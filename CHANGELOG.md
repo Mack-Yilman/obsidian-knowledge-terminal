@@ -16,3 +16,12 @@ Primera versión.
   - una ficha de sesión al cerrar.
 - Importaciones solo a pedido y con selección. Bloquean el contenido con aparentes datos de
   pacientes.
+- **Notion:**
+  - las propiedades no se copian;
+  - se navega por las relaciones (curso → módulos → capítulos);
+  - el Markdown enriquecido se convierte a Obsidian (plegables, tablas, marcadores).
+- **NotebookLM:**
+  - las respuestas guardan sus referencias numeradas, con el texto citado;
+  - la descarga de Studio se revisa en caché antes de entrar al vault.
+- **`init` sobre un vault de Obsidian existente:** agrega los ajustes que faltan sin cambiar los del
+  usuario.

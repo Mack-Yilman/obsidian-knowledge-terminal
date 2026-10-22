@@ -28,7 +28,7 @@ description: Guarda conocimiento en el segundo cerebro de Obsidian (OKT) e impor
 
 ## Importar (solo a pedido; el usuario elige qué)
 
-1. **Vista previa:** `okt importar notion "<enlace>"` u `okt importar drive "<enlace>"`. Una página o un archivo muestra su título; una base o una carpeta muestra una lista numerada.
+1. **Vista previa:** `okt importar notion "<enlace>"` u `okt importar drive "<enlace>"`. Una página o un archivo muestra su título; una base o una carpeta muestra una lista numerada. En Notion, una página de curso suele no tener contenido propio y mostrar **páginas relacionadas** (módulos, capítulos) con su id: baja de nivel con `okt importar notion <id>` hasta llegar a las que tienen contenido.
 2. **Elige el usuario:** muestra la lista tal cual y pregunta qué números importar. No elijas por él.
 3. **Importa:** agrega `--seleccion 1,3` (o `--seleccion todo` si lo pidió así). Para una sola página o archivo, `--aplicar`. Para dejarlo en una carpeta concreta, `--carpeta "10-Proyectos/<proyecto>"`.
 4. Si el comando dice que el contenido parece traer datos de pacientes, **no** uses `--forzar` por tu cuenta: díselo al usuario.

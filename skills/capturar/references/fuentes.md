@@ -26,7 +26,9 @@ Elige según lo que haya, en este orden:
 
 - **El enlace:** «Copiar enlace» de la página o de la base. Si el enlace lleva `?v=`, es una base.
 - **Qué se copia:** solo el contenido. Las imágenes alojadas en Notion se descargan a `40-Fuentes/adjuntos/notion/`, porque sus URL caducan en una hora; las imágenes externas quedan enlazadas.
-- **Error 404:** suele ser una vista enlazada o una página no compartida con la integración de `ntn`. Pide el enlace de la base original.
+- **Error 404 o «has no data sources»:** suele ser una vista enlazada (una base incrustada que muestra otra) o una página no compartida con la integración de `ntn`. Navega por las páginas relacionadas que muestra la vista previa o pide el enlace de la base original.
+- **Cursos con módulos y capítulos:** se navega por las relaciones. Por ejemplo, Curso → «Módulos» → «Capítulos». Importa los capítulos con `--seleccion` y `--carpeta "10-Proyectos/<curso>"`.
+- **Conversión:** los encabezados plegables, los `<details>` (que pasan a *callouts* plegables), las tablas y los marcadores se convierten a Markdown de Obsidian. Los botones de Notion se omiten.
 
 ## Google Docs y Drive
 
