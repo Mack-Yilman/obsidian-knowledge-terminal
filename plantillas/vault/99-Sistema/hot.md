@@ -3,7 +3,7 @@ tipo: sistema
 creado: {{fecha}}
 ---
 
-# Contexto reciente
+# 🔥 Contexto reciente
 
 Lo lee el agente al empezar cada sesión. Lo regenera `okt hot`: no lo edites a mano.
 

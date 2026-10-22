@@ -3,7 +3,7 @@ tipo: sistema
 creado: {{fecha}}
 ---
 
-# Índice
+# 🗂️ Índice
 
 Catálogo de todas las notas con su resumen. Lo regenera `okt indice`.
 

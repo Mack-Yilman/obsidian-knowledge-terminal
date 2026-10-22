@@ -2,7 +2,7 @@
 
 ## PDF y papers
 
-- `okt adjuntar "<ruta>"` copia el archivo a `40-Fuentes/adjuntos/pdf/` sin tocar el original. Calcula su huella (SHA-256): si ese mismo archivo ya estaba, avisa y devuelve el nombre existente.
+- `okt adjuntar "<ruta>"` copia el archivo a `40 │ 📚 Fuentes/📎 adjuntos/📕 pdf/` sin tocar el original. Calcula su huella (SHA-256): si ese mismo archivo ya estaba, avisa y devuelve el nombre existente.
 - La ficha (`okt nota nueva articulo "<título>" --origen pdf --adjunto "<nombre.pdf>" --autor "…" --publicado AAAA`) se completa leyendo el PDF por partes: resumen, introducción, métodos, resultados y discusión. No hace falta leerlo entero.
 - **TL;DR:** 2 o 3 líneas.
 - **Puntos clave:** cada uno con la página o sección de donde sale («p. 4», «Tabla 2»).
@@ -25,13 +25,13 @@ Elige según lo que haya, en este orden:
 ## Notion
 
 - **El enlace:** «Copiar enlace» de la página o de la base. Si el enlace lleva `?v=`, es una base.
-- **Qué se copia:** solo el contenido. Las imágenes alojadas en Notion se descargan a `40-Fuentes/adjuntos/notion/`, porque sus URL caducan en una hora; las imágenes externas quedan enlazadas.
+- **Qué se copia:** solo el contenido. Las imágenes alojadas en Notion se descargan a `40 │ 📚 Fuentes/📎 adjuntos/🗒️ notion/`, porque sus URL caducan en una hora; las imágenes externas quedan enlazadas.
 - **Error 404 o «has no data sources»:** suele ser una vista enlazada (una base incrustada que muestra otra) o una página no compartida con la integración de `ntn`. Navega por las páginas relacionadas que muestra la vista previa o pide el enlace de la base original.
-- **Cursos con módulos y capítulos:** se navega por las relaciones. Por ejemplo, Curso → «Módulos» → «Capítulos». Importa los capítulos con `--seleccion` y `--carpeta "10-Proyectos/<curso>"`.
+- **Cursos con módulos y capítulos:** se navega por las relaciones. Por ejemplo, Curso → «Módulos» → «Capítulos». Importa los capítulos con `--seleccion` y `--carpeta "proyectos/<curso>"`.
 - **Conversión:** los encabezados plegables, los `<details>` (que pasan a *callouts* plegables), las tablas y los marcadores se convierten a Markdown de Obsidian. Los botones de Notion se omiten.
 
 ## Google Docs y Drive
 
-- **El enlace:** «Compartir → Copiar enlace». Un Doc se exporta a Markdown. Un PDF, una imagen o un Word se guarda en `40-Fuentes/adjuntos/drive/` con una nota que lo enlaza.
+- **El enlace:** «Compartir → Copiar enlace». Un Doc se exporta a Markdown. Un PDF, una imagen o un Word se guarda en `40 │ 📚 Fuentes/📎 adjuntos/☁️ drive/` con una nota que lo enlaza.
 - **Una carpeta:** se lista y el usuario elige qué importar.
 - **Hojas de cálculo:** nunca se importan, porque en Drive suelen tener datos clínicos.

@@ -3,25 +3,13 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, relative, basename, extname } from 'node:path';
 import { leerFrontmatter } from './frontmatter.mjs';
 import { posix } from './rutas.mjs';
+import { C, R, CARPETAS } from './estructura.mjs';
+import { sinEmoji } from './nombres.mjs';
 
-export const CARPETAS = [
-  '00-Bandeja/notas',
-  '00-Bandeja/sesiones',
-  '00-Bandeja/importados',
-  '00-Bandeja/telegram',
-  '10-Proyectos',
-  '20-Areas',
-  '30-Conocimiento/conceptos',
-  '30-Conocimiento/entidades',
-  '30-Conocimiento/sintesis',
-  '40-Fuentes/adjuntos',
-  '50-Diario',
-  '90-Archivo',
-  '99-Sistema/plantillas',
-];
+export { CARPETAS };
 
 // Se ignoran las carpetas ocultas (.obsidian, .cerebro, .git, .trash) y las plantillas.
-const IGNORAR = (rel) => rel.split('/').some((p) => p.startsWith('.')) || rel.startsWith('99-Sistema/plantillas');
+const IGNORAR = (rel) => rel.split('/').some((p) => p.startsWith('.')) || rel.startsWith(R.plantillas);
 
 function recorrer(vault, dir, salida) {
   let entradas;
@@ -57,7 +45,7 @@ export function leerNota(vault, rel) {
   return { rel, nombre: basename(rel, extname(rel)), texto, datos, cuerpo, tieneFrontmatter: tiene };
 }
 
-export const esSistema = (rel) => rel.startsWith('99-Sistema/');
+export const esSistema = (rel) => rel.startsWith(`${C.sistema}/`);
 
 // Enlaces [[destino#sección|alias]] y ![[adjunto]] fuera de bloques de código.
 export function extraerEnlaces(texto) {
@@ -87,6 +75,13 @@ export function mapaDeNombres(vault) {
     }
   }
   return mapa;
+}
+
+// Notas que son «la misma» aunque cambie el emoji: «💡 Anemia» y «🩸 Anemia». Sirve para no duplicar; los
+// enlaces, en cambio, se resuelven por el nombre exacto, como en Obsidian (un alias no resuelve un enlace).
+export function mismasNotas(vault, nombre) {
+  const base = sinEmoji(nombre).toLowerCase();
+  return listarNotas(vault).filter((rel) => sinEmoji(basename(rel, extname(rel))).toLowerCase() === base);
 }
 
 export function existe(vault, rel) {

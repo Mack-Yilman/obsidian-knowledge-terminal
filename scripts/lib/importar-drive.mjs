@@ -1,6 +1,6 @@
 // okt importar drive <enlace o id> [--seleccion 1,3|todo] [--aplicar] [--carpeta <destino>] [--forzar]
 // Solo lectura en Drive (gws). Un Google Doc se exporta a Markdown; un PDF u otro archivo se baja a
-// 40-Fuentes/adjuntos/drive/ con una nota que lo enlaza; una carpeta se lista para elegir.
+// la carpeta de adjuntos de Drive con una nota que lo enlaza; una carpeta se lista para elegir.
 // Las hojas de cálculo no se importan: en Drive suele haber datos clínicos.
 import { readFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -8,6 +8,7 @@ import { ejecutar, jsonDe } from './binarios.mjs';
 import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, rutaAdjunto, leerRegistro } from './importacion.mjs';
 import { pareceSensible } from './sensibles.mjs';
 import { limpiarNombre } from './nombres.mjs';
+import { carpetaAdjuntos } from './estructura.mjs';
 
 const CARPETA = 'application/vnd.google-apps.folder';
 const DOC = 'application/vnd.google-apps.document';
@@ -57,7 +58,7 @@ async function importarArchivo(vault, f, op) {
   }
 
   // Binario (PDF, imagen, Word…): se guarda el original y una nota que lo enlaza.
-  const dir = join(vault, '40-Fuentes', 'adjuntos', 'drive');
+  const dir = join(vault, carpetaAdjuntos('drive'));
   let base = limpiarNombre(f.name) || f.id;
   if (!/\.[a-z0-9]{2,5}$/i.test(base)) base += f.mimeType === 'application/pdf' ? '.pdf' : '';
   // Reimportar el mismo archivo reemplaza su propio adjunto; otro archivo con el mismo nombre lleva sufijo.

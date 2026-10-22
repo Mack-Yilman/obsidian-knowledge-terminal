@@ -3,7 +3,7 @@ tipo: sistema
 creado: {{fecha}}
 ---
 
-# Pendientes
+# ✅ Pendientes
 
 La cola entre skills. La escribe `okt pendiente`; marca `[x]` a mano solo si lo resolviste tú.
 

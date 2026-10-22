@@ -1,5 +1,43 @@
 # Cambios
 
+## 0.3.0 — 2026-10-22
+
+**Carpetas y notas con emojis.** Cambia la estructura del vault: un vault 0.2.x se migra con `okt migrar`.
+
+- **Carpetas:** `00 │ 📥 Bandeja` … `99 │ ⚙️ Sistema`, con subcarpetas (`📲 telegram`, `💡 conceptos`, `📕 pdf`…). El
+  separador es `│` (U+2502): `|` está prohibido en los nombres de Windows y en Obsidian separa el alias.
+- **Notas:** emoji temático elegido por la IA en conceptos, entidades, síntesis, proyectos y áreas
+  (`🩸 Anemia ferropénica`); emoji fijo del tipo en lo demás (📄 fuente, 🔬 artículo, 📅 diario, 📲 Telegram,
+  💻 sesión, 🗒️ Notion, ☁️ Drive, 🤖 NotebookLM). El nombre sin emoji queda como alias. «💡 Anemia» y «🩸 Anemia»
+  cuentan como la misma nota y no se duplican.
+- **`okt migrar [--aplicar]`:** vista previa y migración reanudable de un vault 0.2.x: mueve carpetas y notas (nada se
+  borra), reescribe los enlaces, actualiza los registros de `.cerebro`, la configuración de Obsidian, `AGENTS.md` y el
+  `.gitignore`, y hace un commit. Si dos nombres chocarían, no toca nada. Hasta migrar, los comandos que escriben se
+  detienen y el hook de inicio lo avisa.
+- **`okt renombrar "<nota>" "<nombre nuevo>"`:** cambia el nombre o el emoji, el título, el alias y los enlaces de
+  todo el vault (y la carpeta, si es la nota principal de un proyecto).
+- **`--carpeta`** (y `archivar`, `notebooklm vincular`) acepta nombres cortos (`proyectos/Tesis`), rutas antiguas y
+  nombres sin emoji.
+- **Lint:** aviso `sin_emoji`, y un enlace roto como `[[Anemia]]` sugiere `[[🩸 Anemia]]`.
+
+Correcciones de la auditoría:
+
+- NotebookLM: la tabla de datos se lee como CSV de verdad (celdas con comas, saltos de línea o comillas ya no se
+  descuadran).
+- Telegram: `--forzar` escribe solo los ids que se nombran (`--forzar todo` para todos); `okt estado` muestra los
+  retenidos y la última bajada con novedades.
+- Ficha de sesión: el primer archivo modificado perdía su primer carácter (git devolvía « M archivo» y se recortaba
+  el espacio), y los nombres con tildes o emojis salían escapados. Ahora usa `git status --porcelain -z` y
+  `core.quotepath=false`.
+- Todas las escrituras sobre archivos existentes del vault usan `sobrescribir()`: un archivo oculto ya no da EPERM.
+- Los cortes de nombres ya no parten un emoji en dos.
+- `.gitignore` del vault: `.tmp.drivedownload/` de Google Drive.
+- `okt doctor`: respeta `OKT_AGY_SKILLS`, avisa si el vault no es carpeta de confianza en agy y si falta migrar.
+- Contrato: `actualizado` no se exige en `semanal` ni `sistema`. La guía de configuración ya no dice que Antigravity
+  no tiene hooks.
+- README para usuarios nuevos: requisitos por sistema, instalación paso a paso, actualizar, migrar y problemas
+  frecuentes.
+
 ## 0.2.2 — 2026-10-22
 
 - **Antigravity con hook de inicio:** `okt instalar antigravity --aplicar` deja en `<vault>/.agents/hooks.json`

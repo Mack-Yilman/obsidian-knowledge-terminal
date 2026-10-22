@@ -3,15 +3,19 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
-import { CARPETAS } from './vault.mjs';
+import { CARPETAS, mismasNotas } from './vault.mjs';
+import { C, VERSION_ESTRUCTURA, conEmoji, traducir, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
 import { reemplazarBloque, leerBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO } from './fechas.mjs';
 import { iniciarGit, commit } from './git.mjs';
-import { limpiarNombre } from './nombres.mjs';
+import { limpiarNombre, sinEmoji } from './nombres.mjs';
 
 const PLANTILLA = join(RAIZ_PLUGIN, 'plantillas', 'vault');
-export const AREAS_POR_DEFECTO = ['Personal', 'Estudios', 'Trabajo'];
+export const AREAS_POR_DEFECTO = ['🌱 Personal', '📖 Estudios', '💼 Trabajo'];
+
+// Plantillas de Obsidian: el emoji de su tipo («Concepto» → «💡 Concepto»).
+const PLANTILLAS = { Concepto: 'concepto', Diario: 'diario', Fuente: 'fuente', Proyecto: 'proyecto' };
 
 function archivosPlantilla(dir = PLANTILLA, base = '') {
   const lista = [];
@@ -23,8 +27,14 @@ function archivosPlantilla(dir = PLANTILLA, base = '') {
   return lista;
 }
 
-// Nombre final en el vault: AGENTS.md.tmpl → AGENTS.md, gitignore.tmpl → .gitignore.
-const destino = (rel) => (rel === 'gitignore.tmpl' ? '.gitignore' : rel.replace(/\.tmpl$/, ''));
+// Nombre final en el vault: AGENTS.md.tmpl → AGENTS.md, gitignore.tmpl → .gitignore. La plantilla del plugin
+// guarda las carpetas con nombres ASCII («99-Sistema/hot.md»); aquí pasan a la estructura con emojis.
+function destino(rel) {
+  if (rel === 'gitignore.tmpl') return '.gitignore';
+  const r = traducir(rel.replace(/\.tmpl$/, ''));
+  const m = /^(.*\/)([^/]+)\.md$/.exec(r);
+  return m && PLANTILLAS[m[2]] ? `${m[1]}${conEmoji(PLANTILLAS[m[2]], m[2])}.md` : r;
+}
 
 function rellenar(texto, valores) {
   return texto.replace(/\{\{(fecha|areas|cli)\}\}/g, (_, k) => valores[k]);
@@ -38,10 +48,13 @@ export function planInit(vault, opciones = {}) {
   if (dentroDe(RAIZ_PLUGIN, vault) || dentroDe(vault, RAIZ_PLUGIN)) {
     throw new Error(`No crees el vault dentro de la carpeta del plugin ni alrededor de ella (${posix(RAIZ_PLUGIN)}). Abre tu agente en la carpeta de tus notas.`);
   }
+  // Un vault 0.2.x no se completa con init: tendría carpetas nuevas y viejas a la vez.
+  if (necesitaMigrar(vault)) throw Object.assign(new Error(AVISO_MIGRAR), { codigo: 2 });
   const previa = leerConfigVault(vault);
   const areas = (opciones.areas ? opciones.areas.split(',') : previa.areas || AREAS_POR_DEFECTO)
     .map((a) => limpiarNombre(a))
-    .filter(Boolean);
+    .filter((a) => sinEmoji(a))
+    .map((a) => conEmoji('area', a));
   const valores = { fecha: fechaISO(), areas: areas.map((a) => `[[${a}]]`).join(', '), cli: posix(CLI) };
   const acciones = [];
 
@@ -58,8 +71,8 @@ export function planInit(vault, opciones = {}) {
     }
   }
   for (const a of areas) {
-    const ruta = `20-Areas/${a}.md`;
-    if (!existsSync(join(vault, ruta))) acciones.push({ tipo: 'area', ruta, nombre: a });
+    const ruta = `${C.areas}/${a}.md`;
+    if (!existsSync(join(vault, ruta)) && !(existsSync(vault) && mismasNotas(vault, a).length)) acciones.push({ tipo: 'area', ruta, nombre: a });
   }
   acciones.push({ tipo: 'config', ruta: '.cerebro/config.json' });
   if (!existsSync(join(vault, '.git'))) acciones.push({ tipo: 'git', ruta: '.git (local, sin remoto)' });
@@ -106,13 +119,13 @@ export function aplicarInit(plan) {
     }
     if (a.tipo === 'area') {
       mkdirSync(dirname(abs), { recursive: true });
-      const datos = { tipo: 'area', creado: valores.fecha, actualizado: valores.fecha, resumen: `Área continua: ${a.nombre}.` };
+      const datos = { tipo: 'area', creado: valores.fecha, actualizado: valores.fecha, resumen: `Área continua: ${sinEmoji(a.nombre)}.`, aliases: [sinEmoji(a.nombre)] };
       writeFileSync(abs, escribirFrontmatter(datos, `\n# ${a.nombre}\n\n## Proyectos\n\n## Conocimiento\n\n## Notas\n`));
     }
   }
   const previa = leerConfigVault(vault);
   guardarConfigVault(vault, {
-    version: 1,
+    version: VERSION_ESTRUCTURA,
     creado: previa.creado || valores.fecha,
     areas,
     frescura_dias: previa.frescura_dias ?? 90,

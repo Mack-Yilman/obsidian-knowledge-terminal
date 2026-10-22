@@ -5,9 +5,10 @@
 import { readFileSync, existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
 import { join, relative, basename } from 'node:path';
 import { ejecutar, jsonDe } from './binarios.mjs';
-import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, rutaAdjunto } from './importacion.mjs';
+import { errorUso, parsearSeleccion, revisarSensible, escribirImportada } from './importacion.mjs';
+import { C, carpetaAdjuntos, resolverCarpeta } from './estructura.mjs';
 import { leerConfigVault, guardarConfigVault, posix } from './rutas.mjs';
-import { limpiarNombre } from './nombres.mjs';
+import { limpiarNombre, recortar } from './nombres.mjs';
 import { fechaISO } from './fechas.mjs';
 
 const ESTUDIO = {
@@ -45,7 +46,7 @@ export function resolverCuaderno(vault, op, cwd = process.cwd()) {
   if (!ref) {
     const vinculos = leerConfigVault(vault).cuadernos || {};
     let rel = posix(relative(vault, cwd));
-    if (op.carpeta) rel = op.carpeta;
+    if (op.carpeta) rel = resolverCarpeta(vault, op.carpeta);
     let mejor = null;
     for (const [carpeta, v] of Object.entries(vinculos)) if ((rel === carpeta || rel.startsWith(`${carpeta}/`)) && (!mejor || carpeta.length > mejor[0].length)) mejor = [carpeta, v];
     if (!mejor) throw errorUso('¿De qué cuaderno? Usa --cuaderno "<título o id>" o vincula esta carpeta: okt notebooklm vincular <carpeta> "<cuaderno>". Lista: okt notebooklm cuadernos');
@@ -68,14 +69,16 @@ export function cuadernos() {
 
 export function vincular(vault, carpeta, ref) {
   if (!carpeta || !ref) throw errorUso('Uso: okt notebooklm vincular <carpeta del vault> "<cuaderno>"');
-  if (!existsSync(join(vault, carpeta))) throw errorUso(`La carpeta ${carpeta} no existe en el vault.`);
+  const real = resolverCarpeta(vault, carpeta);
+  if (!existsSync(join(vault, real))) throw errorUso(`La carpeta ${carpeta} no existe en el vault.`);
   const c = resolverCuaderno(vault, { cuaderno: ref });
-  const cuadernosCfg = { ...(leerConfigVault(vault).cuadernos || {}), [posix(carpeta).replace(/\/$/, '')]: c };
+  const cuadernosCfg = { ...(leerConfigVault(vault).cuadernos || {}), [posix(real).replace(/\/$/, '')]: c };
   guardarConfigVault(vault, { cuadernos: cuadernosCfg });
-  return { texto: `${carpeta} ↔ ${c.titulo}`, datos: c };
+  return { texto: `${real} ↔ ${c.titulo}`, datos: c };
 }
 
-const carpetaAdjuntos = (c) => `notebooklm/${limpiarNombre(c.titulo).slice(0, 60) || c.id.slice(0, 8)}`;
+// Una subcarpeta por cuaderno dentro de los adjuntos de NotebookLM.
+const carpetaCuaderno = (c) => `${carpetaAdjuntos('notebooklm')}/📓 ${recortar(limpiarNombre(c.titulo), 60) || c.id.slice(0, 8)}`;
 
 export function notas(vault, op) {
   const c = resolverCuaderno(vault, op);
@@ -116,8 +119,8 @@ export function preguntar(vault, pregunta, op) {
     fuentes = [].concat(j.sources || []).map((s) => (typeof s === 'string' ? s : s.title || s.name || '')).filter(Boolean);
   }
   revisarSensible(respuesta, op, pregunta);
-  const contenido = `**Pregunta:** ${pregunta}\n\n**Cuaderno:** ${c.titulo}\n\n${respuesta}${fuentes.length ? `\n\n**Fuentes citadas por NotebookLM:**\n${[...new Set(fuentes)].map((f) => `- ${f}`).join('\n')}` : ''}\n\n> Respuesta generada por NotebookLM: es una síntesis, no evidencia. Verifica en las fuentes antes de pasarla a 30-Conocimiento.`;
-  const res = escribirImportada(vault, { clave: `notebooklm:pregunta:${c.id}:${fechaISO()}:${pregunta.slice(0, 60)}`, titulo: `NotebookLM - ${pregunta.slice(0, 70)}`, contenido, datos: { origen: 'notebooklm', id_externo: c.id, cuaderno: c.titulo }, op });
+  const contenido = `**Pregunta:** ${pregunta}\n\n**Cuaderno:** ${c.titulo}\n\n${respuesta}${fuentes.length ? `\n\n**Fuentes citadas por NotebookLM:**\n${[...new Set(fuentes)].map((f) => `- ${f}`).join('\n')}` : ''}\n\n> Respuesta generada por NotebookLM: es una síntesis, no evidencia. Verifica en las fuentes antes de pasarla a ${C.conocimiento}.`;
+  const res = escribirImportada(vault, { clave: `notebooklm:pregunta:${c.id}:${fechaISO()}:${recortar(pregunta, 60)}`, titulo: `NotebookLM - ${recortar(pregunta, 70)}`, contenido, datos: { origen: 'notebooklm', id_externo: c.id, cuaderno: c.titulo }, op });
   return { texto: `${respuesta}\n\n→ Guardado en ${res.ruta}`, datos: { respuesta, fuentes, ...res } };
 }
 
@@ -130,6 +133,40 @@ export function estado(vault, op) {
   const c = resolverCuaderno(vault, op);
   const lista = estadoEstudio(c);
   return { texto: lista.length ? lista.map((a) => `- ${a.type} · ${a.status} · ${a.artifact_id || a.id}`).join('\n') : 'Sin contenidos de Studio.', datos: lista };
+}
+
+// CSV (RFC 4180): las celdas entre comillas pueden traer comas, saltos de línea y comillas dobles ("").
+export function leerCsv(texto) {
+  const filas = [];
+  let fila = [];
+  let celda = '';
+  let comillas = false;
+  const t = String(texto).replace(/^\uFEFF/, '');
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (comillas) {
+      if (ch === '"' && t[i + 1] === '"') {
+        celda += '"';
+        i++;
+      } else if (ch === '"') comillas = false;
+      else celda += ch;
+    } else if (ch === '"') comillas = true;
+    else if (ch === ',') {
+      fila.push(celda);
+      celda = '';
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && t[i + 1] === '\n') i++;
+      fila.push(celda);
+      filas.push(fila);
+      fila = [];
+      celda = '';
+    } else celda += ch;
+  }
+  if (celda || fila.length) {
+    fila.push(celda);
+    filas.push(fila);
+  }
+  return filas.filter((f) => f.some((c) => c.trim()));
 }
 
 // Convierte lo descargado en algo que Obsidian muestre bien.
@@ -148,7 +185,7 @@ function contenidoDescargado(abs, nombre, tipo) {
     return `${lineas.join('\n') || '(mapa vacío)'}\n\nOriginal: [[${nombre}]]`;
   }
   if (tipo === 'tabla') {
-    const filas = readFileSync(abs, 'utf8').trim().split(/\r?\n/).map((l) => l.split(',').map((x) => x.replace(/^"|"$/g, '').replace(/\|/g, '\\|')));
+    const filas = leerCsv(readFileSync(abs, 'utf8')).map((f) => f.map((x) => x.replace(/\r?\n/g, '<br>').replace(/\|/g, '\\|')));
     if (!filas.length) return `[[${nombre}]]`;
     return [`| ${filas[0].join(' | ')} |`, `| ${filas[0].map(() => '---').join(' | ')} |`, ...filas.slice(1).map((f) => `| ${f.join(' | ')} |`)].join('\n') + `\n\nOriginal: [[${nombre}]]`;
   }
@@ -165,10 +202,10 @@ export function descargar(vault, tipo, op) {
     if (!listos.length) throw new Error(`No hay ${tipo} terminado en «${c.titulo}». Créalo con: okt notebooklm crear ${tipo}`);
     id = listos[0].artifact_id || listos[0].id;
   }
-  const subcarpeta = carpetaAdjuntos(c);
-  const dir = join(vault, '40-Fuentes', 'adjuntos', ...subcarpeta.split('/'));
+  const subcarpeta = carpetaCuaderno(c);
+  const dir = join(vault, subcarpeta);
   mkdirSync(dir, { recursive: true });
-  let nombre = `${limpiarNombre(`${tipo} ${c.titulo}`).slice(0, 80)} ${fechaISO()}.${def.ext}`;
+  let nombre = `${recortar(limpiarNombre(`${tipo} ${c.titulo}`), 80)} ${fechaISO()}.${def.ext}`;
   for (let i = 2; existsSync(join(dir, nombre)); i++) nombre = nombre.replace(/( \d+)?\.(\w+)$/, ` ${i}.$2`);
   // Se baja primero a la caché: solo pasa a adjuntos si no parece traer datos de pacientes.
   const cache = join(vault, '.cerebro', 'cache', 'notebooklm');
@@ -185,7 +222,7 @@ export function descargar(vault, tipo, op) {
   }
   const abs = join(dir, nombre);
   renameSync(temporal, abs);
-  const contenido = `${convertido}\n\nCuaderno: ${c.titulo} · ${tipo} · ${fechaISO()} · \`${rutaAdjunto(subcarpeta, nombre)}\``;
+  const contenido = `${convertido}\n\nCuaderno: ${c.titulo} · ${tipo} · ${fechaISO()} · \`${subcarpeta}/${nombre}\``;
   const res = escribirImportada(vault, { clave: `notebooklm:${tipo}:${id}`, titulo: `${tipo[0].toUpperCase()}${tipo.slice(1)} - ${c.titulo}`, contenido, datos: { origen: 'notebooklm', id_externo: `${c.id}/${id}`, cuaderno: c.titulo, adjunto: `[[${nombre}]]` }, op });
   return { texto: `Descargado ${basename(abs)} → nota ${res.ruta} (${res.accion}).`, datos: { archivo: posix(relative(vault, abs)), ...res } };
 }
