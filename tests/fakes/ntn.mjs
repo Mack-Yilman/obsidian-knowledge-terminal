@@ -13,7 +13,9 @@ if (grupo === '--version') {
 } else if (grupo === 'pages' && accion === 'get') {
   const p = d.paginas[norm(ref)];
   if (!p) fallar('object_not_found: Could not find page');
-  process.stdout.write(p.markdown);
+  // Como el ntn real: las propiedades salen primero como frontmatter YAML.
+  const props = Object.entries(p.props || {}).map(([k, v]) => (Array.isArray(v) ? `${/\s|%/.test(k) ? `'${k}'` : k}:\n${v.map((x) => `- ${x}`).join('\n')}` : `${/\s|%/.test(k) ? `'${k}'` : k}: ${v}`));
+  process.stdout.write(`${props.length ? `---\n${props.join('\n')}\n---\n\n` : ''}${p.markdown}`);
 } else if (grupo === 'api') {
   const id = norm(accion);
   if (!accion.startsWith('/v1/')) fallar('400 invalid_request_url');

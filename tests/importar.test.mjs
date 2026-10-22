@@ -8,6 +8,10 @@ const P1 = '1a2b3c4d5e6f708192a3b4c5d6e7f801';
 const P2 = '2a2b3c4d5e6f708192a3b4c5d6e7f802';
 const P3 = '3a2b3c4d5e6f708192a3b4c5d6e7f803';
 const BASE = '9a2b3c4d5e6f708192a3b4c5d6e7f809';
+const CURSO = 'aa2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a0';
+const MOD = 'ab2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a1';
+const CAP1 = 'ac2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a2';
+const CAP2 = 'ad2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a3';
 
 const DATOS = {
   notion: {
@@ -15,6 +19,10 @@ const DATOS = {
       [P1]: { titulo: 'Apuntes de anemia', editado: '2026-10-20T10:00:00.000Z', markdown: '# Apuntes de anemia\n\nLa ferritina es clave.\n\n![grafico](https://prod-files-secure.s3.us-west-2.amazonaws.com/abc/grafico.png?X-Amz=1)\n\n[externo](https://example.com/x.png)' },
       [P2]: { titulo: 'Clase 2: hierro', editado: '2026-10-21T10:00:00.000Z', markdown: 'Absorción del hierro.' },
       [P3]: { titulo: 'Caso', editado: '2026-10-21T10:00:00.000Z', markdown: 'Paciente con DNI 45879632.' },
+      [CURSO.replace(/-/g, '')]: { titulo: 'Curso de prueba', editado: '2026-01-13T00:00:00.000Z', props: { Estado: 'Finalizado ✅', 'Nombre del curso': 'Curso de prueba', Módulos: [MOD] }, markdown: '### Módulos del Curso\n---\n<database url="https://app.notion.com/p/ffff" inline="true"></database>' },
+      [MOD.replace(/-/g, '')]: { titulo: '1. Módulo uno', editado: '2026-01-13T00:00:00.000Z', props: { '% Completado': 1, Capítulos: [CAP1, CAP2], Curso: [CURSO] }, markdown: '<database url="https://app.notion.com/p/eeee" inline="true"></database>' },
+      [CAP1.replace(/-/g, '')]: { titulo: 'Capítulo 1', editado: '2026-01-13T00:00:00.000Z', props: { Módulo: [MOD], Estado: 'Visto' }, markdown: 'El crédito hipotecario cubre hasta el 90 %.' },
+      [CAP2.replace(/-/g, '')]: { titulo: 'Capítulo 2', editado: '2026-01-13T00:00:00.000Z', props: { Módulo: [MOD] }, markdown: 'La cuota inicial mínima es del 10 %.' },
     },
     bases: { [BASE]: [P1, P2, P3] },
   },
@@ -87,6 +95,28 @@ test('notion: una base se lista; con --seleccion importa solo esas páginas, sin
   assert.match(texto, /Absorción del hierro/);
   assert.doesNotMatch(texto, /Curso|select/);
   assert.equal(readdirSync(join(v.vault, '00-Bandeja/importados')).length, 1);
+  v.borrar();
+});
+
+test('notion: navega por relaciones (curso → módulo → capítulos) y nunca copia las propiedades', () => {
+  const v = preparar();
+  let r = v.run(['importar', 'notion', `https://app.notion.com/p/mi/Curso-${CURSO.replace(/-/g, '')}?source=copy_link`]);
+  assert.equal(r.codigo, 0, r.error);
+  assert.match(r.salida, /«Curso de prueba» \(sin contenido propio/);
+  assert.match(r.salida, /Páginas relacionadas en «Módulos»:\n1\. 1\. Módulo uno · ab2b3c4d/);
+  assert.match(r.salida, /base\(s\) incrustada\(s\)/);
+  assert.doesNotMatch(r.salida, /Importar esta página/);
+  r = v.run(['importar', 'notion', MOD, '--aplicar']);
+  assert.notEqual(r.codigo, 0);
+  assert.match(r.error, /no tiene contenido propio.*«Capítulos» \(2\)/);
+  r = v.run(['importar', 'notion', MOD]);
+  assert.match(r.salida, /«Capítulos»:\n1\. Capítulo 1 · ac2b3c4d[\s\S]*2\. Capítulo 2[\s\S]*«Curso»:\n3\. Curso de prueba/);
+  r = v.run(['importar', 'notion', MOD, '--seleccion', '1-2']);
+  assert.equal(r.codigo, 0, r.error);
+  const cap = leer(v, '00-Bandeja/importados/Capítulo 1.md');
+  assert.match(cap, /cubre hasta el 90 %/);
+  assert.doesNotMatch(cap, /Estado|Visto|Módulo:|ab2b3c4d/, 'las propiedades de Notion no se copian');
+  assert.match(leer(v, '00-Bandeja/importados/Capítulo 2.md'), /cuota inicial/);
   v.borrar();
 });
 
