@@ -1,5 +1,5 @@
 // Dónde está cada cosa: el plugin, la configuración global y el vault.
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, openSync, ftruncateSync, writeSync, closeSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +32,19 @@ export function guardarConfigGlobal(cambios) {
 }
 
 export const esVault = (dir) => existsSync(join(dir, '.cerebro', 'config.json'));
+
+// En Windows, writeFileSync sobre un archivo con atributo Oculto falla con EPERM (abre con
+// CREATE_ALWAYS). Si el archivo existe, se abre con r+ y se trunca: respeta el atributo.
+export function sobrescribir(ruta, texto) {
+  if (!existsSync(ruta)) return writeFileSync(ruta, texto);
+  const fd = openSync(ruta, 'r+');
+  try {
+    ftruncateSync(fd, 0);
+    writeSync(fd, texto, 0, 'utf8');
+  } finally {
+    closeSync(fd);
+  }
+}
 
 export function dentroDe(padre, hijo) {
   const r = relative(resolve(padre), resolve(hijo));

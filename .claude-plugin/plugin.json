@@ -1,6 +1,6 @@
 {
   "name": "obsidian-knowledge-terminal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Segundo cerebro en Obsidian para cualquier LLM (Claude Code y Antigravity): captura PDFs, web, YouTube, notas y sesiones; importa a pedido desde Notion, Google Docs y Drive; trae notas, respuestas e infografías de NotebookLM; responde con citas a tus notas y mantiene el vault (bandeja por lotes, revisión semanal, lint, frescura). Cinco skills y un CLI sin dependencias que hace lo mecánico sin gastar tokens.",
   "author": {
     "name": "Mack Chirinos"

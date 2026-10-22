@@ -2,7 +2,7 @@
 // Es reanudable: crea solo lo que falta y en AGENTS.md actualiza solo el bloque de OKT.
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigVault, guardarConfigVault } from './rutas.mjs';
+import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { CARPETAS } from './vault.mjs';
 import { reemplazarBloque, leerBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
@@ -98,11 +98,11 @@ export function aplicarInit(plan) {
     if (a.tipo === 'mezclar') {
       const u = leerJson(abs);
       const p = leerJson(join(PLANTILLA, a.origen));
-      if (u && p) writeFileSync(abs, `${JSON.stringify({ ...p, ...u }, null, 2)}\n`);
+      if (u && p) sobrescribir(abs, `${JSON.stringify({ ...p, ...u }, null, 2)}\n`);
     }
     if (a.tipo === 'bloque') {
       const nuevo = leerBloque(textoAgents(valores));
-      writeFileSync(abs, reemplazarBloque(readFileSync(abs, 'utf8'), nuevo));
+      sobrescribir(abs, reemplazarBloque(readFileSync(abs, 'utf8'), nuevo));
     }
     if (a.tipo === 'area') {
       mkdirSync(dirname(abs), { recursive: true });
