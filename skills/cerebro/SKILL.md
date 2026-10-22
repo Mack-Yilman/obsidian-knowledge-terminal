@@ -1,6 +1,6 @@
 ---
 name: cerebro
-description: Guía y gestor del segundo cerebro en Obsidian (OKT). Configura el vault la primera vez (carpetas, Obsidian, respaldo en Google Drive, NotebookLM, Notion, Google, Antigravity, Telegram), muestra el estado (bandeja, pendientes, última actividad), dice el siguiente paso y explica qué se puede pedir. Úsala SIEMPRE que el usuario diga «configura mi segundo cerebro», «crea mi vault», «instala OKT», «conecta Notion/Drive/NotebookLM/Telegram», «configura el bot de Telegram», «instala las skills en Antigravity», «qué puedo hacer con mi cerebro», «por dónde empiezo», «cómo va mi cerebro», «qué tengo pendiente», «revisa la configuración», «excluye este proyecto», «migra mi vault», «actualiza la estructura de mi vault», o pregunte cómo usar OKT u Obsidian con IA.
+description: Guía y gestor del segundo cerebro en Obsidian (OKT). Configura el vault la primera vez (carpetas, Obsidian, respaldo en Google Drive, NotebookLM, Notion, Google, Antigravity, Telegram), muestra el estado (bandeja, pendientes, última actividad), dice el siguiente paso y explica qué se puede pedir. Úsala SIEMPRE que el usuario diga «configura mi segundo cerebro», «crea mi vault», «instala OKT», «conecta Notion/Drive/NotebookLM/Telegram», «configura el bot de Telegram», «instala las skills en Antigravity», «qué puedo hacer con mi cerebro», «por dónde empiezo», «cómo va mi cerebro», «qué tengo pendiente», «revisa la configuración», «excluye este proyecto», «migra mi vault», «actualiza la estructura de mi vault», «instala las skills de formato de Obsidian», «cambia el formato de mi nota diaria», o pregunte cómo usar OKT u Obsidian con IA.
 ---
 
 # Cerebro: guía y gestor de OKT
@@ -35,8 +35,10 @@ Cada paso es reanudable: `okt doctor` muestra lo que falta. Haz un paso a la vez
 | 6. Respaldo | Guía para que Google Drive para escritorio respalde la carpeta (u otro respaldo). Cuando confirme: `okt config poner respaldo drive` |
 | 7. Conectores | Pregunta cuáles quiere: NotebookLM (`nlm`), Notion (`ntn`), Google Docs y Drive (`gws`). Instala solo esos |
 | 8. Antigravity | Si usa Antigravity: `okt instalar antigravity` (vista previa) y, con su sí, `okt instalar antigravity --aplicar` |
-| 9. Telegram | Opcional: capturar desde el celular con el bot `okt-telegram`. Si lo quiere, guíalo según `references/configuracion.md` (sección «Telegram»): crear el bot con @BotFather, desplegar el Worker y, con su sí, `okt telegram config --url <worker> --token <token>`. Comprueba con `okt telegram bajar`. Nunca pidas que pegue el token en el chat si puede escribirlo él en la terminal |
-| 10. Cierre | `okt doctor` y un resumen de 3 líneas: qué quedó listo, qué falta y la primera frase que puede probar |
+| 9. Formato de Obsidian | Opcional: ofrece `kepano/obsidian-skills` (skills del creador de Obsidian: callouts, propiedades, Bases, Canvas). Con su sí: en Claude Code, `claude plugin marketplace add kepano/obsidian-skills` y `claude plugin install obsidian@obsidian-skills` (se carga al reiniciar); en Antigravity, `okt instalar obsidian-skills --aplicar` |
+| 10. Diario | Pregunta cómo quiere ver la nota diaria: `📅 2026-10-22` (por defecto) o `📅 22∕10∕26` (`okt config poner formato_diario DD/MM/YY`). El comando ajusta también la nota diaria de Obsidian |
+| 11. Telegram | Opcional: capturar desde el celular con el bot `okt-telegram`. Si lo quiere, guíalo según `references/configuracion.md` (sección «Telegram»): crear el bot con @BotFather, desplegar el Worker y, con su sí, `okt telegram config --url <worker> --token <token>`. Comprueba con `okt telegram bajar`. Nunca pidas que pegue el token en el chat si puede escribirlo él en la terminal |
+| 12. Cierre | `okt doctor` y un resumen de 3 líneas: qué quedó listo, qué falta y la primera frase que puede probar |
 
 ## Siguiente paso (cuando el usuario pregunta «¿y ahora?» o «cómo va»)
 

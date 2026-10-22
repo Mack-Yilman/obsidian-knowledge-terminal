@@ -84,6 +84,23 @@ export function conEmoji(tipo, titulo) {
   return EMOJI[tipo] ? `${EMOJI[tipo]} ${base}` : base;
 }
 
+// ---------- nota diaria ----------
+
+// Formatos del nombre de la nota diaria (okt config poner formato_diario). «/» no puede ir en un nombre de archivo
+// (Obsidian crearía carpetas 22/10/26), así que «DD/MM/YY» se escribe con la barra de división ∕ (U+2215).
+const dos = (n) => String(n).padStart(2, '0');
+export const FORMATOS_DIARIO = {
+  'AAAA-MM-DD': { titulo: (d) => `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}`, obsidian: `[${EMOJI.diario}] YYYY-MM-DD` },
+  'DD/MM/YY': { titulo: (d) => `${dos(d.getDate())}∕${dos(d.getMonth() + 1)}∕${dos(d.getFullYear() % 100)}`, obsidian: `[${EMOJI.diario}] DD∕MM∕YY` },
+};
+
+export function formatoDiario(vault) {
+  const f = vault ? leerConfigVault(vault).formato_diario : null;
+  return FORMATOS_DIARIO[f] ? f : 'AAAA-MM-DD';
+}
+
+export const tituloDiario = (vault, fecha) => FORMATOS_DIARIO[formatoDiario(vault)].titulo(fecha);
+
 // ---------- estructura anterior (0.2.x) ----------
 
 const SISTEMA_ANTIGUO = { 'hot.md': R.hot, 'bitacora.md': R.bitacora, 'pendientes.md': R.pendientes, 'indice.md': R.indice };

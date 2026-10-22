@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.3.1 — 2026-10-22
+
+- **Nota diaria con formato a elegir:** `okt config poner formato_diario DD/MM/YY` la nombra `📅 22∕10∕26` (barra de
+  división U+2215, porque `/` crearía carpetas). Por defecto sigue `📅 2026-10-22`. El comando ajusta también la nota
+  diaria de Obsidian, para que su botón y OKT (y las tareas de Telegram) usen la misma nota.
+- **Formato de Obsidian (`kepano/obsidian-skills`):** nuevo paso opcional en la configuración. `okt instalar
+  obsidian-skills [--aplicar]` las instala en Antigravity; en Claude Code se instalan como plugin. `okt doctor` muestra
+  las dos instalaciones.
+
 ## 0.3.0 — 2026-10-22
 
 **Carpetas y notas con emojis.** Cambia la estructura del vault: un vault 0.2.x se migra con `okt migrar`.

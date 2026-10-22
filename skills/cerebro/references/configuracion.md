@@ -49,7 +49,15 @@ Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen en el l
 
 ## Capa de formato (opcional)
 
-`kepano/obsidian-skills` (del CEO de Obsidian) enseña al agente Markdown de Obsidian, Bases y Canvas. En Claude Code: `/plugin marketplace add kepano/obsidian-skills` y `/plugin install obsidian@obsidian-skills`. Para otros agentes: `npx skills add https://github.com/kepano/obsidian-skills`. OKT funciona sin ella.
+`kepano/obsidian-skills` (de Steph Ango, creador de Obsidian; licencia MIT) enseña al agente el Markdown de Obsidian (callouts, propiedades, incrustaciones), Bases, Canvas y el CLI de Obsidian. Son solo skills de texto: no traen hooks ni scripts. `defuddle` y `knap` sugieren instalar su propio CLI con `npm` cuando el usuario las usa. OKT funciona sin ellas.
+
+- **Claude Code:** `claude plugin marketplace add kepano/obsidian-skills` y `claude plugin install obsidian@obsidian-skills`. Se cargan al reiniciar.
+- **Antigravity:** `okt instalar obsidian-skills` (vista previa) y, con su sí, `--aplicar`. Clona el repositorio en `~/.okt/obsidian-skills` y copia sus skills a `~/.gemini/config/skills/`. Repetirlo las actualiza.
+- **Comprobar:** `okt doctor` muestra las dos instalaciones.
+
+## Nota diaria
+
+Por defecto se llama `📅 2026-10-22`. Con `okt config poner formato_diario DD/MM/YY` pasa a `📅 22∕10∕26`, con la barra de división `∕` (U+2215): la `/` no puede ir en un nombre de archivo y Obsidian crearía carpetas. El comando cambia también el formato de la nota diaria de Obsidian (`.obsidian/daily-notes.json`) para que el botón «Nota diaria» y OKT usen la misma nota.
 
 ## Telegram (opcional)
 

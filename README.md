@@ -36,7 +36,7 @@ Nada se importa ni se procesa solo, y nada se borra: lo terminado va al archivo.
 20 │ 🧭 Areas/            lo continuo: 🩺 Medicina.md, 🌱 Personal.md…
 30 │ 🧠 Conocimiento/     lo aprendido: 💡 conceptos · 🏷️ entidades · 🧩 sintesis
 40 │ 📚 Fuentes/          una ficha por fuente (📄 o 🔬) + 📎 adjuntos con los originales
-50 │ 📅 Diario/           📅 2026-10-22.md y revisiones 🗓️ 2026-W43.md
+50 │ 📅 Diario/           📅 2026-10-22.md (o 📅 22∕10∕26.md) y revisiones 🗓️ 2026-W43.md
 90 │ 🗄️ Archivo/          lo terminado
 99 │ ⚙️ Sistema/          🔥 hot · 📜 bitácora · ✅ pendientes · 🗂️ índice · 🧱 plantillas
 AGENTS.md               reglas del vault para cualquier agente
@@ -47,6 +47,9 @@ AGENTS.md               reglas del vault para cualquier agente
   🫀 Insuficiencia cardiaca, 🐍 Curso de Python);
 - en lo demás, el CLI pone el **del tipo**: 📄 fuente, 🔬 artículo, 📅 diario, 📝 nota, 📲 Telegram, 💻 sesión,
   🗒️ Notion, ☁️ Drive, 🤖 NotebookLM.
+
+La nota diaria se llama `📅 2026-10-22` o, si lo prefieres, `📅 22∕10∕26`
+(`okt config poner formato_diario DD/MM/YY`; también ajusta la nota diaria de Obsidian).
 
 Cada nota guarda también su nombre **sin** emoji como alias, así que en Obsidian puedes buscar «Anemia» y el
 autocompletado la encuentra. El separador de las carpetas es `│` (línea fina, U+2502): la barra `|` no está
@@ -114,7 +117,20 @@ no lo edites desde la web de Drive ni desde otra PC a la vez. El vault **no** se
 
 La guía de NotebookLM está en [skills/notebooklm/references/instalacion.md](skills/notebooklm/references/instalacion.md).
 
-### 7. Antigravity (opcional)
+### 7. Formato de Obsidian (opcional, recomendado)
+
+[kepano/obsidian-skills](https://github.com/kepano/obsidian-skills), del creador de Obsidian, enseña a la IA el
+Markdown propio de Obsidian (callouts, propiedades, incrustaciones), Bases y Canvas. OKT funciona sin ellas. Pide
+**«instala las skills de formato de Obsidian»** o hazlo a mano:
+
+```text
+claude plugin marketplace add kepano/obsidian-skills
+claude plugin install obsidian@obsidian-skills
+```
+
+En Antigravity: `okt instalar obsidian-skills --aplicar`.
+
+### 8. Antigravity (opcional)
 
 Si también usas Antigravity, con el plugin ya instalado en Claude Code pide: **«instala las skills en
 Antigravity»**. Sin Claude Code, clona el repositorio y ejecútalo a mano:
@@ -132,13 +148,13 @@ vault, baja Telegram y carga el resumen `🔥 hot.md`, igual que en Claude Code.
 después, repite `instalar antigravity --aplicar`. El `AGENTS.md` del vault orienta a cualquier otro agente (Codex,
 Cursor…).
 
-### 8. Telegram (opcional)
+### 9. Telegram (opcional)
 
 Para mandar notas, voz, enlaces, fotos y tareas desde el celular, despliega el bot
 [okt-telegram](https://github.com/Mack-Yilman/okt-telegram) siguiendo su README y luego pide: **«configura el bot de
 Telegram»**. Más abajo está cómo funciona.
 
-### 9. Comprobar
+### 10. Comprobar
 
 Pide **«revisa la configuración»** (o ejecuta `okt doctor --completo`): muestra lo que está listo y, para lo que
 falta, el comando que lo resuelve.
