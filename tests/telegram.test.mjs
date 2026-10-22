@@ -200,6 +200,16 @@ test('una foto sin leyenda: título sin extensión ni fecha repetida, sin renglo
   }
 });
 
+test('el título no termina en coma ni en otra puntuación', async () => {
+  const t = await preparar({ elementos: [elemento('o1', 'voz', 'Hola, ahorita estoy probando el telegram, el audio de telegram')] });
+  try {
+    await bajar(t.vault);
+    assert.deepEqual(t.bandeja(), ['2026-10-21 1805 Hola, ahorita estoy probando el telegram.md']);
+  } finally {
+    await t.fin();
+  }
+});
+
 test('con poco tiempo (hook), los archivos esperan y lo demás se baja', async () => {
   const t = await preparar({
     elementos: [elemento('n1', 'archivo', 'Un PDF', { archivo_key: 'F', nombre: 'a.pdf' }), elemento('n2', 'nota', 'Texto rápido')],

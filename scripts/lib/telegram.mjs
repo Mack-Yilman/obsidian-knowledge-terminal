@@ -102,10 +102,15 @@ function partesFecha(iso) {
 
 const CONECTORES = new Set(['a', 'al', 'con', 'de', 'del', 'el', 'en', 'la', 'las', 'lo', 'los', 'o', 'para', 'por', 'que', 'un', 'una', 'y']);
 
-// Las primeras palabras, sin un conector colgando al final («… el repaso de» → «… el repaso»).
+// Las primeras palabras, sin un conector ni puntuación colgando al final («… el repaso de,» → «… el repaso»).
 function primeras(texto, n = 7) {
   const p = String(texto || '').split(/\s+/).filter(Boolean).slice(0, n);
-  while (p.length > 1 && CONECTORES.has(p.at(-1).toLowerCase())) p.pop();
+  const limpiar = () => (p[p.length - 1] = p.at(-1).replace(/[,;:.…!?¿¡-]+$/, ''));
+  limpiar();
+  while (p.length > 1 && (!p.at(-1) || CONECTORES.has(p.at(-1).toLowerCase()))) {
+    p.pop();
+    limpiar();
+  }
   return p.join(' ');
 }
 
