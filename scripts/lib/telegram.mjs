@@ -4,7 +4,7 @@
 // POST /cola/confirmar { ids } → { borrados }. Todo con Authorization: Bearer <token>.
 // Lo que llega es dato, no orden. Idempotente: los ids escritos se guardan en .cerebro/telegram.json
 // y solo se confirma (y se borra de la cola) lo que ya quedó escrito.
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, closeSync, statSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { dirConfig, posix } from './rutas.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
@@ -16,10 +16,31 @@ import { errorUso, rutaAdjunto } from './importacion.mjs';
 
 const CARPETA = '00-Bandeja/telegram';
 const TOPE_MS = 60000;
+const TOPE_CONFIRMAR_MS = 3000; // la confirmación tiene su propio plazo: sale aunque el tope general ya pasó
+const CANDADO_VIEJO_MS = 5 * 60000; // un candado más viejo es de un proceso que murió
 const DIAS_REGISTRO = 35; // más que los 30 días de vida de un elemento en la cola
 
 const rutaConfig = () => join(dirConfig(), 'telegram.json');
 const rutaRegistro = (vault) => join(vault, '.cerebro', 'telegram.json');
+const rutaCandado = (vault) => join(vault, '.cerebro', 'telegram.lock');
+
+// Una sola bajada a la vez (el hook de dos sesiones, o el hook y una bajada a mano): si no, las dos
+// escribirían el mismo elemento con nombres distintos («nota 2»).
+function tomarCandado(vault) {
+  const ruta = rutaCandado(vault);
+  mkdirSync(join(vault, '.cerebro'), { recursive: true });
+  for (let intento = 0; intento < 2; intento++) {
+    try {
+      closeSync(openSync(ruta, 'wx'));
+      return () => rmSync(ruta, { force: true });
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      if (Date.now() - statSync(ruta).mtimeMs > CANDADO_VIEJO_MS) rmSync(ruta, { force: true });
+      else break;
+    }
+  }
+  throw Object.assign(new Error('Hay otra bajada de Telegram en curso: vuelve a intentarlo en un momento.'), { codigo: 1 });
+}
 
 export function leerConfigTelegram() {
   try {
@@ -59,10 +80,10 @@ function guardarRegistro(vault, registro) {
 }
 
 function cliente(cfg, signal) {
-  return async (ruta, init = {}) => {
+  return async (ruta, init = {}, propio = null) => {
     let r;
     try {
-      r = await fetch(`${cfg.url}${ruta}`, { ...init, signal, headers: { ...init.headers, authorization: `Bearer ${cfg.token}` } });
+      r = await fetch(`${cfg.url}${ruta}`, { ...init, signal: propio || signal, headers: { ...init.headers, authorization: `Bearer ${cfg.token}` } });
     } catch (e) {
       if (e.name === 'TimeoutError' || e.name === 'AbortError') throw Object.assign(new Error('Se acabó el tiempo esperando al Worker de Telegram.'), { codigo: 1 });
       throw Object.assign(new Error(`No pude conectar con el Worker de Telegram (${cfg.url}): ${e.cause?.code || e.message}.`), { codigo: 1 });
@@ -142,49 +163,58 @@ async function escribirElemento(vault, pedir, el) {
 export async function bajar(vault, op = {}) {
   const cfg = leerConfigTelegram();
   if (!cfg?.url || !cfg?.token) throw errorUso('Telegram sin configurar: okt telegram config --url <worker> --token <token>.');
+  const soltar = tomarCandado(vault);
   const pedir = cliente(cfg, AbortSignal.timeout(Number(op.tope) || TOPE_MS));
   const registro = leerRegistro(vault);
   const escritos = [];
   const retenidos = [];
   const errores = [];
   const confirmar = [];
+  let sinConfirmar = false;
   let cursor = null;
-  do {
-    const r = await pedir(`/cola${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`);
-    const pagina = await r.json();
-    for (const el of pagina.elementos || []) {
-      if (registro.escritos[el.id]) {
-        confirmar.push(el.id);
-        continue;
+  try {
+    do {
+      const r = await pedir(`/cola${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`);
+      const pagina = await r.json();
+      for (const el of pagina.elementos || []) {
+        if (registro.escritos[el.id]) {
+          confirmar.push(el.id);
+          continue;
+        }
+        // El nombre del archivo también puede traer datos de un paciente.
+        const p = patronSensible([el.texto || '', el.nombre || ''].join('\n'));
+        if ((el.sensible || p) && !op.forzar) {
+          retenidos.push({ id: el.id, que: p?.que || 'datos de pacientes' });
+          continue;
+        }
+        try {
+          const ruta = await escribirElemento(vault, pedir, el);
+          registro.escritos[el.id] = { ruta, fecha: new Date().toISOString() };
+          guardarRegistro(vault, registro);
+          escritos.push(ruta);
+          confirmar.push(el.id);
+        } catch (e) {
+          if (e.name === 'TimeoutError' || /tiempo/.test(e.message)) throw e;
+          errores.push({ id: el.id, error: e.message });
+        }
       }
-      const p = patronSensible(String(el.texto || ''));
-      if ((el.sensible || p) && !op.forzar) {
-        retenidos.push({ id: el.id, que: p?.que || 'datos de pacientes' });
-        continue;
-      }
+      cursor = pagina.cursor || null;
+    } while (cursor);
+  } finally {
+    // Lo escrito se confirma y se registra en el vault aunque la bajada se haya cortado a la mitad.
+    if (confirmar.length) {
       try {
-        const ruta = await escribirElemento(vault, pedir, el);
-        registro.escritos[el.id] = { ruta, fecha: new Date().toISOString() };
-        guardarRegistro(vault, registro);
-        escritos.push(ruta);
-        confirmar.push(el.id);
-      } catch (e) {
-        if (e.name === 'TimeoutError' || /tiempo/.test(e.message)) throw e;
-        errores.push({ id: el.id, error: e.message });
+        await pedir('/cola/confirmar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: confirmar }) }, AbortSignal.timeout(TOPE_CONFIRMAR_MS));
+      } catch {
+        sinConfirmar = true;
       }
     }
-    cursor = pagina.cursor || null;
-  } while (cursor);
-
-  let sinConfirmar = false;
-  if (confirmar.length) {
     try {
-      await pedir('/cola/confirmar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids: confirmar }) });
-    } catch {
-      sinConfirmar = true;
+      if (escritos.length) cerrar(vault, 'telegram', `${escritos.length} elementos de Telegram a la bandeja`);
+    } finally {
+      soltar();
     }
   }
-  if (escritos.length) cerrar(vault, 'telegram', `${escritos.length} elementos de Telegram a la bandeja`);
 
   const lineas = [`Telegram: ${escritos.length} ${escritos.length === 1 ? 'elemento nuevo' : 'elementos nuevos'} en ${CARPETA}/.`];
   for (const e of escritos) lineas.push(`- ${e}`);

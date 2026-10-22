@@ -9,6 +9,10 @@
 - Idempotencia con `.cerebro/telegram.json` para no duplicar elementos si la confirmación falla.
 - La skill cerebro suma el paso 9 «Telegram» y el cierre pasa a 10.
 - La skill mantener baja la cola al procesar la bandeja.
+- Una sola bajada a la vez (candado en `.cerebro/telegram.lock`), y lo ya escrito se confirma aunque la bajada
+  se corte por tiempo.
+- Datos de pacientes: el patrón de nombres detecta también los escritos en mayúsculas («Paciente JUAN
+  PÉREZ») en el lint, las importaciones y Telegram; en Telegram se revisa además el nombre del archivo.
 
 ## 0.1.1 — 2026-10-22
 

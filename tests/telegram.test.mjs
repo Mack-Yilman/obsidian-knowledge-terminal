@@ -145,6 +145,59 @@ test('también retiene lo que parece sensible aunque el Worker no lo marcara', a
   }
 });
 
+test('retiene por el nombre del archivo y por nombres en mayúsculas', async () => {
+  const t = await preparar({
+    elementos: [
+      elemento('c3', 'archivo', '', { archivo_key: 'F', nombre: 'Paciente Juan Perez - HC 45892.pdf', mime: 'application/pdf' }),
+      elemento('c4', 'nota', 'Paciente JUAN PÉREZ con resultado crítico'),
+    ],
+    archivos: { F: { bytes: '%PDF', mime: 'application/pdf' } },
+  });
+  try {
+    const r = await bajar(t.vault);
+    assert.deepEqual(r.datos.retenidos.map((x) => x.id), ['c3', 'c4']);
+    assert.ok(!existsSync(join(t.vault, '40-Fuentes/adjuntos/telegram')) || readdirSync(join(t.vault, '40-Fuentes/adjuntos/telegram')).length === 0);
+  } finally {
+    await t.fin();
+  }
+});
+
+test('confirma lo ya escrito aunque después se acabe el tiempo', async () => {
+  const t = await preparar({ elementos: [elemento('i1', 'nota', 'Primera'), elemento('i2', 'archivo', 'Lento', { archivo_key: 'LENTO', nombre: 'l.pdf' })], archivos: { LENTO: { bytes: 'x', mime: 'application/pdf' } } });
+  try {
+    t.cola.estado.demoraArchivo = 1000;
+    await assert.rejects(bajar(t.vault, { tope: 400 }), /tiempo/i);
+    assert.equal(t.bandeja().length, 1);
+    // La confirmación de lo escrito sale aunque el tope ya pasó: se manda con su propio plazo corto.
+    assert.deepEqual(t.cola.estado.confirmados, ['i1']);
+  } finally {
+    await t.fin();
+  }
+});
+
+test('dos bajadas a la vez no duplican: la segunda espera su turno', async () => {
+  const t = await preparar({ elementos: [elemento('j1', 'nota', 'Solo una vez')], demora: 150 });
+  try {
+    const [a, b] = await Promise.allSettled([bajar(t.vault), bajar(t.vault)]);
+    const textos = [a, b].map((x) => (x.status === 'fulfilled' ? x.value.texto : x.reason.message));
+    assert.ok(textos.some((x) => /otra bajada/i.test(x)), textos.join(' | '));
+    assert.equal(t.bandeja().length, 1);
+    assert.ok(!existsSync(join(t.vault, '.cerebro', 'telegram.lock')));
+  } finally {
+    await t.fin();
+  }
+});
+
+test('el hook avisa si algo no se pudo bajar', async () => {
+  const t = await preparar({ elementos: [elemento('k1', 'archivo', 'x', { archivo_key: 'NO', nombre: 'x.pdf' })] });
+  try {
+    escribir(t.configDir, 'config.json', JSON.stringify({ vault: t.vault }));
+    assert.match(await hookInicio(JSON.stringify({ cwd: t.vault })), /No pude escribir k1/);
+  } finally {
+    await t.fin();
+  }
+});
+
 test('descartar confirma sin escribir nada', async () => {
   const t = await preparar({ elementos: [elemento('d1', 'nota', 'DNI 45879632', { sensible: true })] });
   try {

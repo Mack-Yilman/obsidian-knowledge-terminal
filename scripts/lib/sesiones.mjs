@@ -51,7 +51,8 @@ async function lineaTelegram(vault) {
   if (!leerConfigTelegram()) return '';
   try {
     const r = await bajarTelegram(vault, { tope: TOPE_TELEGRAM_MS });
-    return r.datos.escritos.length || r.datos.retenidos.length ? `${r.texto}\n\n` : '';
+    const { escritos, retenidos, errores } = r.datos;
+    return escritos.length || retenidos.length || errores.length ? `${r.texto}\n\n` : '';
   } catch {
     return '';
   }

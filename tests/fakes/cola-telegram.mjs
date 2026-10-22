@@ -6,7 +6,7 @@ import { createServer } from 'node:http';
 export const TOKEN = 'token-de-prueba-123';
 
 export async function colaFalsa({ elementos = [], archivos = {}, porPagina = 50, fallarConfirmar = false, demora = 0 } = {}) {
-  const estado = { elementos: [...elementos], archivos: { ...archivos }, confirmados: [], pedidos: [], fallarConfirmar };
+  const estado = { elementos: [...elementos], archivos: { ...archivos }, confirmados: [], pedidos: [], fallarConfirmar, demoraArchivo: 0 };
   const servidor = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://x');
     estado.pedidos.push(`${req.method} ${url.pathname}`);
@@ -26,6 +26,7 @@ export async function colaFalsa({ elementos = [], archivos = {}, porPagina = 50,
       const key = decodeURIComponent(url.pathname.slice('/archivo/'.length));
       const a = estado.archivos[key];
       if (!a) return responder(404, { error: 'no existe' });
+      if (estado.demoraArchivo) await new Promise((r) => setTimeout(r, estado.demoraArchivo));
       return responder(200, a.bytes, a.mime);
     }
     if (req.method === 'POST' && url.pathname === '/cola/confirmar') {
