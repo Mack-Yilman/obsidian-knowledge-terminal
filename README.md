@@ -71,8 +71,13 @@ Con el plugin ya instalado en Claude Code, o desde una copia del repositorio:
 
 ```bash
 node scripts/okt.mjs instalar antigravity            # vista previa
-node scripts/okt.mjs instalar antigravity --aplicar  # copia el plugin a ~/.okt y las skills a ~/.gemini/config/skills
+node scripts/okt.mjs instalar antigravity --aplicar  # copia el plugin a ~/.okt, las skills a ~/.gemini/config/skills y el hook al vault
 ```
+
+Con un vault ya creado, `instalar` también deja en `<vault>/.agents/hooks.json` un hook **SessionStart**:
+al abrir `agy` en el vault, baja Telegram y carga `hot.md`, igual que en Claude Code. Antigravity solo usa los
+hooks de una **carpeta de confianza**: la primera vez que abras `agy` en el vault, acepta confiar en ella. Si
+creas el vault después, repite `instalar antigravity --aplicar`.
 
 Abre `agy` en la carpeta del vault y pide «¿cómo va mi cerebro?». El `AGENTS.md` del vault orienta a
 cualquier otro agente (Codex, Cursor…).
@@ -94,8 +99,14 @@ Permite enviar notas, audios, enlaces, fotos y tareas a la bandeja del vault des
 El bot solo encola en un Worker de Cloudflare con KV; el vault permanece siempre en la PC y baja el contenido a pedido o al iniciar sesión.
 
 - `okt telegram config --url <worker> --token <OKT_TOKEN>`: guarda la conexión en `~/.config/okt/telegram.json` (sin opciones muestra la URL guardada; el token nunca se imprime).
-- `okt telegram bajar [--forzar]`: baja todo, confirma lo escrito y cierra con bitácora + índice + commit del vault.
+- `okt telegram bajar [--forzar]`: baja todo, confirma lo escrito y cierra con bitácora + índice + commit del vault. Al abrir Claude Code o Antigravity en el vault, el hook lo hace solo; también puedes pedir «baja lo de Telegram».
 - `okt telegram descartar <id…>`: quita elementos de la cola sin escribirlos en el vault.
+
+**Capacidad de la cola:**
+- **Mensajes:** sin límite práctico; lo que no se baje en 30 días vence.
+- **Archivos:** se quedan en Telegram hasta bajarlos, con hasta 20 MB cada uno (límite de la API de bots).
+- **Tiempos:** cada archivo tarda unos 5 s en bajar. El hook (tope de 10 s) y la bajada a mano (tope de 3 min)
+  dejan para la próxima vez los archivos que no alcanzan, sin error.
 
 | Mensaje | En el Worker | En el vault (al bajar) |
 |---|---|---|
@@ -139,9 +150,16 @@ En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
   commits y los archivos tocados. Nunca copia el contenido de los archivos ni nada que parezca un
   dato personal.
 
-Para excluir un proyecto de las fichas: `okt config excluir <proyecto>`. Antigravity no tiene hooks:
-sus sesiones se recogen al procesar la bandeja (`okt sesiones agy`), sin copiar el texto de tus
-pedidos.
+En **Antigravity**, el hook SessionStart del vault (lo instala `okt instalar antigravity --aplicar`) hace lo
+mismo al abrir `agy` en el vault: carga `hot.md` y baja Telegram. Antigravity no tiene un hook de cierre: sus
+fichas de sesión se recogen al procesar la bandeja (`okt sesiones agy`), sin copiar el texto de tus pedidos.
+
+Para excluir un proyecto de las fichas: `okt config excluir <proyecto>`.
+
+**Un solo vault para los dos agentes:** todo está en Markdown dentro del vault. Las reglas viven en
+`AGENTS.md`, que el `CLAUDE.md` del vault importa; la memoria compartida, en `99-Sistema/` (`hot.md`,
+`bitacora.md`, `pendientes.md`, `indice.md`). Cada operación termina con `okt cerrar`, que hace un commit en el
+git local. Lo que guarda Claude lo encuentra Antigravity, y al revés.
 
 ## Privacidad
 

@@ -15,7 +15,8 @@ import { cerrar } from './sistema.mjs';
 import { errorUso, rutaAdjunto } from './importacion.mjs';
 
 const CARPETA = '00-Bandeja/telegram';
-const TOPE_MS = 60000;
+const TOPE_MS = 180000; // a mano: ~30 archivos de ~5 s cada uno
+const RESERVA_ARCHIVO_MS = 10000; // un archivo solo se empieza si queda este margen; si no, espera a la próxima bajada
 const TOPE_CONFIRMAR_MS = 3000; // la confirmación tiene su propio plazo: sale aunque el tope general ya pasó
 const CANDADO_VIEJO_MS = 5 * 60000; // un candado más viejo es de un proceso que murió
 const DIAS_REGISTRO = 35; // más que los 30 días de vida de un elemento en la cola
@@ -170,13 +171,15 @@ async function escribirElemento(vault, pedir, el) {
   return escribirNota(vault, el, {}, texto);
 }
 
-// okt telegram bajar [--forzar] [--tope <ms>]. Con op.reservaArchivo (el hook), un archivo solo se baja si
-// quedan al menos esos ms del tope: cada uno tarda ~5 s (Telegram → Worker → PC) y lo demás es rápido.
+// okt telegram bajar [--forzar] [--tope <ms>]. Un archivo solo se empieza si quedan op.reservaArchivo ms del
+// tope (10 s a mano, 6 s en el hook): cada uno tarda ~5 s (Telegram → Worker → PC) y lo demás es rápido. Los que
+// no alcanzan quedan en la cola, sin error, para la próxima bajada.
 export async function bajar(vault, op = {}) {
   const cfg = leerConfigTelegram();
   if (!cfg?.url || !cfg?.token) throw errorUso('Telegram sin configurar: okt telegram config --url <worker> --token <token>.');
   const soltar = tomarCandado(vault);
   const tope = Number(op.tope) || TOPE_MS;
+  const reserva = op.reservaArchivo ?? RESERVA_ARCHIVO_MS;
   const inicio = Date.now();
   const pedir = cliente(cfg, AbortSignal.timeout(tope));
   const registro = leerRegistro(vault);
@@ -202,7 +205,7 @@ export async function bajar(vault, op = {}) {
           retenidos.push({ id: el.id, que: p?.que || 'datos de pacientes' });
           continue;
         }
-        if (el.tipo === 'archivo' && op.reservaArchivo && tope - (Date.now() - inicio) < op.reservaArchivo) {
+        if (el.tipo === 'archivo' && reserva && tope - (Date.now() - inicio) < reserva) {
           diferidos.push(el.id);
           continue;
         }

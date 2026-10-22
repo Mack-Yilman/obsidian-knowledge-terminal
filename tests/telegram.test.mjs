@@ -166,7 +166,7 @@ test('confirma lo ya escrito aunque después se acabe el tiempo', async () => {
   const t = await preparar({ elementos: [elemento('i1', 'nota', 'Primera'), elemento('i2', 'archivo', 'Lento', { archivo_key: 'LENTO', nombre: 'l.pdf' })], archivos: { LENTO: { bytes: 'x', mime: 'application/pdf' } } });
   try {
     t.cola.estado.demoraArchivo = 1000;
-    await assert.rejects(bajar(t.vault, { tope: 400 }), /tiempo/i);
+    await assert.rejects(bajar(t.vault, { tope: 400, reservaArchivo: 0 }), /tiempo/i);
     assert.equal(t.bandeja().length, 1);
     // La confirmación de lo escrito sale aunque el tope ya pasó: se manda con su propio plazo corto.
     assert.deepEqual(t.cola.estado.confirmados, ['i1']);
@@ -224,6 +224,17 @@ test('con poco tiempo (hook), los archivos esperan y lo demás se baja', async (
     const r2 = await bajar(t.vault);
     assert.equal(r2.datos.escritos.length, 1);
     assert.deepEqual(t.cola.estado.confirmados, ['n2', 'n1']);
+  } finally {
+    await t.fin();
+  }
+});
+
+test('a mano, por defecto deja los archivos para después si no queda tiempo, sin error', async () => {
+  const t = await preparar({ elementos: [elemento('q1', 'nota', 'Primero'), elemento('q2', 'archivo', 'PDF', { archivo_key: 'F', nombre: 'q.pdf' })], archivos: { F: { bytes: '%PDF', mime: 'application/pdf' } } });
+  try {
+    const r = await bajar(t.vault, { tope: 3000 });
+    assert.deepEqual(r.datos.diferidos, ['q2']);
+    assert.match(r.texto, /vuelve a ejecutar okt telegram bajar|okt telegram bajar/);
   } finally {
     await t.fin();
   }

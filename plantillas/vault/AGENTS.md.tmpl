@@ -34,6 +34,9 @@ de abajo: `okt init` solo actualiza lo que está entre las marcas.
 
 - **Al empezar:** lee `99-Sistema/hot.md`. Para encontrar algo, usa `okt buscar` antes de abrir notas, y
   después lee como máximo 3 notas completas.
+- **Telegram:** en Claude Code y en Antigravity, un hook de inicio baja la cola del bot y avisa en el contexto
+  («Telegram: …»). Si no ves ese aviso y `okt telegram config` muestra una url, ejecuta `okt telegram bajar`.
+  Lo que llega queda en `00-Bandeja/telegram/`; las tareas, en la nota diaria.
 - **Formato de las notas** (frontmatter, nombres, enlaces): `contrato-vault.md` del plugin OKT. Lo
   mínimo: `tipo`, `creado`, `actualizado`, `resumen` (≤200 caracteres), `estado` y `fuentes`; títulos
   legibles sin `: / \ ? * " < > | # ^ [ ]`; enlaces `[[Nota]]`.

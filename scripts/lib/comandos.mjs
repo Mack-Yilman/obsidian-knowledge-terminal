@@ -6,7 +6,7 @@ import { bitacora, pendiente, indice, hot, cerrar } from './sistema.mjs';
 import { commit } from './git.mjs';
 import { buscar } from './buscar.mjs';
 import { lint } from './lint.mjs';
-import { hookInicio, hookFin, sesionesAgy } from './sesiones.mjs';
+import { hookInicio, hookInicioAntigravity, hookFin, sesionesAgy } from './sesiones.mjs';
 import { preparar } from './bandeja.mjs';
 import { adjuntar, archivar } from './archivos.mjs';
 import { instalarAntigravity } from './instalar.mjs';
@@ -54,6 +54,7 @@ Bandeja y sesiones
   bandeja preparar | bandeja archivar <rutas>
   sesiones agy                           Fichas de las sesiones de Antigravity (sin el texto de los pedidos)
   hook inicio|fin                        Hooks de Claude Code (leen JSON por stdin)
+  hook inicio --formato antigravity      SessionStart de Antigravity (responde injectSteps en JSON)
 
 Importar (solo a pedido)
   importar notion "<enlace>" [--seleccion 1,3|todo] [--aplicar] [--carpeta]
@@ -105,10 +106,11 @@ export const COMANDOS = {
   cerrar: { correr: ({ pos, op, vault }) => cerrar(vault, pos[0], pos.slice(1).join(' '), op) },
   hook: {
     vault: false,
-    async correr({ pos }) {
+    async correr({ pos, op }) {
       let entrada = '';
       if (!process.stdin.isTTY) for await (const trozo of process.stdin) entrada += trozo;
-      const salida = pos[0] === 'inicio' ? await hookInicio(entrada) : pos[0] === 'fin' ? hookFin(entrada) : '';
+      const salida =
+        pos[0] === 'inicio' ? await (op.formato === 'antigravity' ? hookInicioAntigravity(entrada) : hookInicio(entrada)) : pos[0] === 'fin' ? hookFin(entrada) : '';
       if (salida) process.stdout.write(salida);
       return 0;
     },

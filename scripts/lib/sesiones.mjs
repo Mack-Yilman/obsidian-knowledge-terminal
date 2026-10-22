@@ -8,7 +8,7 @@ import { leerConfigGlobal, guardarConfigGlobal, leerConfigVault, guardarConfigVa
 import { leerBloque, reemplazarBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { ahora, fechaISO, horaCorta } from './fechas.mjs';
-import { cambiosDesde } from './git.mjs';
+import { cambiosDesde, commit } from './git.mjs';
 import { pareceSensible } from './sensibles.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { textoAgents } from './init.mjs';
@@ -42,6 +42,7 @@ function renovarRutaCli(vault) {
   const areas = (leerConfigVault(vault).areas || []).map((a) => `[[${a}]]`).join(', ');
   const nuevo = leerBloque(textoAgents({ fecha: fechaISO(), areas, cli: actual }));
   writeFileSync(ruta, reemplazarBloque(readFileSync(ruta, 'utf8'), nuevo));
+  commit(vault, 'okt: ruta del CLI actualizada en AGENTS.md');
 }
 
 const archivoSesion = (id) => join(dirConfig(), 'sesiones', `${String(id).replace(/[^\w-]/g, '')}.json`);
@@ -59,6 +60,17 @@ async function lineaTelegram(vault) {
   }
 }
 
+// Contexto de inicio, igual para Claude Code y Antigravity: cabecera, lo que llegó de Telegram y hot.md
+// (se lee después de bajar Telegram, porque esa bajada lo actualiza).
+async function contextoInicio(vault) {
+  const telegram = await lineaTelegram(vault);
+  const hot = existsSync(join(vault, '99-Sistema', 'hot.md')) ? leerBloque(readFileSync(join(vault, '99-Sistema', 'hot.md'), 'utf8')) || '' : '';
+  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${telegram}## Contexto reciente (99-Sistema/hot.md)\n\n`;
+  const texto = cab + hot;
+  if (texto.length <= TOPE_CONTEXTO) return texto;
+  return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(join(vault, '99-Sistema', 'hot.md'))}`;
+}
+
 export async function hookInicio(entradaTexto) {
   try {
     const e = leerEntrada(entradaTexto);
@@ -70,14 +82,26 @@ export async function hookInicio(entradaTexto) {
       writeFileSync(archivoSesion(e.session_id), JSON.stringify({ inicio: Date.now(), cwd: e.cwd || '' }));
     }
     if (!e.cwd || !dentroDe(vault, e.cwd)) return '';
-    const hot = existsSync(join(vault, '99-Sistema', 'hot.md')) ? leerBloque(readFileSync(join(vault, '99-Sistema', 'hot.md'), 'utf8')) || '' : '';
-    const telegram = await lineaTelegram(vault);
-    const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${telegram}## Contexto reciente (99-Sistema/hot.md)\n\n`;
-    const texto = cab + hot;
-    if (texto.length <= TOPE_CONTEXTO) return texto;
-    return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(join(vault, '99-Sistema', 'hot.md'))}`;
+    return await contextoInicio(vault);
   } catch {
     return '';
+  }
+}
+
+// SessionStart de Antigravity (<vault>/.agents/hooks.json). agy entrega el vault en workspacePaths y espera
+// {"injectSteps":[{"systemMessage":{"systemMessage":"…"}}]} (verificado en agy 1.4.5). No renueva la ruta del
+// CLI: la de AGENTS.md es la de Claude Code, y cambiarla haría que los dos agentes se la pisaran.
+export async function hookInicioAntigravity(entradaTexto) {
+  try {
+    const e = leerEntrada(entradaTexto);
+    if (e.invocationNum > 0) return '{}';
+    const vault = vaultGlobal();
+    const cwd = e.workspacePaths?.[0] || e.cwd;
+    if (!vault || !cwd || !dentroDe(vault, cwd)) return '{}';
+    const texto = await contextoInicio(vault);
+    return texto ? JSON.stringify({ injectSteps: [{ systemMessage: { systemMessage: texto } }] }) : '{}';
+  } catch {
+    return '{}';
   }
 }
 
