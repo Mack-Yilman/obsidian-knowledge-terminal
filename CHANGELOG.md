@@ -1,5 +1,18 @@
 # Cambios
 
+## 0.2.2 — 2026-10-22
+
+- **Antigravity con hook de inicio:** `okt instalar antigravity --aplicar` deja en `<vault>/.agents/hooks.json`
+  un hook **SessionStart** (`okt hook inicio --formato antigravity`) que, al abrir `agy` en el vault, baja
+  Telegram y carga `hot.md`, igual que en Claude Code. Formato verificado en agy 1.4.5:
+  `{"injectSteps":[{"systemMessage":{"systemMessage":"…"}}]}`, comando sin comillas. Avisa si el vault aún no
+  es una carpeta de confianza de agy, que no usa los hooks hasta entonces. No pisa otros hooks.
+- La bajada a mano ya no termina en error si hay muchos archivos: tope de 3 min, y los archivos que no alcanzan
+  quedan en la cola para la próxima vez.
+- `cerebro` y `mantener` reconocen «baja lo de Telegram», «qué llegó de Telegram» y «conecta Telegram».
+- `AGENTS.md` del vault: cómo se baja Telegram en cada agente.
+- El hook de Claude Code hace commit de `AGENTS.md` cuando renueva la ruta del CLI (antes lo dejaba modificado).
+
 ## 0.2.1 — 2026-10-22
 
 Tras la prueba real contra el Worker desplegado:

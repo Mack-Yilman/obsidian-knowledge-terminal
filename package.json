@@ -1,6 +1,6 @@
 {
   "name": "obsidian-knowledge-terminal",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Segundo cerebro en Obsidian para cualquier LLM: skills y un CLI sin dependencias para capturar, importar, consultar y mantener el conocimiento.",
   "private": true,
   "type": "module",

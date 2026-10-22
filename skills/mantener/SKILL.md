@@ -1,6 +1,6 @@
 ---
 name: mantener
-description: Mantiene el segundo cerebro de Obsidian (OKT): procesa la bandeja por lotes (notas, importados y fichas de sesión de Claude y Antigravity), compila las fuentes en notas de conocimiento, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces rotos, huérfanas, frontmatter, datos vencidos, contradicciones) y archiva lo terminado. Úsala cuando el usuario diga «procesa mi bandeja», «ordena mi cerebro», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «archiva este proyecto» o «recoge mis sesiones de Antigravity».
+description: Mantiene el segundo cerebro de Obsidian (OKT): baja lo que llegó del bot de Telegram, procesa la bandeja por lotes (notas, importados, Telegram y fichas de sesión de Claude y Antigravity), compila las fuentes en notas de conocimiento, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces rotos, huérfanas, frontmatter, datos vencidos, contradicciones) y archiva lo terminado. Úsala cuando el usuario diga «procesa mi bandeja», «baja lo de Telegram», «qué llegó de Telegram», «trae mis mensajes del bot», «ordena mi cerebro», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «archiva este proyecto» o «recoge mis sesiones de Antigravity».
 ---
 
 # Mantener
