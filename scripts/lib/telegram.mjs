@@ -105,6 +105,7 @@ const CONECTORES = new Set(['a', 'al', 'con', 'de', 'del', 'el', 'en', 'la', 'la
 // Las primeras palabras, sin un conector ni puntuación colgando al final («… el repaso de,» → «… el repaso»).
 function primeras(texto, n = 7) {
   const p = String(texto || '').split(/\s+/).filter(Boolean).slice(0, n);
+  if (!p.length) return '';
   const limpiar = () => (p[p.length - 1] = p.at(-1).replace(/[,;:.…!?¿¡-]+$/, ''));
   limpiar();
   while (p.length > 1 && (!p.at(-1) || CONECTORES.has(p.at(-1).toLowerCase()))) {
