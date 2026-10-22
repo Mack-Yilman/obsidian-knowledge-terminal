@@ -1,5 +1,10 @@
 # Cambios
 
+## 0.1.1 — 2026-10-22
+
+- `okt init` ya no falla con EPERM en Windows cuando `.obsidian/app.json` tiene el atributo Oculto
+  (como lo deja Obsidian): los archivos existentes se sobrescriben abriéndolos con `r+`.
+
 ## 0.1.0 — 2026-10-22
 
 Primera versión.

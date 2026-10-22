@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { temporal, okt, vaultNuevo, escribir, CLI } from './ayuda.mjs';
 
 test('init sin --aplicar solo muestra la vista previa', () => {
@@ -52,6 +53,8 @@ test('init sobre un vault de Obsidian existente: agrega solo los ajustes que fal
   escribir(t.dir, '.obsidian/app.json', '{"attachmentFolderPath": "Adjuntos", "vimMode": true}');
   escribir(t.dir, '.obsidian/core-plugins.json', '["file-explorer"]');
   escribir(t.dir, 'desktop.ini', '[.ShellClassInfo]');
+  // Obsidian deja .obsidian/app.json con el atributo Oculto en Windows: writeFileSync fallaría con EPERM.
+  if (process.platform === 'win32') spawnSync('attrib', ['+H', join(t.dir, '.obsidian', 'app.json')]);
   const configDir = join(t.dir, 'cfg');
   let r = okt(['init'], { cwd: t.dir, configDir });
   assert.doesNotMatch(r.salida, /ya tiene archivos/);
