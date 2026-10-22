@@ -9,6 +9,19 @@ import { lint } from './lint.mjs';
 import { hookInicio, hookFin, sesionesAgy } from './sesiones.mjs';
 import { preparar, archivar } from './bandeja.mjs';
 import { leerConfigVault, guardarConfigVault } from './rutas.mjs';
+import { doctor } from './doctor.mjs';
+import { importarNotion } from './importar-notion.mjs';
+import { importarDrive } from './importar-drive.mjs';
+import {
+  cuadernos as nlmCuadernos,
+  vincular as nlmVincular,
+  notas as nlmNotas,
+  preguntar as nlmPreguntar,
+  estado as nlmEstado,
+  crear as nlmCrear,
+  descargar as nlmDescargar,
+  TIPOS_ESTUDIO,
+} from './notebooklm.mjs';
 
 export const AYUDA = `okt: CLI de obsidian-knowledge-terminal (segundo cerebro en Obsidian)
 
@@ -89,12 +102,34 @@ export const COMANDOS = {
       }
       if (accion === 'poner') {
         const [clave, ...valor] = resto;
-        const permitidas = { frescura_dias: Number, delegar: (v) => (v === 'ninguno' ? null : v) };
+        const permitidas = { frescura_dias: Number, delegar: (v) => (v === 'ninguno' ? null : v), respaldo: (v) => v };
         if (!permitidas[clave]) throw Object.assign(new Error(`Claves que se pueden cambiar: ${Object.keys(permitidas).join(', ')}`), { codigo: 2 });
         guardarConfigVault(vault, { [clave]: permitidas[clave](valor.join(' ')) });
         return { texto: `${clave} = ${valor.join(' ')}` };
       }
       return { texto: JSON.stringify(cfg, null, 2), datos: cfg };
+    },
+  },
+  doctor: { vault: 'opcional', correr: ({ op, vault }) => doctor(vault, op) },
+  importar: {
+    async correr({ pos, op, vault }) {
+      const [fuente, ...ref] = pos;
+      if (fuente === 'notion') return importarNotion(vault, ref.join(' '), op);
+      if (fuente === 'drive') return importarDrive(vault, ref.join(' '), op);
+      throw Object.assign(new Error('Uso: okt importar notion|drive <enlace> [--seleccion …] [--aplicar]. Para NotebookLM: okt notebooklm …'), { codigo: 2 });
+    },
+  },
+  notebooklm: {
+    async correr({ pos, op, vault }) {
+      const accion = pos.shift();
+      if (accion === 'cuadernos') return nlmCuadernos();
+      if (accion === 'vincular') return nlmVincular(vault, pos[0], pos.slice(1).join(' '));
+      if (accion === 'notas') return nlmNotas(vault, op);
+      if (accion === 'preguntar') return nlmPreguntar(vault, pos.join(' '), op);
+      if (accion === 'estado') return nlmEstado(vault, op);
+      if (accion === 'crear') return nlmCrear(vault, pos[0], op);
+      if (accion === 'descargar') return nlmDescargar(vault, pos[0], op);
+      throw Object.assign(new Error(`Uso: okt notebooklm cuadernos | vincular <carpeta> "<cuaderno>" | notas | preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo>\nTipos de Studio: ${TIPOS_ESTUDIO.join(', ')}`), { codigo: 2 });
     },
   },
   commit: {

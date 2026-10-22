@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { resolverVault, buscarVaultArriba, posix } from './lib/rutas.mjs';
 import { COMANDOS, AYUDA } from './lib/comandos.mjs';
 
-const BOOLEANOS = new Set(['aplicar', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'nuevo']);
+const BOOLEANOS = new Set(['aplicar', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'nuevo', 'completo']);
 
 export function parsear(argv) {
   const pos = [];
@@ -38,7 +38,7 @@ async function main() {
   if (cmd.vault !== false) {
     // init crea en la carpeta actual (o en la del vault que la contiene); nunca usa la config global.
     vault = cmd.vault === 'crear' ? (op.vault ? resolve(op.vault) : buscarVaultArriba() || process.cwd()) : resolverVault(op.vault);
-    if (!vault) {
+    if (!vault && cmd.vault !== 'opcional') {
       process.stderr.write('No encontré un vault de OKT aquí ni en la configuración. Abre tu agente en la carpeta de tus notas y ejecuta «okt init».\n');
       return 1;
     }
