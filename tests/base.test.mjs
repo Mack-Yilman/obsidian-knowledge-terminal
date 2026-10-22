@@ -81,3 +81,21 @@ test('nombres: detecta caracteres prohibidos y los limpia', () => {
   assert.equal(limpiarNombre('2026-10-22'), '2026-10-22');
   assert.equal(limpiarNombre('A: / B'), 'A - B');
 });
+
+test('binarios: en Windows, un .cmd de npm se ejecuta con node y su script de node_modules', { skip: process.platform !== 'win32' }, async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { resolverBinario } = await import('../scripts/lib/binarios.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'okt-bin-'));
+  mkdirSync(join(dir, 'node_modules', 'falso'), { recursive: true });
+  writeFileSync(join(dir, 'falso.cmd'), '@ECHO off\r\nIF EXIST "%dp0%\\node.exe" (\r\n  SET "_prog=%dp0%\\node.exe"\r\n)\r\nendLocal & "%_prog%"  "%dp0%\\node_modules\\falso\\run.js" %*\r\n');
+  const antes = process.env.PATH;
+  process.env.PATH = dir;
+  try {
+    assert.deepEqual(resolverBinario('falso'), [process.execPath, join(dir, 'node_modules', 'falso', 'run.js')]);
+  } finally {
+    process.env.PATH = antes;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

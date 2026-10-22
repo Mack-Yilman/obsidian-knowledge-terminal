@@ -21,7 +21,8 @@ export function resolverBinario(nombre) {
       if (!existsSync(ruta)) continue;
       if (process.platform !== 'win32' || ext === '.exe') return [ruta];
       if (ext === '.cmd') {
-        const m = readFileSync(ruta, 'utf8').match(/"%dp0%\\([^"]+)"/);
+        // El .cmd nombra primero "%dp0%\node.exe"; el script real es el que está en node_modules.
+        const m = [...readFileSync(ruta, 'utf8').matchAll(/"%dp0%\\([^"]+)"/g)].find((x) => /node_modules/i.test(x[1]));
         if (m) return [process.execPath, join(dirname(ruta), m[1])];
       }
     }

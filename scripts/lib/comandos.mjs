@@ -7,7 +7,9 @@ import { commit } from './git.mjs';
 import { buscar } from './buscar.mjs';
 import { lint } from './lint.mjs';
 import { hookInicio, hookFin, sesionesAgy } from './sesiones.mjs';
-import { preparar, archivar } from './bandeja.mjs';
+import { preparar } from './bandeja.mjs';
+import { adjuntar, archivar } from './archivos.mjs';
+import { instalarAntigravity } from './instalar.mjs';
 import { leerConfigVault, guardarConfigVault } from './rutas.mjs';
 import { doctor } from './doctor.mjs';
 import { importarNotion } from './importar-notion.mjs';
@@ -26,9 +28,38 @@ import {
 export const AYUDA = `okt: CLI de obsidian-knowledge-terminal (segundo cerebro en Obsidian)
 
 Configuración
-  init [--areas "A,B"] [--aplicar]   Crea el vault en la carpeta actual (sin --aplicar: vista previa)
-  doctor                             Qué herramientas y pasos de configuración faltan
-  estado                             Resumen del vault: notas, bandeja, pendientes, última actividad
+  init [--areas "A,B"] [--aplicar]       Crea el vault en la carpeta actual (sin --aplicar: vista previa)
+  doctor [--completo]                    Qué herramientas y pasos faltan (--completo: verifica sesiones)
+  estado                                 Notas, bandeja, pendientes y última actividad
+  config [excluir|incluir <proyecto>]    Ver o cambiar la configuración del vault
+  config poner <clave> <valor>           frescura_dias, delegar (agy|ninguno), respaldo
+  instalar antigravity [--aplicar]       Copia el plugin y las skills a Antigravity
+
+Notas
+  nota nueva <tipo> "<título>"           concepto entidad sintesis fuente articulo proyecto area
+                                         diario semanal nota sesion  (--resumen --fuentes --area
+                                         --proyecto --origen --url --autor --carpeta --tags)
+  buscar "<texto>" [--carpeta --tipo --limite]
+  adjuntar "<archivo>" [--origen pdf]    Copia un archivo a 40-Fuentes/adjuntos sin duplicar
+  archivar "<ruta>" […]                  Mueve a 90-Archivo (nada se borra)
+
+Sistema (las skills se comunican por aquí)
+  bitacora <skill> "<texto>" [--notas "A,B"]
+  pendiente agregar "<texto>" [--de --para --nota] | cerrar <n> | listar [--cerrados]
+  indice | hot [--aprendizaje "<texto>"] | lint | commit "<mensaje>"
+  cerrar <skill> "<texto>" [--notas "A,B"]   bitácora + índice + hot + commit
+
+Bandeja y sesiones
+  bandeja preparar | bandeja archivar <rutas>
+  sesiones agy                           Fichas de las sesiones de Antigravity (sin el texto de los pedidos)
+  hook inicio|fin                        Hooks de Claude Code (leen JSON por stdin)
+
+Importar (solo a pedido)
+  importar notion "<enlace>" [--seleccion 1,3|todo] [--aplicar] [--carpeta]
+  importar drive "<enlace>"  [--seleccion 1,3|todo] [--aplicar] [--carpeta]
+  notebooklm cuadernos | vincular <carpeta> "<cuaderno>" | notas [--seleccion]
+  notebooklm preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo> [--id]
+             (--cuaderno "<título>"; tipos: infografia presentacion audio video mapa informe tabla)
 
 Opciones comunes: --vault <ruta>  --json
 `;
@@ -108,6 +139,15 @@ export const COMANDOS = {
         return { texto: `${clave} = ${valor.join(' ')}` };
       }
       return { texto: JSON.stringify(cfg, null, 2), datos: cfg };
+    },
+  },
+  adjuntar: { correr: ({ pos, op, vault }) => adjuntar(vault, pos.join(' '), op) },
+  archivar: { correr: ({ pos, vault }) => archivar(vault, pos) },
+  instalar: {
+    vault: false,
+    correr({ pos, op }) {
+      if (pos[0] !== 'antigravity') throw Object.assign(new Error('Uso: okt instalar antigravity [--aplicar]'), { codigo: 2 });
+      return instalarAntigravity(op);
     },
   },
   doctor: { vault: 'opcional', correr: ({ op, vault }) => doctor(vault, op) },
