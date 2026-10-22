@@ -119,19 +119,20 @@ El bot solo encola en un Worker de Cloudflare con KV; el vault permanece siempre
 
 ### Contrato de la cola
 
-- Elemento: `{ id, tipo: "nota"|"voz"|"enlace"|"archivo"|"tarea", texto, url?, archivo_key?, nombre?, mime?, fecha, chat_id, sensible? }`.
+- **Elemento**: `{ id, tipo: "nota"|"voz"|"enlace"|"archivo"|"tarea", texto, url?, archivo_key?, nombre?, mime?, fecha, chat_id, sensible? }`.
   - `id`: `AAAAMMDDTHHmmss-<update_id de 10 dígitos>` (fecha UTC del mensaje): ordena por fecha y un reintento de Telegram reescribe el mismo elemento.
   - `fecha`: ISO con zona (`2026-10-21T18:05:00-05:00`, hora de Lima).
   - `archivo_key`: el `file_id` de Telegram.
   - `sensible: true` si el texto parece traer datos de pacientes.
-- Todas las rutas de la API piden `Authorization: Bearer <OKT_TOKEN>` (401 si falta o no coincide).
-- `GET /cola[?cursor=<c>]` → `{ elementos: [...], cursor: <c>|null }`, del más antiguo al más nuevo, 50 por página.
-- `GET /archivo/<file_id>` → los bytes del archivo (el Worker lo pide a Telegram con getFile).
-- `POST /cola/confirmar` con `{ ids: [...] }` → `{ borrados: n }`. Solo se borra lo confirmado.
-- Caducidad: lo no confirmado vence a los 30 días (TTL de KV).
-- Idempotencia: el Worker ignora un `update_id` repetido (Telegram reintenta); el plugin guarda los ids escritos en `.cerebro/telegram.json` y no duplica si la confirmación falló.
-- El webhook es `POST /telegram` y exige la cabecera `X-Telegram-Bot-Api-Secret-Token` (403 si no coincide).
-- `GET /` responde «OKT Telegram…» (sirve de ping).
+- **Autenticación**: Todas las rutas de la API exigen `Authorization: Bearer <OKT_TOKEN>` (devuelve 401 si falta o no coincide).
+- **Rutas**:
+  - `GET /cola[?cursor=<c>]` → `{ elementos: [...], cursor: <c>|null }`, del más antiguo al más nuevo, 50 por página.
+  - `GET /archivo/<file_id>` → los bytes del archivo (el Worker lo solicita a Telegram con `getFile`).
+  - `POST /cola/confirmar` con `{ ids: [...] }` → `{ borrados: n }`. Solo se borra lo confirmado.
+  - `POST /telegram`: webhook que exige la cabecera `X-Telegram-Bot-Api-Secret-Token` (403 si no coincide).
+  - `GET /`: responde «OKT Telegram…» (sirve de ping).
+- **Caducidad**: Lo no confirmado vence a los 30 días (TTL de KV).
+- **Idempotencia**: El Worker ignora un `update_id` repetido (Telegram reintenta); el plugin guarda los ids escritos en `.cerebro/telegram.json` y no duplica si la confirmación falló.
 
 ## Respaldo y sincronización
 
