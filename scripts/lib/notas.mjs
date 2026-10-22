@@ -1,11 +1,12 @@
 // okt nota nueva <tipo> "<título>": crea la nota en su carpeta con el frontmatter y las secciones
 // del contrato. El modelo solo rellena el contenido.
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO, semanaISO } from './fechas.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { mapaDeNombres } from './vault.mjs';
+import { sobrescribir } from './rutas.mjs';
 
 export const TIPOS = {
   concepto: { carpeta: '30-Conocimiento/conceptos', estado: 'borrador', resumen: true, fuentes: true, cuerpo: ['Lo esencial', 'Relacionado', 'Historial'] },
@@ -73,4 +74,29 @@ export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
   if (existsSync(abs)) throw new Error(`Ya existe: ${rel}`);
   writeFileSync(abs, escribirFrontmatter(datos, cuerpo));
   return { texto: `Creada: ${rel}`, datos: { ruta: rel, creada: true } };
+}
+
+// Agrega «- [ ] texto» bajo ## Tareas de la nota diaria de hoy (la crea si falta). Usa la línea
+// vacía que trae la plantilla de Obsidian, o va después de la última tarea de la sección.
+export function agregarTarea(vault, texto) {
+  const { ruta } = notaNueva(vault, 'diario', '').datos;
+  const abs = join(vault, ruta);
+  const lineas = readFileSync(abs, 'utf8').replace(/\r\n/g, '\n').split('\n');
+  const tarea = `- [ ] ${String(texto).replace(/\s+/g, ' ').trim()}`;
+  const i = lineas.findIndex((l) => /^##\s+Tareas\s*$/.test(l));
+  if (i === -1) {
+    while (lineas.length && lineas.at(-1) === '') lineas.pop();
+    lineas.push('', '## Tareas', '', tarea, '');
+  } else {
+    let fin = lineas.findIndex((l, k) => k > i && /^#{1,2}\s/.test(l));
+    if (fin === -1) fin = lineas.length;
+    const vacia = lineas.findIndex((l, k) => k > i && k < fin && /^- \[ \]\s*$/.test(l));
+    let ultima = -1;
+    for (let k = i + 1; k < fin; k++) if (/^\s*- \[.\]/.test(lineas[k])) ultima = k;
+    if (vacia !== -1) lineas[vacia] = tarea;
+    else if (ultima !== -1) lineas.splice(ultima + 1, 0, tarea);
+    else lineas.splice(i + 1, 0, '', tarea);
+  }
+  sobrescribir(abs, lineas.join('\n'));
+  return { texto: `Tarea agregada a ${ruta}.`, datos: { ruta } };
 }

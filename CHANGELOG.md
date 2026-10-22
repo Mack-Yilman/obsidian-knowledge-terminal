@@ -1,5 +1,15 @@
 # Cambios
 
+## 0.2.0 — 2026-10-22
+
+- Comando `okt telegram config|bajar|descartar` para gestionar y sincronizar la cola del bot okt-telegram.
+- El hook de inicio baja la cola al abrir Claude Code en el vault (tope de 10 s, nunca frena la sesión).
+- Retención de lo sensible: los elementos con posibles datos de pacientes requieren `--forzar` para descargarse o se descartan con `okt telegram descartar`.
+- `/tarea` va a `## Tareas` de la nota diaria de hoy.
+- Idempotencia con `.cerebro/telegram.json` para no duplicar elementos si la confirmación falla.
+- La skill cerebro suma el paso 9 «Telegram» y el cierre pasa a 10.
+- La skill mantener baja la cola al procesar la bandeja.
+
 ## 0.1.1 — 2026-10-22
 
 - `okt init` ya no falla con EPERM en Windows cuando `.obsidian/app.json` tiene el atributo Oculto

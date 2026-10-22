@@ -48,3 +48,26 @@ Antigravity no tiene hooks: sus sesiones se recogen en el lote con `okt sesiones
 ## Capa de formato (opcional)
 
 `kepano/obsidian-skills` (del CEO de Obsidian) enseña al agente Markdown de Obsidian, Bases y Canvas. En Claude Code: `/plugin marketplace add kepano/obsidian-skills` y `/plugin install obsidian@obsidian-skills`. Para otros agentes: `npx skills add https://github.com/kepano/obsidian-skills`. OKT funciona sin ella.
+
+## Telegram (opcional)
+
+Permite enviar notas, notas de voz, enlaces, fotos y tareas desde el móvil mediante el bot [okt-telegram](https://github.com/Mack-Yilman/okt-telegram). El detalle completo de despliegue está en su README.
+
+### Puesta en marcha
+
+1. **Crear bot:** habla con `@BotFather` en Telegram (`/newbot`) y copia el token.
+2. **Dependencias:** en el repositorio de okt-telegram, ejecuta `npm install` (en npm 11: `npm install-scripts approve esbuild workerd` y `npm rebuild esbuild workerd`).
+3. **KV de Cloudflare:** crea el namespace con `npx wrangler kv namespace create COLA`. Copia `wrangler.jsonc` a `wrangler.local.jsonc` con el ID generado.
+4. **Secretos:** copia `.dev.vars.example` a `.dev.vars` y define `TELEGRAM_TOKEN`, `WEBHOOK_SECRET` y `OKT_TOKEN` (claves aleatorias largas).
+5. **Chat ID:** escribe `/start` a tu bot, ejecuta `node scripts/setup.mjs chat-id` e ingresa el ID en `CHAT_IDS` dentro de `.dev.vars`.
+6. **Despliegue:** sube los secretos con `npx wrangler secret bulk .dev.vars -c wrangler.local.jsonc` y publica con `npx wrangler deploy -c wrangler.local.jsonc`.
+7. **Webhook:** tras esperar ~60 s, vincula el webhook con `node scripts/setup.mjs webhook --url https://okt-telegram.<subdominio>.workers.dev` (`setup.mjs estado` revisa la configuración).
+8. **Conectar en la PC:** registra la URL y el token en el plugin:
+   ```bash
+   okt telegram config --url https://okt-telegram.<subdominio>.workers.dev --token <OKT_TOKEN>
+   ```
+
+### Comprobación
+
+- En Telegram: envía `/estado` al bot para ver cuántos elementos esperan en la cola.
+- En la PC: ejecuta `okt telegram bajar` para descargar los elementos en `00-Bandeja/telegram/` y confirmar la recepción.

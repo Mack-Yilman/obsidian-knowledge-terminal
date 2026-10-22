@@ -12,7 +12,9 @@ import { cambiosDesde } from './git.mjs';
 import { pareceSensible } from './sensibles.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { textoAgents } from './init.mjs';
+import { bajar as bajarTelegram, leerConfigTelegram } from './telegram.mjs';
 
+const TOPE_TELEGRAM_MS = 10000; // el hook tiene 15 s: la sesión nunca espera más que esto
 const TOPE_CONTEXTO = 9500; // Claude Code recorta en silencio lo que pase de 10 000 caracteres.
 const HERRAMIENTAS_DE_EDICION = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 
@@ -44,7 +46,18 @@ function renovarRutaCli(vault) {
 
 const archivoSesion = (id) => join(dirConfig(), 'sesiones', `${String(id).replace(/[^\w-]/g, '')}.json`);
 
-export function hookInicio(entradaTexto) {
+// Si Telegram está configurado, baja la cola; un error o el tope de tiempo no frenan la sesión.
+async function lineaTelegram(vault) {
+  if (!leerConfigTelegram()) return '';
+  try {
+    const r = await bajarTelegram(vault, { tope: TOPE_TELEGRAM_MS });
+    return r.datos.escritos.length || r.datos.retenidos.length ? `${r.texto}\n\n` : '';
+  } catch {
+    return '';
+  }
+}
+
+export async function hookInicio(entradaTexto) {
   try {
     const e = leerEntrada(entradaTexto);
     const vault = vaultGlobal();
@@ -56,7 +69,8 @@ export function hookInicio(entradaTexto) {
     }
     if (!e.cwd || !dentroDe(vault, e.cwd)) return '';
     const hot = existsSync(join(vault, '99-Sistema', 'hot.md')) ? leerBloque(readFileSync(join(vault, '99-Sistema', 'hot.md'), 'utf8')) || '' : '';
-    const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n## Contexto reciente (99-Sistema/hot.md)\n\n`;
+    const telegram = await lineaTelegram(vault);
+    const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${telegram}## Contexto reciente (99-Sistema/hot.md)\n\n`;
     const texto = cab + hot;
     if (texto.length <= TOPE_CONTEXTO) return texto;
     return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(join(vault, '99-Sistema', 'hot.md'))}`;
