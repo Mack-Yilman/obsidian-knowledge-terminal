@@ -9,8 +9,11 @@ import { lint } from './lint.mjs';
 import { hookInicio, hookInicioAntigravity, hookFin, sesionesAgy } from './sesiones.mjs';
 import { preparar } from './bandeja.mjs';
 import { adjuntar, archivar } from './archivos.mjs';
-import { instalarAntigravity } from './instalar.mjs';
-import { leerConfigVault, guardarConfigVault } from './rutas.mjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { instalarAntigravity, instalarObsidianSkills } from './instalar.mjs';
+import { leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
+import { FORMATOS_DIARIO } from './estructura.mjs';
 import { doctor } from './doctor.mjs';
 import { migrar, renombrar } from './migrar.mjs';
 import { importarNotion } from './importar-notion.mjs';
@@ -34,8 +37,10 @@ Configuración
   doctor [--completo]                    Qué herramientas y pasos faltan (--completo: verifica sesiones)
   estado                                 Notas, bandeja, pendientes y última actividad
   config [excluir|incluir <proyecto>]    Ver o cambiar la configuración del vault
-  config poner <clave> <valor>           frescura_dias, delegar (agy|ninguno), respaldo
+  config poner <clave> <valor>           frescura_dias, delegar (agy|ninguno), respaldo,
+                                         formato_diario (AAAA-MM-DD | DD/MM/YY)
   instalar antigravity [--aplicar]       Copia el plugin y las skills a Antigravity
+  instalar obsidian-skills [--aplicar]   Skills de formato de Obsidian (kepano) para Antigravity
   migrar [--aplicar]                     Pasa un vault 0.2.x a la estructura con emojis (sin --aplicar: vista previa)
 
 Notas
@@ -147,9 +152,16 @@ export const COMANDOS = {
       }
       if (accion === 'poner') {
         const [clave, ...valor] = resto;
-        const permitidas = { frescura_dias: Number, delegar: (v) => (v === 'ninguno' ? null : v), respaldo: (v) => v };
+        const permitidas = { frescura_dias: Number, delegar: (v) => (v === 'ninguno' ? null : v), respaldo: (v) => v, formato_diario: (v) => v };
         if (!permitidas[clave]) throw Object.assign(new Error(`Claves que se pueden cambiar: ${Object.keys(permitidas).join(', ')}`), { codigo: 2 });
+        if (clave === 'formato_diario' && !FORMATOS_DIARIO[valor.join(' ')]) throw Object.assign(new Error(`Formatos de la nota diaria: ${Object.keys(FORMATOS_DIARIO).join(', ')}`), { codigo: 2 });
         guardarConfigVault(vault, { [clave]: permitidas[clave](valor.join(' ')) });
+        // El botón «Nota diaria» de Obsidian usa el mismo nombre que OKT: si no, habría dos notas por día.
+        const diaria = join(vault, '.obsidian', 'daily-notes.json');
+        if (clave === 'formato_diario' && existsSync(diaria)) {
+          const d = JSON.parse(readFileSync(diaria, 'utf8'));
+          sobrescribir(diaria, `${JSON.stringify({ ...d, format: FORMATOS_DIARIO[valor.join(' ')].obsidian }, null, 2)}\n`);
+        }
         return { texto: `${clave} = ${valor.join(' ')}` };
       }
       return { texto: JSON.stringify(cfg, null, 2), datos: cfg };
@@ -160,7 +172,8 @@ export const COMANDOS = {
   instalar: {
     vault: false,
     correr({ pos, op }) {
-      if (pos[0] !== 'antigravity') throw Object.assign(new Error('Uso: okt instalar antigravity [--aplicar]'), { codigo: 2 });
+      if (pos[0] === 'obsidian-skills') return instalarObsidianSkills(op);
+      if (pos[0] !== 'antigravity') throw Object.assign(new Error('Uso: okt instalar antigravity|obsidian-skills [--aplicar]'), { codigo: 2 });
       return instalarAntigravity(op);
     },
   },

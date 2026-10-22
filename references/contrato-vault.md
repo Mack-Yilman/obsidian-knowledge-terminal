@@ -37,7 +37,7 @@ Fuente de verdad que comparten las 5 skills de OKT (`cerebro`, `capturar`, `cons
 | `20 │ 🧭 Areas/` | Lo continuo, sin fecha de fin: una nota por área (y subcarpeta si crece) | `🩺 Medicina.md`, `🌱 Personal.md` |
 | `30 │ 🧠 Conocimiento/` | Lo aprendido, compilado y enlazado: `💡 conceptos/`, `🏷️ entidades/`, `🧩 sintesis/` | `💡 conceptos/🦠 Sepsis.md`, `🏷️ entidades/🟣 Obsidian.md`, `🧩 sintesis/🫁 Antibióticos en neumonía.md` |
 | `40 │ 📚 Fuentes/` | Una ficha por fuente + `📎 adjuntos/<origen>/` con el original | `📄 Guía MINSA de anemia 2024.md`, `🔬 Hierro oral en niños.md`, `📎 adjuntos/📕 pdf/…` |
-| `50 │ 📅 Diario/` | Diario y revisión semanal | `📅 2026-10-22.md`, `🗓️ 2026-W43.md` |
+| `50 │ 📅 Diario/` | Diario y revisión semanal. El nombre del diario sigue `formato_diario` (`AAAA-MM-DD` o `DD/MM/YY`, que se escribe con `∕`) | `📅 2026-10-22.md` o `📅 22∕10∕26.md`, `🗓️ 2026-W43.md` |
 | `90 │ 🗄️ Archivo/` | Lo terminado u obsoleto, conservando su ruta relativa | `90 │ 🗄️ Archivo/10 │ 🎯 Proyectos/🐍 Curso viejo/` |
 | `99 │ ⚙️ Sistema/` | `🔥 hot.md`, `📜 bitacora.md`, `✅ pendientes.md`, `🗂️ indice.md`, `🧱 plantillas/` | — |
 

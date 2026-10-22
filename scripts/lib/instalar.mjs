@@ -4,6 +4,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, cpSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { RAIZ_PLUGIN, posix, guardarConfigGlobal, leerConfigGlobal, esVault, sobrescribir } from './rutas.mjs';
 
 export const FRASE_RAIZ = 'dos niveles arriba del directorio base de esta skill';
@@ -45,6 +46,32 @@ function instalarHookVault(vault, cli) {
   mkdirSync(dirname(ruta), { recursive: true });
   sobrescribir(ruta, `${JSON.stringify(hooks, null, 2)}\n`);
   return { ruta: posix(ruta) };
+}
+
+// okt instalar obsidian-skills [--aplicar]: las skills de kepano/obsidian-skills (Markdown de Obsidian, Bases, Canvas,
+// CLI de Obsidian) para Antigravity, que no tiene marketplace de plugins. En Claude Code se instalan como plugin:
+// claude plugin marketplace add kepano/obsidian-skills && claude plugin install obsidian@obsidian-skills.
+// OKT_OBSIDIAN_SKILLS_REPO reemplaza el repositorio (pruebas sin red).
+const REPO_OBSIDIAN_SKILLS = () => process.env.OKT_OBSIDIAN_SKILLS_REPO || 'https://github.com/kepano/obsidian-skills.git';
+export const SKILL_OBSIDIAN = 'obsidian-markdown'; // la que comprueba okt doctor
+
+export function instalarObsidianSkills(op = {}) {
+  const repo = join(dirOkt(), 'obsidian-skills');
+  const destino = dirSkillsAgy();
+  const plan = [
+    existsSync(join(repo, '.git')) ? `Actualizar ${posix(repo)} (git pull)` : `Clonar ${REPO_OBSIDIAN_SKILLS()} en ${posix(repo)}`,
+    `Copiar sus skills (obsidian-markdown, obsidian-bases, json-canvas, obsidian-cli, defuddle, knap) a ${posix(destino)}`,
+  ];
+  const claude = 'En Claude Code se instalan aparte, como plugin: claude plugin marketplace add kepano/obsidian-skills y claude plugin install obsidian@obsidian-skills.';
+  if (!op.aplicar) return { texto: `Vista previa de obsidian-skills (licencia MIT, de Steph Ango, creador de Obsidian):\n${plan.map((p) => `  - ${p}`).join('\n')}\n${claude}\nPara instalar en Antigravity: okt instalar obsidian-skills --aplicar`, datos: { plan } };
+
+  const git = (args, cwd) => spawnSync('git', args, { cwd, encoding: 'utf8' });
+  const r = existsSync(join(repo, '.git')) ? git(['pull', '-q', '--ff-only'], repo) : (mkdirSync(dirOkt(), { recursive: true }), git(['clone', '-q', '--depth', '1', REPO_OBSIDIAN_SKILLS(), repo]));
+  if (r.status !== 0) throw Object.assign(new Error(`No pude descargar obsidian-skills: ${(r.stderr || r.error?.message || '').trim()}`), { codigo: 1 });
+  const skills = readdirSync(join(repo, 'skills'), { withFileTypes: true }).filter((e) => e.isDirectory() && existsSync(join(repo, 'skills', e.name, 'SKILL.md'))).map((e) => e.name);
+  mkdirSync(destino, { recursive: true });
+  for (const s of skills) cpSync(join(repo, 'skills', s), join(destino, s), { recursive: true, force: true });
+  return { texto: `obsidian-skills en Antigravity: ${skills.join(', ')}.\n${claude}`, datos: { skills, destino: posix(destino) } };
 }
 
 export function skillsDelPlugin() {

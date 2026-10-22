@@ -5,7 +5,17 @@ import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { ejecutar, resolverBinario, jsonDe } from './binarios.mjs';
 import { leerConfigVault, posix } from './rutas.mjs';
-import { dirSkillsAgy, deConfianza } from './instalar.mjs';
+import { dirSkillsAgy, deConfianza, SKILL_OBSIDIAN } from './instalar.mjs';
+
+// Plugins de Claude Code instalados (~/.claude/plugins/installed_plugins.json; OKT_CLAUDE_PLUGINS para las pruebas).
+function pluginClaude(id) {
+  try {
+    const ruta = process.env.OKT_CLAUDE_PLUGINS || join(homedir(), '.claude', 'plugins', 'installed_plugins.json');
+    return Boolean(JSON.parse(readFileSync(ruta, 'utf8')).plugins?.[id]);
+  } catch {
+    return false;
+  }
+}
 import { necesitaMigrar } from './estructura.mjs';
 
 const plataforma = process.platform;
@@ -83,6 +93,13 @@ export function doctor(vault, op = {}) {
   }
   const agySkills = existsSync(join(dirSkillsAgy(), 'okt-cerebro', 'SKILL.md'));
   add('Conectores', 'Skills de OKT en Antigravity', agySkills, agySkills ? 'instaladas' : 'no instaladas', 'okt instalar antigravity', true);
+  // Formato de Obsidian (kepano/obsidian-skills): plugin en Claude Code, skills copiadas en Antigravity.
+  const enClaude = pluginClaude('obsidian@obsidian-skills');
+  add('Conectores', 'Formato de Obsidian en Claude Code (obsidian-skills)', enClaude, enClaude ? 'instalado' : 'no instalado', 'claude plugin marketplace add kepano/obsidian-skills && claude plugin install obsidian@obsidian-skills', true);
+  if (agySkills) {
+    const enAgy = existsSync(join(dirSkillsAgy(), SKILL_OBSIDIAN, 'SKILL.md'));
+    add('Conectores', 'Formato de Obsidian en Antigravity (obsidian-skills)', enAgy, enAgy ? 'instalado' : 'no instalado', 'okt instalar obsidian-skills --aplicar', true);
+  }
   // agy solo usa el hook de inicio del vault (Telegram y hot.md) si el vault es una carpeta de confianza.
   if (agySkills && vault) {
     const confianza = deConfianza(vault);

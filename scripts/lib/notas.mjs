@@ -3,11 +3,11 @@
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { escribirFrontmatter } from './frontmatter.mjs';
-import { fechaISO, semanaISO } from './fechas.mjs';
+import { ahora, fechaISO, semanaISO } from './fechas.mjs';
 import { limpiarNombre, sinEmoji } from './nombres.mjs';
 import { mismasNotas } from './vault.mjs';
 import { sobrescribir } from './rutas.mjs';
-import { C, R, conEmoji, resolverCarpeta } from './estructura.mjs';
+import { C, R, conEmoji, resolverCarpeta, tituloDiario } from './estructura.mjs';
 
 // alias: se agrega el título sin emoji, para que la búsqueda y el autocompletado de Obsidian lo encuentren.
 export const TIPOS = {
@@ -18,7 +18,7 @@ export const TIPOS = {
   articulo: { tipo: 'fuente', carpeta: C.fuentes, estado: 'borrador', resumen: true, alias: true, cuerpo: ['TL;DR', 'Pregunta', 'Método', 'Resultados', 'Limitaciones', 'Qué aporta', 'Notas'] },
   proyecto: { carpeta: C.proyectos, propia: true, estado: 'activo', resumen: true, alias: true, cuerpo: ['Objetivo', 'Próximos pasos', 'Decisiones', 'Relacionado', 'Historial'] },
   area: { carpeta: C.areas, resumen: true, alias: true, cuerpo: ['Proyectos', 'Conocimiento', 'Notas'] },
-  diario: { carpeta: C.diario, sinActualizado: true, titulo: () => fechaISO(), cuerpo: ['Foco del día', 'Notas', 'Tareas', 'Lo que aprendí'] },
+  diario: { carpeta: C.diario, sinActualizado: true, titulo: (vault) => tituloDiario(vault, ahora()), cuerpo: ['Foco del día', 'Notas', 'Tareas', 'Lo que aprendí'] },
   semanal: { carpeta: C.diario, sinActualizado: true, titulo: () => semanaISO(), cuerpo: ['Qué pasó', 'Proyectos', 'Lo aprendido', 'Pendientes', 'Próxima semana'] },
   nota: { carpeta: R.notas, alias: true, cuerpo: [] },
   sesion: { carpeta: R.sesiones, sinActualizado: true, cuerpo: [] },
@@ -34,7 +34,7 @@ export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
     e.codigo = 2;
     throw e;
   }
-  const limpio = limpiarNombre(tituloPedido || (def.titulo ? def.titulo() : ''));
+  const limpio = limpiarNombre(tituloPedido || (def.titulo ? def.titulo(vault) : ''));
   if (!sinEmoji(limpio)) {
     const e = new Error('Falta el título: okt nota nueva <tipo> "<título>"');
     e.codigo = 2;
