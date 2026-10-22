@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.2.1 — 2026-10-22
+
+Tras la prueba real contra el Worker desplegado:
+
+- En el hook, un archivo solo se baja si quedan 6 s del tope (cada uno tarda ~5 s: Telegram → Worker → PC);
+  los demás esperan a `okt telegram bajar` y el hook lo avisa.
+- Una foto sin leyenda se titula «foto», sin la extensión ni la fecha repetida.
+- README: `/tarea` sola (desde el menú del bot) pregunta y toma el siguiente mensaje.
+
 ## 0.2.0 — 2026-10-22
 
 - Comando `okt telegram config|bajar|descartar` para gestionar y sincronizar la cola del bot okt-telegram.

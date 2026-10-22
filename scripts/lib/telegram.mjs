@@ -102,10 +102,16 @@ function partesFecha(iso) {
 
 const CONECTORES = new Set(['a', 'al', 'con', 'de', 'del', 'el', 'en', 'la', 'las', 'lo', 'los', 'o', 'para', 'por', 'que', 'un', 'una', 'y']);
 
-// Las primeras palabras, sin un conector colgando al final («… el repaso de» → «… el repaso»).
+// Las primeras palabras, sin un conector ni puntuación colgando al final («… el repaso de,» → «… el repaso»).
 function primeras(texto, n = 7) {
   const p = String(texto || '').split(/\s+/).filter(Boolean).slice(0, n);
-  while (p.length > 1 && CONECTORES.has(p.at(-1).toLowerCase())) p.pop();
+  if (!p.length) return '';
+  const limpiar = () => (p[p.length - 1] = p.at(-1).replace(/[,;:.…!?¿¡-]+$/, ''));
+  limpiar();
+  while (p.length > 1 && (!p.at(-1) || CONECTORES.has(p.at(-1).toLowerCase()))) {
+    p.pop();
+    limpiar();
+  }
   return p.join(' ');
 }
 
@@ -117,7 +123,11 @@ function titulo(el) {
     } catch {}
     return `${host} ${primeras(String(el.texto || '').replace(el.url || '', ''), 5)}`;
   }
-  if (el.tipo === 'archivo') return primeras(el.texto) || el.nombre || 'archivo';
+  if (el.tipo === 'archivo') {
+    // Sin leyenda: el nombre sin extensión ni la fecha que ya va al inicio («foto 2026-10-21 1805.jpg» → «foto»).
+    const base = String(el.nombre || '').replace(/\.[^.]{1,5}$/, '').replace(/\s*\d{4}-\d{2}-\d{2} \d{4}$/, '');
+    return primeras(el.texto) || base || 'archivo';
+  }
   return primeras(el.texto) || el.tipo;
 }
 
@@ -154,21 +164,26 @@ async function escribirElemento(vault, pedir, el) {
   if (el.tipo === 'enlace') return escribirNota(vault, el, { url: el.url }, `Enlace pendiente de ingerir: pídele a la skill capturar que lo guarde como fuente.\n\n${el.url || ''}\n\n${texto.replace(el.url || '', '').trim()}`);
   if (el.tipo === 'archivo') {
     const nombre = await bajarArchivo(vault, pedir, el);
-    return escribirNota(vault, el, { adjunto: `[[${nombre}]]` }, `![[${nombre}]]\n\n${texto}\n\nArchivo en ${rutaAdjunto('telegram', nombre)}.`);
+    const cuerpo = [`![[${nombre}]]`, texto, `Archivo en ${rutaAdjunto('telegram', nombre)}.`].filter(Boolean).join('\n\n');
+    return escribirNota(vault, el, { adjunto: `[[${nombre}]]` }, cuerpo);
   }
   return escribirNota(vault, el, {}, texto);
 }
 
-// okt telegram bajar [--forzar] [--tope <ms>]
+// okt telegram bajar [--forzar] [--tope <ms>]. Con op.reservaArchivo (el hook), un archivo solo se baja si
+// quedan al menos esos ms del tope: cada uno tarda ~5 s (Telegram → Worker → PC) y lo demás es rápido.
 export async function bajar(vault, op = {}) {
   const cfg = leerConfigTelegram();
   if (!cfg?.url || !cfg?.token) throw errorUso('Telegram sin configurar: okt telegram config --url <worker> --token <token>.');
   const soltar = tomarCandado(vault);
-  const pedir = cliente(cfg, AbortSignal.timeout(Number(op.tope) || TOPE_MS));
+  const tope = Number(op.tope) || TOPE_MS;
+  const inicio = Date.now();
+  const pedir = cliente(cfg, AbortSignal.timeout(tope));
   const registro = leerRegistro(vault);
   const escritos = [];
   const retenidos = [];
   const errores = [];
+  const diferidos = [];
   const confirmar = [];
   let sinConfirmar = false;
   let cursor = null;
@@ -185,6 +200,10 @@ export async function bajar(vault, op = {}) {
         const p = patronSensible([el.texto || '', el.nombre || ''].join('\n'));
         if ((el.sensible || p) && !op.forzar) {
           retenidos.push({ id: el.id, que: p?.que || 'datos de pacientes' });
+          continue;
+        }
+        if (el.tipo === 'archivo' && op.reservaArchivo && tope - (Date.now() - inicio) < op.reservaArchivo) {
+          diferidos.push(el.id);
           continue;
         }
         try {
@@ -223,8 +242,12 @@ export async function bajar(vault, op = {}) {
     lineas.push(`Si no lo son: okt telegram bajar --forzar. Para quitarlos de la cola: okt telegram descartar ${retenidos.map((x) => x.id).join(' ')}`);
   }
   for (const e of errores) lineas.push(`No pude escribir ${e.id}: ${e.error.replace(/\.$/, '')}. Queda en la cola para la próxima vez.`);
+  if (diferidos.length) {
+    const n = diferidos.length;
+    lineas.push(`${n} ${n === 1 ? 'archivo espera' : 'archivos esperan'} en la cola: se bajan con okt telegram bajar o al procesar la bandeja.`);
+  }
   if (sinConfirmar) lineas.push('No pude confirmar la bajada al Worker: se confirmará la próxima vez, sin duplicar notas.');
-  return { texto: lineas.join('\n'), datos: { escritos, retenidos, errores, confirmados: sinConfirmar ? [] : confirmar } };
+  return { texto: lineas.join('\n'), datos: { escritos, retenidos, errores, diferidos, confirmados: sinConfirmar ? [] : confirmar } };
 }
 
 // okt telegram descartar <id…>: quita elementos de la cola sin escribirlos (p. ej. los sensibles).

@@ -50,9 +50,10 @@ const archivoSesion = (id) => join(dirConfig(), 'sesiones', `${String(id).replac
 async function lineaTelegram(vault) {
   if (!leerConfigTelegram()) return '';
   try {
-    const r = await bajarTelegram(vault, { tope: TOPE_TELEGRAM_MS });
-    const { escritos, retenidos, errores } = r.datos;
-    return escritos.length || retenidos.length || errores.length ? `${r.texto}\n\n` : '';
+    // Cada archivo tarda ~5 s: solo se empieza uno si quedan 6 s del tope; los demás esperan a la bajada a mano.
+    const r = await bajarTelegram(vault, { tope: TOPE_TELEGRAM_MS, reservaArchivo: 6000 });
+    const { escritos, retenidos, errores, diferidos } = r.datos;
+    return escritos.length || retenidos.length || errores.length || diferidos.length ? `${r.texto}\n\n` : '';
   } catch {
     return '';
   }
