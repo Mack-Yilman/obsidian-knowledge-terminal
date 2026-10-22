@@ -27,13 +27,15 @@ Cada paso es reanudable: `okt doctor` muestra lo que falta. Haz un paso a la vez
 | 6. Respaldo | Guía para que Google Drive para escritorio respalde la carpeta (u otro respaldo). Cuando confirme: `okt config poner respaldo drive` |
 | 7. Conectores | Pregunta cuáles quiere: NotebookLM (`nlm`), Notion (`ntn`), Google Docs y Drive (`gws`). Instala solo esos |
 | 8. Antigravity | Si usa Antigravity: `okt instalar antigravity` (vista previa) y, con su sí, `okt instalar antigravity --aplicar` |
-| 9. Cierre | `okt doctor` y un resumen de 3 líneas: qué quedó listo, qué falta y la primera frase que puede probar |
+| 9. Telegram | Opcional: capturar desde el celular con el bot `okt-telegram`. Si lo quiere, guíalo según `references/configuracion.md` (sección «Telegram»): crear el bot con @BotFather, desplegar el Worker y, con su sí, `okt telegram config --url <worker> --token <token>`. Comprueba con `okt telegram bajar`. Nunca pidas que pegue el token en el chat si puede escribirlo él en la terminal |
+| 10. Cierre | `okt doctor` y un resumen de 3 líneas: qué quedó listo, qué falta y la primera frase que puede probar |
 
 ## Siguiente paso (cuando el usuario pregunta «¿y ahora?» o «cómo va»)
 
 | Si `okt estado` muestra… | Propón |
 |---|---|
-| Bandeja con elementos | «Procesa mi bandeja» (skill `mantener`) |
+| Bandeja con elementos (también los de `00-Bandeja/telegram/`) | «Procesa mi bandeja» (skill `mantener`) |
+| Elementos de Telegram retenidos por parecer datos de pacientes | Que el usuario decida: `okt telegram descartar <id>` o, si no lo son, `okt telegram bajar --forzar` |
 | Pendientes abiertos | El más antiguo, con la skill que indica (`de → para`) |
 | Conocimiento en borrador | Revisar los borradores con su fuente |
 | Nada pendiente | Capturar algo nuevo o hacer la revisión semanal |

@@ -88,6 +88,40 @@ cualquier otro agente (Codex, Cursor…).
 `okt doctor --completo` muestra qué falta. La guía de NotebookLM está en
 [skills/notebooklm/references/instalacion.md](skills/notebooklm/references/instalacion.md).
 
+## Telegram (captura desde el celular)
+
+Permite enviar notas, audios, enlaces, fotos y tareas a la bandeja del vault desde el móvil mediante el bot [okt-telegram](https://github.com/Mack-Yilman/okt-telegram).
+El bot solo encola en un Worker de Cloudflare con KV; el vault permanece siempre en la PC y baja el contenido a pedido o al iniciar sesión.
+
+- `okt telegram config --url <worker> --token <OKT_TOKEN>`: guarda la conexión en `~/.config/okt/telegram.json` (sin opciones muestra la URL guardada; el token nunca se imprime).
+- `okt telegram bajar [--forzar]`: baja todo, confirma lo escrito y cierra con bitácora + índice + commit del vault.
+- `okt telegram descartar <id…>`: quita elementos de la cola sin escribirlos en el vault.
+
+| Mensaje | En el Worker | En el vault (al bajar) |
+|---|---|---|
+| Texto o `/nota <texto>` | encola `tipo: nota` | `00-Bandeja/telegram/AAAA-MM-DD HHmm <primeras palabras>.md` |
+| Nota de voz o audio (≤ 10 min) | transcribe con Whisper de Workers AI (`@cf/openai/whisper-large-v3-turbo`, en español) y encola `tipo: voz` con el texto. El audio no se guarda. Si la transcripción falla, no encola y pide reenviar | nota con la transcripción, marcada como automática |
+| Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | nota «pendiente de ingerir» con la url, para la skill `capturar` |
+| Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `40-Fuentes/adjuntos/telegram/` y una nota con `![[archivo]]` y la leyenda |
+| `/tarea <texto>` | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`50-Diario/AAAA-MM-DD.md`) |
+| `/estado`, `/start`, `/ayuda` | responde en Telegram (cuántos elementos esperan o ayuda) | — |
+
+### Contrato de la cola
+
+- Elemento: `{ id, tipo: "nota"|"voz"|"enlace"|"archivo"|"tarea", texto, url?, archivo_key?, nombre?, mime?, fecha, chat_id, sensible? }`.
+  - `id`: `AAAAMMDDTHHmmss-<update_id de 10 dígitos>` (fecha UTC del mensaje): ordena por fecha y un reintento de Telegram reescribe el mismo elemento.
+  - `fecha`: ISO con zona (`2026-10-21T18:05:00-05:00`, hora de Lima).
+  - `archivo_key`: el `file_id` de Telegram.
+  - `sensible: true` si el texto parece traer datos de pacientes.
+- Todas las rutas de la API piden `Authorization: Bearer <OKT_TOKEN>` (401 si falta o no coincide).
+- `GET /cola[?cursor=<c>]` → `{ elementos: [...], cursor: <c>|null }`, del más antiguo al más nuevo, 50 por página.
+- `GET /archivo/<file_id>` → los bytes del archivo (el Worker lo pide a Telegram con getFile).
+- `POST /cola/confirmar` con `{ ids: [...] }` → `{ borrados: n }`. Solo se borra lo confirmado.
+- Caducidad: lo no confirmado vence a los 30 días (TTL de KV).
+- Idempotencia: el Worker ignora un `update_id` repetido (Telegram reintenta); el plugin guarda los ids escritos en `.cerebro/telegram.json` y no duplica si la confirmación falló.
+- El webhook es `POST /telegram` y exige la cabecera `X-Telegram-Bot-Api-Secret-Token` (403 si no coincide).
+- `GET /` responde «OKT Telegram…» (sirve de ping).
+
 ## Respaldo y sincronización
 
 El vault es una carpeta local con un **git local, sin remoto**: cada operación de la IA queda en un
@@ -99,6 +133,8 @@ no se sube a GitHub.
 
 En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
 - **Al iniciar** dentro del vault, carga el resumen `99-Sistema/hot.md`.
+- **Al iniciar** dentro del vault, si Telegram está configurado, baja la cola del bot (tope de 10 s,
+  nunca frena la sesión).
 - **Al cerrar** una sesión en otro proyecto, anota una ficha en la bandeja con el proyecto, los
   commits y los archivos tocados. Nunca copia el contenido de los archivos ni nada que parezca un
   dato personal.
@@ -115,6 +151,8 @@ pedidos.
 - De Drive nunca se importan hojas de cálculo.
 - Lo que delegues a Antigravity sale a los servidores de Google. Lo que proceses con Claude, a los de
   Anthropic.
+- Lo que mandas pasa por Telegram y Cloudflare; los elementos que parecen datos de pacientes
+  quedan retenidos.
 
 ## CLI
 
@@ -123,7 +161,7 @@ lista los comandos. Las skills lo llaman solas; no hace falta usarlo a mano.
 
 ## Proyectos relacionados
 
-- **okt-telegram** (próximamente): un bot para mandar notas, voz y enlaces desde el celular a la
+- [okt-telegram](https://github.com/Mack-Yilman/okt-telegram): un bot para mandar notas, voz y enlaces desde el celular a la
   bandeja del vault.
 
 ## Licencia

@@ -13,7 +13,7 @@ Todo aquí ocurre a pedido. Nada se borra: lo procesado o terminado va a `90-Arc
 
 ## Procesar la bandeja (lote)
 
-1. **Recoge:** si el usuario usa Antigravity, `okt sesiones agy`. Luego `okt bandeja preparar`, que deja un paquete en `.cerebro/cache/` con todo el contenido de la bandeja.
+1. **Recoge:** si el usuario usa Antigravity, `okt sesiones agy`. Si tiene el bot de Telegram (`okt telegram config` muestra una url), `okt telegram bajar`: lo que llega queda en `00-Bandeja/telegram/` (las voces son transcripciones automáticas: revisa nombres y cifras; los enlaces se ingieren con la skill `capturar`). Luego `okt bandeja preparar`, que deja un paquete en `.cerebro/cache/` con todo el contenido de la bandeja.
 2. **Revisa datos sensibles:** `okt lint`. Si hay `datos_sensibles` en la bandeja, detente y muéstraselo al usuario antes de seguir.
 3. **¿Delegar?** Si `okt config` muestra `delegar: agy` y la skill `delegar-antigravity` está disponible, propón delegar la lectura del paquete a Gemini Flash y aplica tú el resultado. Si no, lee el paquete tú.
 4. **Decide cada elemento:**

@@ -14,6 +14,7 @@ import { leerConfigVault, guardarConfigVault } from './rutas.mjs';
 import { doctor } from './doctor.mjs';
 import { importarNotion } from './importar-notion.mjs';
 import { importarDrive } from './importar-drive.mjs';
+import { configurar as tgConfigurar, bajar as tgBajar, descartar as tgDescartar } from './telegram.mjs';
 import {
   cuadernos as nlmCuadernos,
   vincular as nlmVincular,
@@ -61,6 +62,11 @@ Importar (solo a pedido)
   notebooklm preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo> [--id]
              (--cuaderno "<título>"; tipos: infografia presentacion audio video mapa informe tabla)
 
+Telegram (bot okt-telegram: el celular encola, aquí se baja)
+  telegram config [--url <worker> --token <token>]   Guarda la conexión en ~/.config/okt/telegram.json
+  telegram bajar [--forzar]              Baja la cola a 00-Bandeja/telegram/ (también al iniciar sesión)
+  telegram descartar <id…>               Quita elementos de la cola sin escribirlos
+
 Opciones comunes: --vault <ruta>  --json
 `;
 
@@ -102,7 +108,7 @@ export const COMANDOS = {
     async correr({ pos }) {
       let entrada = '';
       if (!process.stdin.isTTY) for await (const trozo of process.stdin) entrada += trozo;
-      const salida = pos[0] === 'inicio' ? hookInicio(entrada) : pos[0] === 'fin' ? hookFin(entrada) : '';
+      const salida = pos[0] === 'inicio' ? await hookInicio(entrada) : pos[0] === 'fin' ? hookFin(entrada) : '';
       if (salida) process.stdout.write(salida);
       return 0;
     },
@@ -170,6 +176,16 @@ export const COMANDOS = {
       if (accion === 'crear') return nlmCrear(vault, pos[0], op);
       if (accion === 'descargar') return nlmDescargar(vault, pos[0], op);
       throw Object.assign(new Error(`Uso: okt notebooklm cuadernos | vincular <carpeta> "<cuaderno>" | notas | preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo>\nTipos de Studio: ${TIPOS_ESTUDIO.join(', ')}`), { codigo: 2 });
+    },
+  },
+  telegram: {
+    vault: 'opcional',
+    async correr({ pos, op, vault }) {
+      const accion = pos.shift();
+      if (accion === 'config') return tgConfigurar(op);
+      if (accion !== 'bajar' && accion !== 'descartar') throw Object.assign(new Error('Uso: okt telegram config [--url <worker> --token <token>] | bajar [--forzar] | descartar <id…>'), { codigo: 2 });
+      if (!vault) throw Object.assign(new Error('No encontré un vault de OKT aquí ni en la configuración.'), { codigo: 1 });
+      return accion === 'bajar' ? tgBajar(vault, op) : tgDescartar(vault, pos);
     },
   },
   commit: {
