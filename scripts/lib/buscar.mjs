@@ -32,7 +32,7 @@ export function buscar(vault, consulta, op = {}) {
   const resultados = [];
   for (const rel of listarNotas(vault)) {
     if (esSistema(rel)) continue;
-    if (op.carpeta && !rel.startsWith(op.carpeta)) continue;
+    if (op.carpeta && !rel.startsWith(String(op.carpeta).replace(/\\/g, '/'))) continue;
     const n = leerNota(vault, rel);
     if (op.tipo && n.datos.tipo !== op.tipo) continue;
     const campos = {

@@ -56,7 +56,7 @@ async function traerAdjuntos(vault, markdown, base) {
     }
   }
   let salida = markdown;
-  for (const [a, b] of reemplazos) salida = salida.replace(a, b);
+  for (const [a, b] of reemplazos) salida = salida.replace(a, () => b);
   return salida;
 }
 

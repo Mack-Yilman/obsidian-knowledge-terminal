@@ -33,7 +33,7 @@ export function adjuntar(vault, ruta, op = {}) {
   const origen = op.origen || ORIGEN_POR_EXT[ext] || 'otros';
   const dir = join(vault, '40-Fuentes', 'adjuntos', origen);
   mkdirSync(dir, { recursive: true });
-  const base = limpiarNombre(basename(abs, ext)) || 'archivo';
+  const base = limpiarNombre(basename(abs, extname(abs))) || 'archivo';
   let nombre = `${base}${ext}`;
   for (let i = 2; existsSync(join(dir, nombre)); i++) nombre = `${base} ${i}${ext}`;
   copyFileSync(abs, join(dir, nombre));

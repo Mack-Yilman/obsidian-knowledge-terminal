@@ -8,7 +8,7 @@ const activo = () => process.env.OKT_SIN_GIT !== '1';
 
 function git(vault, args) {
   const r = spawnSync('git', args, { cwd: vault, encoding: 'utf8' });
-  return { ok: r.status === 0, salida: (r.stdout || '').trim(), error: (r.stderr || r.error?.message || '').trim() };
+  return { ok: r.status === 0, salida: (r.stdout || '').replace(/\r/g, '').trim(), error: (r.stderr || r.error?.message || '').trim() };
 }
 
 export function hayGit() {

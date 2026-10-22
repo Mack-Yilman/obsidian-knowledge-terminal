@@ -121,6 +121,31 @@ test('drive: un Doc se exporta a Markdown; un PDF se baja a adjuntos; respeta la
   v.borrar();
 });
 
+test('drive: otro archivo con el mismo nombre no pisa un adjunto; reimportar el mismo sí lo reemplaza', () => {
+  const v = preparar();
+  escribir(v.vault, '40-Fuentes/adjuntos/drive/Guía de hipertensión.pdf', 'ORIGINAL DEL USUARIO');
+  const url = 'https://drive.google.com/file/d/PDFID1234567890abc/view';
+  let r = v.run(['importar', 'drive', url, '--aplicar']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.equal(leer(v, '40-Fuentes/adjuntos/drive/Guía de hipertensión.pdf'), 'ORIGINAL DEL USUARIO');
+  assert.equal(leer(v, '40-Fuentes/adjuntos/drive/Guía de hipertensión 2.pdf'), '%PDF-fake');
+  r = v.run(['importar', 'drive', url, '--aplicar']);
+  assert.match(r.salida, /actualizada/);
+  assert.deepEqual(readdirSync(join(v.vault, '40-Fuentes/adjuntos/drive')).sort(), ['Guía de hipertensión 2.pdf', 'Guía de hipertensión.pdf']);
+  v.borrar();
+});
+
+test('notion: un enlace con $ en el texto no se corrompe al reemplazarlo', () => {
+  const v = preparar();
+  const datos = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
+  datos.notion.paginas[P2].markdown = 'Ver [Tarifa $1 y $&](https://file.notion.so/f/tarifa.pdf).';
+  escribir(v.dir, 'fake.json', JSON.stringify(datos));
+  const r = v.run(['importar', 'notion', `https://www.notion.so/${P2}`, '--aplicar']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.match(leer(v, '00-Bandeja/importados/Clase 2 - hierro.md'), /\[\[Clase 2 - hierro 1\.pdf\|Tarifa \$1 y \$&\]\]/);
+  v.borrar();
+});
+
 test('drive: una carpeta se lista y las hojas de cálculo no se importan', () => {
   const v = preparar();
   let r = v.run(['importar', 'drive', 'https://drive.google.com/drive/folders/CARPETA1234567890']);
@@ -168,6 +193,20 @@ test('notebooklm: crear una infografía espera, descarga e incrusta; el mapa men
   r = v.run(['notebooklm', 'crear', 'mapa', '--cuaderno', 'Tesis anemia']);
   assert.equal(r.codigo, 0, r.error);
   assert.match(leer(v, '00-Bandeja/importados/Mapa - Tesis anemia.md'), /- Raíz\n  - Rama A\n    - Hoja\n  - Rama B/);
+  v.borrar();
+});
+
+test('notebooklm: un informe con datos de pacientes no entra al vault (ni nota ni adjunto)', () => {
+  const v = preparar();
+  const datos = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
+  datos.notebooklm.informe = '# Informe\n\nPaciente con HC 1234567 y anemia.';
+  escribir(v.dir, 'fake.json', JSON.stringify(datos));
+  const r = v.run(['notebooklm', 'crear', 'informe', '--cuaderno', 'Tesis anemia']);
+  assert.notEqual(r.codigo, 0);
+  assert.match(r.error, /historia clínica/);
+  assert.equal(existsSync(join(v.vault, '00-Bandeja/importados/Informe - Tesis anemia.md')), false);
+  assert.deepEqual(readdirSync(join(v.vault, '40-Fuentes/adjuntos/notebooklm/Tesis anemia')), []);
+  assert.deepEqual(readdirSync(join(v.vault, '.cerebro/cache/notebooklm')), []);
   v.borrar();
 });
 

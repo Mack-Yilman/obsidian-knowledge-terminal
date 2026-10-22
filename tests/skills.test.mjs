@@ -55,6 +55,8 @@ test('adjuntar copia sin tocar el original y no duplica el mismo contenido', () 
   const copia = escribir(v.dir, 'otra copia.pdf', '%PDF-1');
   r = v.okt(['adjuntar', copia]);
   assert.match(r.salida, /Ya estaba: 40-Fuentes\/adjuntos\/pdf\/Guía - anemia\.pdf/);
+  r = v.okt(['adjuntar', escribir(v.dir, 'Foto.PNG', 'img'), '--json']);
+  assert.equal(JSON.parse(r.salida).ruta, '40-Fuentes/adjuntos/imagenes/Foto.png');
   v.borrar();
 });
 

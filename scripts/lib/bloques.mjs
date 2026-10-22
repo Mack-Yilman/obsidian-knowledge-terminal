@@ -14,6 +14,8 @@ export function reemplazarBloque(texto, contenido) {
   const i = texto.indexOf(INICIO);
   const f = texto.indexOf(FIN, i);
   const bloque = contenido ? `${INICIO}\n${contenido}\n${FIN}` : `${INICIO}\n${FIN}`;
-  if (i < 0 || f < 0) return `${texto.replace(/\s*$/, '')}\n\n${bloque}\n`;
+  // Sin la marca de cierre, agregar otro bloque haría que la próxima vez se borre lo que quedó en medio.
+  if (i >= 0 && f < 0) throw new Error(`Falta la marca ${FIN} después de ${INICIO}: restáurala a mano para no perder texto.`);
+  if (i < 0) return `${texto.replace(/\s*$/, '')}\n\n${bloque}\n`;
   return texto.slice(0, i) + bloque + texto.slice(f + FIN.length);
 }

@@ -74,7 +74,7 @@ export function extraerEnlaces(texto) {
 export function mapaDeNombres(vault) {
   const mapa = new Map();
   for (const rel of listarArchivos(vault)) {
-    const nombre = rel.toLowerCase().endsWith('.md') ? basename(rel, '.md') : basename(rel);
+    const nombre = rel.toLowerCase().endsWith('.md') ? basename(rel.slice(0, -3)) : basename(rel);
     const clave = nombre.toLowerCase();
     if (!mapa.has(clave)) mapa.set(clave, []);
     mapa.get(clave).push(rel);

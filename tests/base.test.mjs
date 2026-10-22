@@ -73,6 +73,10 @@ test('bloques: sin marcas, las agrega al final', () => {
   assert.equal(nuevo, 'texto del usuario\n\n<!-- okt:inicio -->\nx\n<!-- okt:fin -->\n');
 });
 
+test('bloques: si falta la marca de cierre, se niega en vez de duplicar el bloque', () => {
+  assert.throws(() => reemplazarBloque('a\n<!-- okt:inicio -->\nviejo\nnotas del usuario', 'nuevo'), /Falta la marca/);
+});
+
 test('nombres: detecta caracteres prohibidos y los limpia', () => {
   assert.equal(nombreValido('Guía MINSA de anemia 2024'), true);
   assert.equal(nombreValido('Sepsis: definición'), false);

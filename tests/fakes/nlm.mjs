@@ -40,6 +40,6 @@ else if (a === 'note' && b === 'list') {
   const id = opcion(args, '--id');
   const art = estudio.artefactos.find((x) => x.artifact_id === id) || d.listos?.find((x) => x.artifact_id === id);
   if (!art || art.status !== 'completed') fallar('Artifact not ready');
-  const contenido = { infographic: 'PNGFAKE', report: '# Informe\n\nTexto del informe.', 'mind-map': JSON.stringify({ name: 'Raíz', children: [{ name: 'Rama A', children: [{ name: 'Hoja' }] }, { name: 'Rama B' }] }), 'data-table': 'Fármaco,Dosis\nSulfato ferroso,3 mg/kg' }[b] || 'BIN';
+  const contenido = { infographic: 'PNGFAKE', report: d.informe || '# Informe\n\nTexto del informe.', 'mind-map': JSON.stringify({ name: 'Raíz', children: [{ name: 'Rama A', children: [{ name: 'Hoja' }] }, { name: 'Rama B' }] }), 'data-table': 'Fármaco,Dosis\nSulfato ferroso,3 mg/kg' }[b] || 'BIN';
   writeFileSync(out, contenido);
 } else fallar(`fake nlm: no soportado ${args.join(' ')}`, 2);

@@ -58,26 +58,29 @@ export function escribirImportada(vault, { clave, titulo, contenido, datos = {},
   const registro = leerRegistro(vault);
   const previa = registro[clave];
   const hoy = fechaISO();
+  // El nombre del adjunto se guarda para que reimportar reemplace el mismo archivo y no otro.
+  const adjunto = datos.adjunto ? String(datos.adjunto).replace(/^\[\[|\]\]$/g, '') : previa?.adjunto;
   if (previa && existsSync(join(vault, previa.ruta)) && !previa.ruta.startsWith('90-Archivo/')) {
     const abs = join(vault, previa.ruta);
     const texto = readFileSync(abs, 'utf8');
     const { datos: fm, cuerpo } = leerFrontmatter(texto);
     const nuevo = escribirFrontmatter({ ...fm, ...datos, importado: hoy, actualizado: hoy }, reemplazarBloque(cuerpo, contenido.trim()));
     writeFileSync(abs, nuevo);
-    registro[clave] = { ...previa, importado: hoy };
+    registro[clave] = { ...previa, importado: hoy, ...(adjunto ? { adjunto } : {}) };
     guardarRegistro(vault, registro);
     return { ruta: previa.ruta, accion: 'actualizada' };
   }
   const destino = op.carpeta || carpeta || '00-Bandeja/importados';
-  let nombre = limpiarNombre(titulo) || 'Sin título';
+  const base = limpiarNombre(titulo) || 'Sin título';
+  let nombre = base;
   const nombres = mapaDeNombres(vault);
-  for (let i = 2; nombres.has(nombre.toLowerCase()); i++) nombre = `${limpiarNombre(titulo)} ${i}`;
+  for (let i = 2; nombres.has(nombre.toLowerCase()); i++) nombre = `${base} ${i}`;
   const rel = `${destino}/${nombre}.md`;
   const fm = { tipo: 'nota', creado: hoy, actualizado: hoy, ...datos, importado: hoy };
   const cuerpo = `\n# ${nombre}\n\nImportado de ${datos.origen || 'una fuente externa'} el ${hoy}. Lo que está entre las marcas se reemplaza si vuelves a importar; escribe tus notas fuera de ellas.\n\n<!-- okt:inicio -->\n${contenido.trim()}\n<!-- okt:fin -->\n`;
   mkdirSync(join(vault, destino), { recursive: true });
   writeFileSync(join(vault, rel), escribirFrontmatter(fm, cuerpo));
-  registro[clave] = { ruta: rel, importado: hoy };
+  registro[clave] = { ruta: rel, importado: hoy, ...(adjunto ? { adjunto } : {}) };
   guardarRegistro(vault, registro);
   return { ruta: rel, accion: 'creada' };
 }

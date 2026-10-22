@@ -2,7 +2,7 @@
 // Studio (infografías, presentaciones, audio, mapas, informes, tablas) al vault. Todo a pedido.
 // Usa el CLI nlm (notebooklm-mcp-cli). Solo lectura sobre las fuentes del cuaderno; crear un
 // contenido de Studio consume cuota de NotebookLM y lo pide el usuario.
-import { readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
 import { join, relative, basename } from 'node:path';
 import { ejecutar, jsonDe } from './binarios.mjs';
 import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, rutaAdjunto } from './importacion.mjs';
@@ -155,10 +155,22 @@ export function descargar(vault, tipo, op) {
   mkdirSync(dir, { recursive: true });
   let nombre = `${limpiarNombre(`${tipo} ${c.titulo}`).slice(0, 80)} ${fechaISO()}.${def.ext}`;
   for (let i = 2; existsSync(join(dir, nombre)); i++) nombre = nombre.replace(/( \d+)?\.(\w+)$/, ` ${i}.$2`);
+  // Se baja primero a la caché: solo pasa a adjuntos si no parece traer datos de pacientes.
+  const cache = join(vault, '.cerebro', 'cache', 'notebooklm');
+  mkdirSync(cache, { recursive: true });
+  const temporal = join(cache, `${id}.${def.ext}`);
+  nlm(['download', def.bajar, c.id, '--output', temporal, '--id', id], 600000);
+  if (!existsSync(temporal)) throw new Error('NotebookLM no entregó el archivo.');
+  const convertido = contenidoDescargado(temporal, nombre, tipo);
+  try {
+    revisarSensible(convertido, op, `${tipo} de ${c.titulo}`);
+  } catch (e) {
+    rmSync(temporal, { force: true });
+    throw e;
+  }
   const abs = join(dir, nombre);
-  nlm(['download', def.bajar, c.id, '--output', abs, '--id', id], 600000);
-  if (!existsSync(abs)) throw new Error('NotebookLM no entregó el archivo.');
-  const contenido = `${contenidoDescargado(abs, nombre, tipo)}\n\nCuaderno: ${c.titulo} · ${tipo} · ${fechaISO()} · \`${rutaAdjunto(subcarpeta, nombre)}\``;
+  renameSync(temporal, abs);
+  const contenido = `${convertido}\n\nCuaderno: ${c.titulo} · ${tipo} · ${fechaISO()} · \`${rutaAdjunto(subcarpeta, nombre)}\``;
   const res = escribirImportada(vault, { clave: `notebooklm:${tipo}:${id}`, titulo: `${tipo[0].toUpperCase()}${tipo.slice(1)} - ${c.titulo}`, contenido, datos: { origen: 'notebooklm', id_externo: `${c.id}/${id}`, cuaderno: c.titulo, adjunto: `[[${nombre}]]` }, op });
   return { texto: `Descargado ${basename(abs)} → nota ${res.ruta} (${res.accion}).`, datos: { archivo: posix(relative(vault, abs)), ...res } };
 }

@@ -5,7 +5,7 @@
 import { readFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { ejecutar, jsonDe } from './binarios.mjs';
-import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, rutaAdjunto } from './importacion.mjs';
+import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, rutaAdjunto, leerRegistro } from './importacion.mjs';
 import { pareceSensible } from './sensibles.mjs';
 import { limpiarNombre } from './nombres.mjs';
 
@@ -58,8 +58,12 @@ async function importarArchivo(vault, f, op) {
 
   // Binario (PDF, imagen, Word…): se guarda el original y una nota que lo enlaza.
   const dir = join(vault, '40-Fuentes', 'adjuntos', 'drive');
-  let nombre = limpiarNombre(f.name) || f.id;
-  if (!/\.[a-z0-9]{2,5}$/i.test(nombre)) nombre += f.mimeType === 'application/pdf' ? '.pdf' : '';
+  let base = limpiarNombre(f.name) || f.id;
+  if (!/\.[a-z0-9]{2,5}$/i.test(base)) base += f.mimeType === 'application/pdf' ? '.pdf' : '';
+  // Reimportar el mismo archivo reemplaza su propio adjunto; otro archivo con el mismo nombre lleva sufijo.
+  const previo = String(leerRegistro(vault)[`drive:${f.id}`]?.adjunto || '');
+  let nombre = previo || base;
+  for (let i = 2; !previo && existsSync(join(dir, nombre)); i++) nombre = base.replace(/(\.[^.]+)?$/, ` ${i}$1`);
   bajar(['drive', 'files', 'get', '--params', JSON.stringify({ fileId: f.id, alt: 'media', supportsAllDrives: true })], dir, nombre);
   const incrustar = /^image\/|application\/pdf/.test(f.mimeType) ? '!' : '';
   const contenido = `Archivo original: ${incrustar}[[${nombre}]]\n\nUbicación: \`${rutaAdjunto('drive', nombre)}\`. Pide «procesa mi bandeja» para resumirlo en una ficha de fuente.`;
