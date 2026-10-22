@@ -1,0 +1,108 @@
+// okt init: crea el vault en la carpeta actual. Sin --aplicar solo muestra la vista previa.
+// Es reanudable: crea solo lo que falta y en AGENTS.md actualiza solo el bloque de OKT.
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, copyFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigVault, guardarConfigVault } from './rutas.mjs';
+import { CARPETAS } from './vault.mjs';
+import { reemplazarBloque, leerBloque } from './bloques.mjs';
+import { escribirFrontmatter } from './frontmatter.mjs';
+import { fechaISO } from './fechas.mjs';
+import { iniciarGit, commit } from './git.mjs';
+import { limpiarNombre } from './nombres.mjs';
+
+const PLANTILLA = join(RAIZ_PLUGIN, 'plantillas', 'vault');
+export const AREAS_POR_DEFECTO = ['Personal', 'Estudios', 'Trabajo'];
+
+function archivosPlantilla(dir = PLANTILLA, base = '') {
+  const lista = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${e.name}` : e.name;
+    if (e.isDirectory()) lista.push(...archivosPlantilla(join(dir, e.name), rel));
+    else lista.push(rel);
+  }
+  return lista;
+}
+
+// Nombre final en el vault: AGENTS.md.tmpl → AGENTS.md, gitignore.tmpl → .gitignore.
+const destino = (rel) => (rel === 'gitignore.tmpl' ? '.gitignore' : rel.replace(/\.tmpl$/, ''));
+
+function rellenar(texto, valores) {
+  return texto.replace(/\{\{(fecha|areas|cli)\}\}/g, (_, k) => valores[k]);
+}
+
+export function textoAgents(valores) {
+  return rellenar(readFileSync(join(PLANTILLA, 'AGENTS.md.tmpl'), 'utf8'), valores);
+}
+
+export function planInit(vault, opciones = {}) {
+  if (dentroDe(RAIZ_PLUGIN, vault) || dentroDe(vault, RAIZ_PLUGIN)) {
+    throw new Error(`No crees el vault dentro de la carpeta del plugin ni alrededor de ella (${posix(RAIZ_PLUGIN)}). Abre tu agente en la carpeta de tus notas.`);
+  }
+  const previa = leerConfigVault(vault);
+  const areas = (opciones.areas ? opciones.areas.split(',') : previa.areas || AREAS_POR_DEFECTO)
+    .map((a) => limpiarNombre(a))
+    .filter(Boolean);
+  const valores = { fecha: fechaISO(), areas: areas.map((a) => `[[${a}]]`).join(', '), cli: posix(CLI) };
+  const acciones = [];
+
+  for (const c of CARPETAS) if (!existsSync(join(vault, c))) acciones.push({ tipo: 'carpeta', ruta: c });
+  for (const rel of archivosPlantilla()) {
+    const dest = destino(rel);
+    if (dest === 'AGENTS.md' && existsSync(join(vault, dest))) {
+      acciones.push({ tipo: 'bloque', ruta: dest });
+    } else if (!existsSync(join(vault, dest))) {
+      acciones.push({ tipo: 'archivo', ruta: dest, origen: rel });
+    }
+  }
+  for (const a of areas) {
+    const ruta = `20-Areas/${a}.md`;
+    if (!existsSync(join(vault, ruta))) acciones.push({ tipo: 'area', ruta, nombre: a });
+  }
+  acciones.push({ tipo: 'config', ruta: '.cerebro/config.json' });
+  if (!existsSync(join(vault, '.git'))) acciones.push({ tipo: 'git', ruta: '.git (local, sin remoto)' });
+
+  const ocupada = existsSync(vault) && readdirSync(vault).some((n) => !n.startsWith('.')) && !existsSync(join(vault, '.cerebro'));
+  return { vault, areas, valores, acciones, ocupada };
+}
+
+export function aplicarInit(plan) {
+  const { vault, areas, valores } = plan;
+  for (const a of plan.acciones) {
+    const abs = join(vault, a.ruta);
+    if (a.tipo === 'carpeta') mkdirSync(abs, { recursive: true });
+    if (a.tipo === 'archivo') {
+      mkdirSync(dirname(abs), { recursive: true });
+      const origen = join(PLANTILLA, a.origen);
+      if (/\.(md|tmpl)$/.test(a.origen)) writeFileSync(abs, rellenar(readFileSync(origen, 'utf8'), valores));
+      else copyFileSync(origen, abs);
+    }
+    if (a.tipo === 'bloque') {
+      const nuevo = leerBloque(textoAgents(valores));
+      writeFileSync(abs, reemplazarBloque(readFileSync(abs, 'utf8'), nuevo));
+    }
+    if (a.tipo === 'area') {
+      mkdirSync(dirname(abs), { recursive: true });
+      const datos = { tipo: 'area', creado: valores.fecha, actualizado: valores.fecha, resumen: `Área continua: ${a.nombre}.` };
+      writeFileSync(abs, escribirFrontmatter(datos, `\n# ${a.nombre}\n\n## Proyectos\n\n## Conocimiento\n\n## Notas\n`));
+    }
+  }
+  const previa = leerConfigVault(vault);
+  guardarConfigVault(vault, {
+    version: 1,
+    creado: previa.creado || valores.fecha,
+    areas,
+    frescura_dias: previa.frescura_dias ?? 90,
+    delegar: previa.delegar ?? null,
+    excluir_proyectos: previa.excluir_proyectos ?? [],
+  });
+  guardarConfigGlobal({ vault: posix(vault), cli: posix(CLI) });
+  const g = plan.acciones.some((a) => a.tipo === 'git') ? iniciarGit(vault) : {};
+  const c = commit(vault, 'okt init: estructura del vault');
+  return { git: g, commit: c };
+}
+
+export function describirPlan(plan) {
+  const nombres = { carpeta: 'Carpeta', archivo: 'Archivo', bloque: 'Actualizar bloque OKT en', area: 'Área', config: 'Configuración', git: 'Git' };
+  const lineas = plan.acciones.map((a) => `  - ${nombres[a.tipo]}: ${a.ruta}`);
+  return lineas.join('\n');
+}

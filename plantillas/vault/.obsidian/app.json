@@ -1,0 +1,9 @@
+{
+  "attachmentFolderPath": "40-Fuentes/adjuntos",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "00-Bandeja/notas",
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "alwaysUpdateLinks": true,
+  "showFrontmatter": true
+}
