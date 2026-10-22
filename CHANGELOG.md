@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.2.1 — 2026-10-22
+
+Tras la prueba real contra el Worker desplegado:
+
+- En el hook, un archivo solo se baja si quedan 6 s del tope (cada uno tarda ~5 s: Telegram → Worker → PC);
+  los demás esperan a `okt telegram bajar` y el hook lo avisa.
+- Una foto sin leyenda se titula «foto», sin la extensión ni la fecha repetida.
+- README: `/tarea` sola (desde el menú del bot) pregunta y toma el siguiente mensaje.
+
 ## 0.2.0 — 2026-10-22
 
 - Comando `okt telegram config|bajar|descartar` para gestionar y sincronizar la cola del bot okt-telegram.
@@ -9,8 +18,6 @@
 - Idempotencia con `.cerebro/telegram.json` para no duplicar elementos si la confirmación falla.
 - La skill cerebro suma el paso 9 «Telegram» y el cierre pasa a 10.
 - La skill mantener baja la cola al procesar la bandeja.
-- En el hook, un archivo solo se baja si quedan 6 s del tope (cada uno tarda ~5 s, medido en la prueba real);
-  los demás esperan a `okt telegram bajar` y el hook lo avisa.
 - Una sola bajada a la vez (candado en `.cerebro/telegram.lock`), y lo ya escrito se confirma aunque la bajada
   se corte por tiempo.
 - Datos de pacientes: el patrón de nombres detecta también los escritos en mayúsculas («Paciente JUAN
