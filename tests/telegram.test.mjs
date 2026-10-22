@@ -188,6 +188,37 @@ test('dos bajadas a la vez no duplican: la segunda espera su turno', async () =>
   }
 });
 
+test('una foto sin leyenda: título sin extensión ni fecha repetida, sin renglones vacíos', async () => {
+  const t = await preparar({ elementos: [elemento('m1', 'archivo', '', { archivo_key: 'F', nombre: 'foto 2026-10-21 1805.jpg', mime: 'image/jpeg' })], archivos: { F: { bytes: 'JPG', mime: 'image/jpeg' } } });
+  try {
+    await bajar(t.vault);
+    assert.deepEqual(t.bandeja(), ['2026-10-21 1805 foto.md']);
+    const nota = t.leer('00-Bandeja/telegram/2026-10-21 1805 foto.md');
+    assert.match(nota, /# foto\n\n!\[\[foto 2026-10-21 1805.jpg\]\]\n\nArchivo en /);
+  } finally {
+    await t.fin();
+  }
+});
+
+test('con poco tiempo (hook), los archivos esperan y lo demás se baja', async () => {
+  const t = await preparar({
+    elementos: [elemento('n1', 'archivo', 'Un PDF', { archivo_key: 'F', nombre: 'a.pdf' }), elemento('n2', 'nota', 'Texto rápido')],
+    archivos: { F: { bytes: '%PDF', mime: 'application/pdf' } },
+  });
+  try {
+    const r = await bajar(t.vault, { tope: 2000, reservaArchivo: 6000 });
+    assert.equal(r.datos.escritos.length, 1);
+    assert.deepEqual(r.datos.diferidos, ['n1']);
+    assert.match(r.texto, /1 archivo espera en la cola/);
+    assert.deepEqual(t.cola.estado.confirmados, ['n2']);
+    const r2 = await bajar(t.vault);
+    assert.equal(r2.datos.escritos.length, 1);
+    assert.deepEqual(t.cola.estado.confirmados, ['n2', 'n1']);
+  } finally {
+    await t.fin();
+  }
+});
+
 test('el hook avisa si algo no se pudo bajar', async () => {
   const t = await preparar({ elementos: [elemento('k1', 'archivo', 'x', { archivo_key: 'NO', nombre: 'x.pdf' })] });
   try {

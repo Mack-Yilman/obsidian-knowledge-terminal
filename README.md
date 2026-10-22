@@ -103,7 +103,7 @@ El bot solo encola en un Worker de Cloudflare con KV; el vault permanece siempre
 | Nota de voz o audio (≤ 10 min) | transcribe con Whisper de Workers AI (`@cf/openai/whisper-large-v3-turbo`, en español) y encola `tipo: voz` con el texto. El audio no se guarda. Si la transcripción falla, no encola y pide reenviar | nota con la transcripción, marcada como automática |
 | Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | nota «pendiente de ingerir» con la url, para la skill `capturar` |
 | Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `40-Fuentes/adjuntos/telegram/` y una nota con `![[archivo]]` y la leyenda |
-| `/tarea <texto>` | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`50-Diario/AAAA-MM-DD.md`) |
+| `/tarea <texto>` (o `/tarea` sola: el bot pregunta y toma el siguiente mensaje) | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`50-Diario/AAAA-MM-DD.md`) |
 | `/estado`, `/start`, `/ayuda` | responde en Telegram (cuántos elementos esperan o ayuda) | — |
 
 ### Contrato de la cola
