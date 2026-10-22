@@ -47,6 +47,27 @@ test('init es reanudable: no pisa lo que ya existe', () => {
   v.borrar();
 });
 
+test('init sobre un vault de Obsidian existente: agrega solo los ajustes que faltan y no cuenta desktop.ini', () => {
+  const t = temporal();
+  escribir(t.dir, '.obsidian/app.json', '{"attachmentFolderPath": "Adjuntos", "vimMode": true}');
+  escribir(t.dir, '.obsidian/core-plugins.json', '["file-explorer"]');
+  escribir(t.dir, 'desktop.ini', '[.ShellClassInfo]');
+  const configDir = join(t.dir, 'cfg');
+  let r = okt(['init'], { cwd: t.dir, configDir });
+  assert.doesNotMatch(r.salida, /ya tiene archivos/);
+  assert.match(r.salida, /Agregar ajustes que faltan .* \.obsidian\/app\.json/);
+  assert.doesNotMatch(r.salida, /core-plugins\.json/);
+  r = okt(['init', '--aplicar'], { cwd: t.dir, configDir });
+  assert.equal(r.codigo, 0, r.error);
+  const app = JSON.parse(readFileSync(join(t.dir, '.obsidian', 'app.json'), 'utf8'));
+  assert.equal(app.attachmentFolderPath, 'Adjuntos', 'no cambia lo que el usuario ya eligió');
+  assert.equal(app.vimMode, true);
+  assert.equal(app.newFileFolderPath, '00-Bandeja/notas', 'agrega lo que faltaba');
+  assert.equal(readFileSync(join(t.dir, '.obsidian', 'core-plugins.json'), 'utf8'), '["file-explorer"]');
+  assert.ok(existsSync(join(t.dir, '.obsidian', 'templates.json')));
+  t.borrar();
+});
+
 test('init avisa si la carpeta tiene archivos y no es un vault de OKT', () => {
   const t = temporal();
   escribir(t.dir, 'algo.txt', 'x');

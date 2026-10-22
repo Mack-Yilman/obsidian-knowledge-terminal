@@ -20,7 +20,11 @@ else if (a === 'note' && b === 'list') {
   console.log(JSON.stringify({ notebook_id: c.id, notes: c.notas || [], count: (c.notas || []).length }));
 } else if (a === 'query' && b === 'notebook') {
   cuaderno(c1);
-  console.log(JSON.stringify({ answer: `Respuesta sobre: ${c2}`, sources: [{ title: 'Guía de prueba' }] }));
+  // Formato real de nlm 0.15.4: references con citation_number, source_id y cited_text.
+  console.log(JSON.stringify({ answer: `Respuesta sobre: ${c2} [1]`, question: c2, conversation_id: 'conv1', sources_used: ['s1'], citations: { 1: 's1' }, references: [{ source_id: 's1', citation_number: 1, cited_text: 'Texto citado de la guía.' }] }));
+} else if (a === 'source' && b === 'list') {
+  cuaderno(c1);
+  console.log(JSON.stringify([{ id: 's1', title: 'Guía de prueba', type: 'web', url: 'https://example.org/guia', status: 2 }]));
 } else if (b === 'create') {
   cuaderno(c1);
   if (!args.includes('--confirm')) fallar('Aborted: confirmation required');

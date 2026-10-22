@@ -205,7 +205,7 @@ test('notebooklm: cuadernos, vínculo de carpeta, notas y pregunta guardada como
   assert.match(r.salida, /Respuesta sobre: ¿Qué dicen sobre la ferritina\?/);
   const nota = readdirSync(join(v.vault, '00-Bandeja/importados')).find((n) => n.startsWith('NotebookLM'));
   const texto = leer(v, `00-Bandeja/importados/${nota}`);
-  assert.match(texto, /Guía de prueba/);
+  assert.match(texto, /- \[1\] Guía de prueba \(https:\/\/example\.org\/guia\): «Texto citado de la guía\.»/);
   assert.match(texto, /síntesis, no evidencia/);
   v.borrar();
 });

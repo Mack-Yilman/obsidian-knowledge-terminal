@@ -50,6 +50,9 @@ export function planInit(vault, opciones = {}) {
     const dest = destino(rel);
     if (dest === 'AGENTS.md' && existsSync(join(vault, dest))) {
       acciones.push({ tipo: 'bloque', ruta: dest });
+    } else if (dest.startsWith('.obsidian/') && dest.endsWith('.json') && existsSync(join(vault, dest))) {
+      // El usuario ya tiene esa configuración de Obsidian: se agregan solo las claves que faltan.
+      if (clavesQueFaltan(join(vault, dest), join(PLANTILLA, rel)).length) acciones.push({ tipo: 'mezclar', ruta: dest, origen: rel });
     } else if (!existsSync(join(vault, dest))) {
       acciones.push({ tipo: 'archivo', ruta: dest, origen: rel });
     }
@@ -61,8 +64,24 @@ export function planInit(vault, opciones = {}) {
   acciones.push({ tipo: 'config', ruta: '.cerebro/config.json' });
   if (!existsSync(join(vault, '.git'))) acciones.push({ tipo: 'git', ruta: '.git (local, sin remoto)' });
 
-  const ocupada = existsSync(vault) && readdirSync(vault).some((n) => !n.startsWith('.')) && !existsSync(join(vault, '.cerebro'));
+  const ocupada = existsSync(vault) && readdirSync(vault).some((n) => !n.startsWith('.') && n.toLowerCase() !== 'desktop.ini') && !existsSync(join(vault, '.cerebro'));
   return { vault, areas, valores, acciones, ocupada };
+}
+
+function leerJson(ruta) {
+  try {
+    return JSON.parse(readFileSync(ruta, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+// Solo objetos JSON: si el archivo del usuario es otra cosa (o está dañado), no se toca.
+function clavesQueFaltan(rutaUsuario, rutaPlantilla) {
+  const u = leerJson(rutaUsuario);
+  const p = leerJson(rutaPlantilla);
+  if (!u || !p || Array.isArray(u) || typeof u !== 'object') return [];
+  return Object.keys(p).filter((k) => !(k in u));
 }
 
 export function aplicarInit(plan) {
@@ -75,6 +94,11 @@ export function aplicarInit(plan) {
       const origen = join(PLANTILLA, a.origen);
       if (/\.(md|tmpl)$/.test(a.origen)) writeFileSync(abs, rellenar(readFileSync(origen, 'utf8'), valores));
       else copyFileSync(origen, abs);
+    }
+    if (a.tipo === 'mezclar') {
+      const u = leerJson(abs);
+      const p = leerJson(join(PLANTILLA, a.origen));
+      if (u && p) writeFileSync(abs, `${JSON.stringify({ ...p, ...u }, null, 2)}\n`);
     }
     if (a.tipo === 'bloque') {
       const nuevo = leerBloque(textoAgents(valores));
@@ -102,7 +126,7 @@ export function aplicarInit(plan) {
 }
 
 export function describirPlan(plan) {
-  const nombres = { carpeta: 'Carpeta', archivo: 'Archivo', bloque: 'Actualizar bloque OKT en', area: 'Área', config: 'Configuración', git: 'Git' };
+  const nombres = { carpeta: 'Carpeta', archivo: 'Archivo', bloque: 'Actualizar bloque OKT en', mezclar: 'Agregar ajustes que faltan (sin cambiar los tuyos) en', area: 'Área', config: 'Configuración', git: 'Git' };
   const lineas = plan.acciones.map((a) => `  - ${nombres[a.tipo]}: ${a.ruta}`);
   return lineas.join('\n');
 }

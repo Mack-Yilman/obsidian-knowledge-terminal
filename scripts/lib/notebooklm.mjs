@@ -99,7 +99,22 @@ export function preguntar(vault, pregunta, op) {
   const salida = nlm(['query', 'notebook', c.id, pregunta, '--json', '--timeout', '240'], 300000);
   const j = jsonDe(salida) || {};
   const respuesta = String(j.answer ?? j.response ?? j.text ?? j.content ?? (typeof j === 'string' ? j : salida)).trim();
-  const fuentes = [].concat(j.sources || j.citations || j.references || []).map((s) => (typeof s === 'string' ? s : s.title || s.source_title || s.name || '')).filter(Boolean);
+  // nlm devuelve references: [{ citation_number, source_id, cited_text }]; el id se traduce a título y URL.
+  const refs = Array.isArray(j.references) ? j.references : [];
+  let fuentes = [];
+  if (refs.length) {
+    const lista = jsonDe(nlm(['source', 'list', c.id, '--json'])) || [];
+    const porId = new Map((Array.isArray(lista) ? lista : lista.sources || []).map((s) => [s.id, s]));
+    fuentes = refs
+      .sort((a, b) => (a.citation_number ?? 0) - (b.citation_number ?? 0))
+      .map((r) => {
+        const s = porId.get(r.source_id) || {};
+        const cita = String(r.cited_text || '').replace(/\s+/g, ' ').trim();
+        return `[${r.citation_number}] ${s.title || r.source_id}${s.url ? ` (${s.url})` : ''}${cita ? `: «${cita.slice(0, 200)}${cita.length > 200 ? '…' : ''}»` : ''}`;
+      });
+  } else {
+    fuentes = [].concat(j.sources || []).map((s) => (typeof s === 'string' ? s : s.title || s.name || '')).filter(Boolean);
+  }
   revisarSensible(respuesta, op, pregunta);
   const contenido = `**Pregunta:** ${pregunta}\n\n**Cuaderno:** ${c.titulo}\n\n${respuesta}${fuentes.length ? `\n\n**Fuentes citadas por NotebookLM:**\n${[...new Set(fuentes)].map((f) => `- ${f}`).join('\n')}` : ''}\n\n> Respuesta generada por NotebookLM: es una síntesis, no evidencia. Verifica en las fuentes antes de pasarla a 30-Conocimiento.`;
   const res = escribirImportada(vault, { clave: `notebooklm:pregunta:${c.id}:${fechaISO()}:${pregunta.slice(0, 60)}`, titulo: `NotebookLM - ${pregunta.slice(0, 70)}`, contenido, datos: { origen: 'notebooklm', id_externo: c.id, cuaderno: c.titulo }, op });
