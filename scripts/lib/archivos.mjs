@@ -1,9 +1,10 @@
-// okt adjuntar (copia un archivo local a 40-Fuentes/adjuntos sin tocar el original y sin duplicar) y
-// okt archivar (mueve a 90-Archivo conservando la ruta; nada se borra).
-import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, renameSync, statSync, readdirSync } from 'node:fs';
+// okt adjuntar (copia un archivo local a los adjuntos de Fuentes sin tocar el original y sin duplicar) y
+// okt archivar (mueve a la carpeta Archivo conservando la ruta; nada se borra).
+import { readFileSync, existsSync, mkdirSync, copyFileSync, renameSync, statSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve, basename, extname, relative } from 'node:path';
 import { createHash } from 'node:crypto';
-import { dentroDe, posix } from './rutas.mjs';
+import { dentroDe, posix, sobrescribir } from './rutas.mjs';
+import { C, carpetaAdjuntos, resolverCarpeta } from './estructura.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO } from './fechas.mjs';
@@ -31,7 +32,7 @@ export function adjuntar(vault, ruta, op = {}) {
   }
   const ext = extname(abs).toLowerCase();
   const origen = op.origen || ORIGEN_POR_EXT[ext] || 'otros';
-  const dir = join(vault, '40-Fuentes', 'adjuntos', origen);
+  const dir = join(vault, carpetaAdjuntos(origen));
   mkdirSync(dir, { recursive: true });
   const base = limpiarNombre(basename(abs, extname(abs))) || 'archivo';
   let nombre = `${base}${ext}`;
@@ -40,7 +41,7 @@ export function adjuntar(vault, ruta, op = {}) {
   const rel = posix(relative(vault, join(dir, nombre)));
   huellas[sha] = rel;
   mkdirSync(join(vault, '.cerebro'), { recursive: true });
-  writeFileSync(join(vault, '.cerebro', 'fuentes.json'), `${JSON.stringify(huellas, null, 2)}\n`);
+  sobrescribir(join(vault, '.cerebro', 'fuentes.json'), `${JSON.stringify(huellas, null, 2)}\n`);
   return { texto: `Copiado a ${rel}. Enlázalo como [[${nombre}]] (el original no se tocó).`, datos: { ruta: rel, nombre, nuevo: true, sha256: sha } };
 }
 
@@ -53,20 +54,20 @@ function marcarArchivado(abs) {
   const texto = readFileSync(abs, 'utf8');
   const { datos, cuerpo, tiene } = leerFrontmatter(texto);
   if (!tiene || !('estado' in datos)) return;
-  writeFileSync(abs, escribirFrontmatter({ ...datos, estado: 'archivado', actualizado: fechaISO() }, cuerpo));
+  sobrescribir(abs, escribirFrontmatter({ ...datos, estado: 'archivado', actualizado: fechaISO() }, cuerpo));
 }
 
 export function archivar(vault, rutas) {
   if (!rutas.length) throw errorUso('Uso: okt archivar "<ruta>" […]');
   const movidos = [];
   for (const r of rutas) {
-    const abs = resolve(vault, r);
+    const abs = resolve(vault, resolverCarpeta(vault, r));
     const rel = posix(relative(resolve(vault), abs));
     // Lo de la raíz (AGENTS.md, las carpetas principales) no se archiva: solo lo que está dentro.
-    const prohibido = !dentroDe(vault, abs) || !rel.includes('/') || /^(90-Archivo|99-Sistema)\/|^\./.test(rel);
-    if (!existsSync(abs) || prohibido) throw errorUso(`No se puede archivar «${r}»: debe existir dentro de una carpeta del vault que no sea 90-Archivo, 99-Sistema ni una carpeta oculta.`);
-    let dest = join(vault, '90-Archivo', rel);
-    for (let i = 2; existsSync(dest); i++) dest = join(vault, '90-Archivo', rel.replace(/(\.[^./]+)?$/, ` ${i}$1`));
+    const prohibido = !dentroDe(vault, abs) || !rel.includes('/') || rel.startsWith(`${C.archivo}/`) || rel.startsWith(`${C.sistema}/`) || rel.startsWith('.');
+    if (!existsSync(abs) || prohibido) throw errorUso(`No se puede archivar «${r}»: debe existir dentro de una carpeta del vault que no sea ${C.archivo}, ${C.sistema} ni una carpeta oculta.`);
+    let dest = join(vault, C.archivo, rel);
+    for (let i = 2; existsSync(dest); i++) dest = join(vault, C.archivo, rel.replace(/(\.[^./]+)?$/, ` ${i}$1`));
     mkdirSync(dirname(dest), { recursive: true });
     renameSync(abs, dest);
     marcarArchivado(dest);

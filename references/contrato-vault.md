@@ -15,10 +15,10 @@ Fuente de verdad que comparten las 5 skills de OKT (`cerebro`, `capturar`, `cons
    procesamiento de la bandeja ocurren solo cuando el usuario los pide, y él elige qué. Lo único
    automático es la ficha de sesión, que escribe un script sin usar el modelo.
 4. **La fuente no se modifica.** Notion, Drive y NotebookLM se leen y nunca se editan. Los archivos de
-   `40-Fuentes/adjuntos/` no se modifican después de guardados.
-5. **Nada se borra.** Lo obsoleto se mueve a `90-Archivo/` con `estado: archivado`. Borrar algo exige un
+   `40 │ 📚 Fuentes/📎 adjuntos/` no se modifican después de guardados.
+5. **Nada se borra.** Lo obsoleto se mueve a `90 │ 🗄️ Archivo/` con `estado: archivado`. Borrar algo exige un
    sí explícito del usuario.
-6. **Un solo escritor para el sistema.** `99-Sistema/` y `.cerebro/` los escribe solo `okt.mjs`. Las
+6. **Un solo escritor para el sistema.** `99 │ ⚙️ Sistema/` y `.cerebro/` los escribe solo `okt.mjs`. Las
    notas sí las escribe el modelo, siguiendo este contrato.
 7. **Lo inferido se marca.** Lo que el modelo deduce y la fuente no dice va con `^[inferido]`; lo dudoso,
    con `^[ambiguo]`. Lo que sale del chat lleva `origen: conversacion` y nunca cuenta como evidencia.
@@ -32,14 +32,18 @@ Fuente de verdad que comparten las 5 skills de OKT (`cerebro`, `capturar`, `cons
 
 | Carpeta | Qué va | Ejemplos |
 |---|---|---|
-| `00-Bandeja/` | Lo que entra sin procesar: `notas/`, `sesiones/`, `importados/`, `telegram/` | Idea suelta, ficha de sesión, página traída de Notion |
-| `10-Proyectos/` | Lo que tiene un fin: una carpeta por proyecto, con su nota principal del mismo nombre | `Tesis/Tesis.md`, `Curso de Python/Curso de Python.md` |
-| `20-Areas/` | Lo continuo, sin fecha de fin: una nota por área (y subcarpeta si crece) | `Medicina.md`, `Personal.md` |
-| `30-Conocimiento/` | Lo aprendido, compilado y enlazado: `conceptos/`, `entidades/`, `sintesis/` | `conceptos/Sepsis.md`, `entidades/Obsidian.md`, `sintesis/Antibióticos en neumonía.md` |
-| `40-Fuentes/` | Una ficha por fuente + `adjuntos/<origen>/` con el original | `Guía MINSA de anemia 2024.md`, `adjuntos/pdf/…` |
-| `50-Diario/` | Diario `AAAA-MM-DD.md` y revisión semanal `AAAA-Wnn.md` | `2026-10-22.md`, `2026-W43.md` |
-| `90-Archivo/` | Lo terminado u obsoleto, conservando su ruta relativa | `90-Archivo/10-Proyectos/Curso viejo/` |
-| `99-Sistema/` | `hot.md`, `bitacora.md`, `pendientes.md`, `indice.md`, `plantillas/` | — |
+| `00 │ 📥 Bandeja/` | Lo que entra sin procesar: `📝 notas/`, `💻 sesiones/`, `📦 importados/`, `📲 telegram/` | Idea suelta, ficha de sesión, página traída de Notion |
+| `10 │ 🎯 Proyectos/` | Lo que tiene un fin: una carpeta por proyecto, con su nota principal del mismo nombre | `🎓 Tesis/🎓 Tesis.md`, `🐍 Curso de Python/🐍 Curso de Python.md` |
+| `20 │ 🧭 Areas/` | Lo continuo, sin fecha de fin: una nota por área (y subcarpeta si crece) | `🩺 Medicina.md`, `🌱 Personal.md` |
+| `30 │ 🧠 Conocimiento/` | Lo aprendido, compilado y enlazado: `💡 conceptos/`, `🏷️ entidades/`, `🧩 sintesis/` | `💡 conceptos/🦠 Sepsis.md`, `🏷️ entidades/🟣 Obsidian.md`, `🧩 sintesis/🫁 Antibióticos en neumonía.md` |
+| `40 │ 📚 Fuentes/` | Una ficha por fuente + `📎 adjuntos/<origen>/` con el original | `📄 Guía MINSA de anemia 2024.md`, `🔬 Hierro oral en niños.md`, `📎 adjuntos/📕 pdf/…` |
+| `50 │ 📅 Diario/` | Diario y revisión semanal | `📅 2026-10-22.md`, `🗓️ 2026-W43.md` |
+| `90 │ 🗄️ Archivo/` | Lo terminado u obsoleto, conservando su ruta relativa | `90 │ 🗄️ Archivo/10 │ 🎯 Proyectos/🐍 Curso viejo/` |
+| `99 │ ⚙️ Sistema/` | `🔥 hot.md`, `📜 bitacora.md`, `✅ pendientes.md`, `🗂️ indice.md`, `🧱 plantillas/` | — |
+
+El separador de las carpetas es `│` (U+2502, «línea fina»), no la barra `|`, que Windows prohíbe en los nombres y
+que en Obsidian separa el alias de un enlace. Para no escribirlo, `--carpeta` acepta nombres cortos
+(`proyectos/Tesis`, `importados`, `conceptos`) y nombres sin su emoji.
 
 **¿Concepto, entidad o síntesis?** Un *concepto* es una idea (enfermedad, técnica, teoría). Una *entidad*
 es algo con nombre propio: persona, institución, herramienta, fármaco comercial. Una *síntesis* cruza
@@ -47,17 +51,29 @@ varias fuentes o conceptos para responder algo («qué antibiótico en neumonía
 
 **¿Proyecto o área?** Si termina (un curso, la tesis, un plugin), es un proyecto. Si no termina
 (medicina, salud personal), es un área. Un curso por gusto que estás llevando es un proyecto; lo
-que aprendiste en él va a `30-Conocimiento/`, enlazado al proyecto.
+que aprendiste en él va a `30 │ 🧠 Conocimiento/`, enlazado al proyecto.
 
 ## 3. Nombres de archivo y enlaces
 
-- **Título legible en español:** `Sepsis.md`, `Guía MINSA de anemia 2024.md`. Se permiten tildes y
-  espacios.
+- **Título legible en español, con un emoji al inicio:** `🦠 Sepsis.md`, `📄 Guía MINSA de anemia 2024.md`. Se
+  permiten tildes y espacios.
+- **Qué emoji:**
+  - **Temático, lo eliges tú** en `concepto`, `entidad`, `sintesis`, `proyecto` y `area`: el que mejor
+    represente el tema (🩸 anemia, 🫀 corazón, 💊 un fármaco, 🐍 Python). Escríbelo al inicio del título:
+    `okt nota nueva concepto "🩸 Anemia ferropénica"`. Si no pones ninguno, el CLI pone el del tipo.
+  - **Fijo, lo pone el CLI** en lo demás: 📄 fuente, 🔬 artículo, 📅 diario, 🗓️ semanal, 📝 nota, 📲 Telegram,
+    💻 sesión, 🗒️ Notion, ☁️ Drive, 🤖 NotebookLM. Si pones otro, el CLI lo cambia por el del tipo.
+  - **Alias:** el CLI agrega el título sin emoji en `aliases`, para que la búsqueda y el autocompletado de
+    Obsidian encuentren «Anemia ferropénica».
+  - **Para cambiar un nombre o su emoji:** `okt renombrar "<nota>" "<nombre nuevo>"`, que actualiza los enlaces.
+    Nunca renombres a mano.
 - **Caracteres prohibidos:** `— – : / \ ? * " < > | # ^ [ ]`. Se usa el guion ASCII `-`.
-- **Enlaces:** siempre `[[Nombre de la nota]]` o `[[Nombre#Sección]]`, sin rutas. Si dos notas se
-  llaman igual, se le cambia el nombre a una.
+- **Enlaces:** siempre `[[Nombre de la nota]]` o `[[Nombre#Sección]]`, sin rutas y **con el emoji**: `[[🩸 Anemia
+  ferropénica]]`. Obsidian no resuelve un enlace por el alias, así que `[[Anemia ferropénica]]` queda roto
+  (`okt lint` sugiere el nombre correcto). «💡 Anemia» y «🩸 Anemia» cuentan como la misma nota: el CLI no deja
+  crear la segunda.
 - **Adjuntos:** `![[archivo.png]]` para mostrarlos y `[[archivo.pdf]]` para enlazarlos.
-- **Cuántos enlaces:** cada nota nueva de `30-Conocimiento/` enlaza al menos a 2 notas existentes (su
+- **Cuántos enlaces:** cada nota nueva de `30 │ 🧠 Conocimiento/` enlaza al menos a 2 notas existentes (su
   fuente y un concepto, área o proyecto).
 
 ## 4. Frontmatter (YAML plano, sin objetos anidados)
@@ -68,13 +84,13 @@ Campos comunes:
 |---|---|---|
 | `tipo` | `concepto` `entidad` `sintesis` `fuente` `proyecto` `area` `diario` `semanal` `sesion` `nota` `sistema` | Todas |
 | `creado` | `AAAA-MM-DD` | Todas |
-| `actualizado` | `AAAA-MM-DD`; cambia solo si cambia el contenido | Todas menos `diario` y `sesion` |
+| `actualizado` | `AAAA-MM-DD`; cambia solo si cambia el contenido | Todas menos `diario`, `semanal`, `sesion` y `sistema` |
 | `resumen` | 1 o 2 frases de ≤200 caracteres; es lo que lee `okt buscar` | `concepto` `entidad` `sintesis` `fuente` `proyecto` `area` |
 | `estado` | Conocimiento y fuentes: `borrador` `revisado` `disputado` `archivado`. Proyectos: `activo` `pausado` `terminado` `archivado` | `concepto` `entidad` `sintesis` `fuente` `proyecto` |
 | `fuentes` | Lista de `"[[Ficha de la fuente]]"` | `concepto` `entidad` `sintesis` |
 | `tags` | Lista (nombre propio de Obsidian) | — |
-| `aliases` | Lista de nombres alternativos (nombre propio de Obsidian) | — |
-| `area` / `proyecto` | `"[[Medicina]]"`, `"[[Tesis]]"` | — |
+| `aliases` | Lista de nombres alternativos (nombre propio de Obsidian); el CLI agrega el título sin emoji | — |
+| `area` / `proyecto` | `"[[🩺 Medicina]]"`, `"[[🎓 Tesis]]"` | — |
 | `frescura_dias` | Días tras los que un sello `(al AAAA-MM-DD)` se considera vencido (por defecto 90) | — |
 
 Campos de `tipo: fuente`:
@@ -97,9 +113,11 @@ creado: 2026-10-22
 actualizado: 2026-10-22
 estado: borrador
 resumen: Respuesta desregulada del huésped a una infección con disfunción orgánica (Sepsis-3).
+aliases:
+  - Sepsis
 fuentes:
-  - "[[Surviving Sepsis Campaign 2021]]"
-area: "[[Medicina]]"
+  - "[[📄 Surviving Sepsis Campaign 2021]]"
+area: "[[🩺 Medicina]]"
 tags:
   - medicina/infectologia
 ---
@@ -121,7 +139,7 @@ tags:
   cargo) lleva el sello `(al AAAA-MM-DD)`, o se reemplaza por un puntero («ver [[Guía…]]»). En el
   diario, todo está fechado por definición.
 
-## 6. 99-Sistema: cómo se comunican las skills
+## 6. 99 │ ⚙️ Sistema: cómo se comunican las skills
 
 | Archivo | Para qué | Cómo se escribe |
 |---|---|---|

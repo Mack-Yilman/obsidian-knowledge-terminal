@@ -4,6 +4,11 @@
 import { resolve } from 'node:path';
 import { resolverVault, buscarVaultArriba, posix } from './lib/rutas.mjs';
 import { COMANDOS, AYUDA } from './lib/comandos.mjs';
+import { necesitaMigrar, AVISO_MIGRAR } from './lib/estructura.mjs';
+
+// Comandos que escriben en el vault: con la estructura anterior (0.2.x) se detienen hasta migrar, para no dejar
+// carpetas nuevas junto a las viejas. telegram se revisa aparte (config no toca el vault).
+const ESCRIBEN = new Set(['init', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'sesiones', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar']);
 
 const BOOLEANOS = new Set(['aplicar', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'nuevo', 'completo']);
 
@@ -42,6 +47,10 @@ async function main() {
       process.stderr.write('No encontré un vault de OKT aquí ni en la configuración. Abre tu agente en la carpeta de tus notas y ejecuta «okt init».\n');
       return 1;
     }
+  }
+  if (vault && (ESCRIBEN.has(nombre) || (nombre === 'telegram' && pos[0] === 'bajar')) && necesitaMigrar(vault)) {
+    process.stderr.write(`${AVISO_MIGRAR}\n`);
+    return 2;
   }
   try {
     const r = await cmd.correr({ pos, op, vault, posix });

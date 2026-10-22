@@ -29,7 +29,7 @@ async function preparar(opciones = {}) {
     ...v,
     cola,
     leer: (rel) => readFileSync(join(v.vault, rel), 'utf8'),
-    bandeja: () => readdirSync(join(v.vault, '00-Bandeja', 'telegram')).sort(),
+    bandeja: () => readdirSync(join(v.vault, '00 │ 📥 Bandeja', '📲 telegram')).sort(),
     async fin() {
       await cola.cerrar();
       v.borrar();
@@ -79,24 +79,24 @@ test('bajar escribe cada tipo en su lugar y confirma todo', async () => {
     assert.deepEqual(t.cola.estado.confirmados.sort(), ['a1', 'a2', 'a3', 'a4', 'a5']);
 
     const notas = t.bandeja();
-    assert.ok(notas.includes('2026-10-21 1805 Idea para el repaso de anemia ferropénica.md'), notas.join(' | '));
-    const nota = t.leer('00-Bandeja/telegram/2026-10-21 1805 Idea para el repaso de anemia ferropénica.md');
+    assert.ok(notas.includes('📲 2026-10-21 1805 Idea para el repaso de anemia ferropénica.md'), notas.join(' | '));
+    const nota = t.leer('00 │ 📥 Bandeja/📲 telegram/📲 2026-10-21 1805 Idea para el repaso de anemia ferropénica.md');
     assert.match(nota, /^---\ntipo: nota\ncreado: 2026-10-21\norigen: telegram\n/);
     assert.match(nota, /Idea para el repaso de anemia ferropénica en niños/);
 
-    const voz = notas.find((n) => n.startsWith('2026-10-21 1806'));
-    assert.match(t.leer(`00-Bandeja/telegram/${voz}`), /Transcripción automática/);
+    const voz = notas.find((n) => n.startsWith('📲 2026-10-21 1806'));
+    assert.match(t.leer(`00 │ 📥 Bandeja/📲 telegram/${voz}`), /Transcripción automática/);
 
-    const enlace = t.leer(`00-Bandeja/telegram/${notas.find((n) => /youtube/i.test(n))}`);
+    const enlace = t.leer(`00 │ 📥 Bandeja/📲 telegram/${notas.find((n) => /youtube/i.test(n))}`);
     assert.match(enlace, /url: https:\/\/www.youtube.com\/watch\?v=abc/);
     assert.match(enlace, /capturar/);
 
-    assert.equal(readFileSync(join(t.vault, '40-Fuentes/adjuntos/telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
-    const archivo = t.leer(`00-Bandeja/telegram/${notas.find((n) => /Pizarra/.test(n))}`);
+    assert.equal(readFileSync(join(t.vault, '40 │ 📚 Fuentes/📎 adjuntos/📲 telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
+    const archivo = t.leer(`00 │ 📥 Bandeja/📲 telegram/${notas.find((n) => /Pizarra/.test(n))}`);
     assert.match(archivo, /adjunto: "\[\[foto.jpg\]\]"/);
     assert.match(archivo, /!\[\[foto.jpg\]\]/);
 
-    assert.match(t.leer('50-Diario/2026-10-22.md'), /## Tareas\n\n- \[ \] Comprar el libro de fisiología/);
+    assert.match(t.leer('50 │ 📅 Diario/📅 2026-10-22.md'), /## Tareas\n\n- \[ \] Comprar el libro de fisiología/);
     assert.equal(notas.length, 4);
   } finally {
     await t.fin();
@@ -127,7 +127,10 @@ test('un elemento sensible se retiene sin --forzar y se escribe con él', async 
     assert.deepEqual(r.datos.retenidos.map((x) => x.id), ['c1']);
     assert.match(r.texto, /okt telegram descartar c1/);
     assert.deepEqual(t.cola.estado.confirmados, []);
-    const r2 = await bajar(t.vault, { forzar: true });
+    assert.match(readFileSync(join(t.vault, '.cerebro', 'telegram.json'), 'utf8'), /"retenidos"[\s\S]*"c1"/, 'okt estado los muestra');
+    // --forzar sin ids no adivina: hay que nombrar cada elemento (o «todo»).
+    await assert.rejects(bajar(t.vault, { forzar: true }), /--forzar <id/);
+    const r2 = await bajar(t.vault, { forzar: true, ids: ['c1'] });
     assert.equal(r2.datos.escritos.length, 1);
     assert.deepEqual(t.cola.estado.confirmados, ['c1']);
   } finally {
@@ -156,7 +159,7 @@ test('retiene por el nombre del archivo y por nombres en mayúsculas', async () 
   try {
     const r = await bajar(t.vault);
     assert.deepEqual(r.datos.retenidos.map((x) => x.id), ['c3', 'c4']);
-    assert.ok(!existsSync(join(t.vault, '40-Fuentes/adjuntos/telegram')) || readdirSync(join(t.vault, '40-Fuentes/adjuntos/telegram')).length === 0);
+    assert.ok(!existsSync(join(t.vault, '40 │ 📚 Fuentes/📎 adjuntos/📲 telegram')) || readdirSync(join(t.vault, '40 │ 📚 Fuentes/📎 adjuntos/📲 telegram')).length === 0);
   } finally {
     await t.fin();
   }
@@ -192,9 +195,9 @@ test('una foto sin leyenda: título sin extensión ni fecha repetida, sin renglo
   const t = await preparar({ elementos: [elemento('m1', 'archivo', '', { archivo_key: 'F', nombre: 'foto 2026-10-21 1805.jpg', mime: 'image/jpeg' })], archivos: { F: { bytes: 'JPG', mime: 'image/jpeg' } } });
   try {
     await bajar(t.vault);
-    assert.deepEqual(t.bandeja(), ['2026-10-21 1805 foto.md']);
-    const nota = t.leer('00-Bandeja/telegram/2026-10-21 1805 foto.md');
-    assert.match(nota, /# foto\n\n!\[\[foto 2026-10-21 1805.jpg\]\]\n\nArchivo en /);
+    assert.deepEqual(t.bandeja(), ['📲 2026-10-21 1805 foto.md']);
+    const nota = t.leer('00 │ 📥 Bandeja/📲 telegram/📲 2026-10-21 1805 foto.md');
+    assert.match(nota, /# 📲 foto\n\n!\[\[foto 2026-10-21 1805.jpg\]\]\n\nArchivo en /);
   } finally {
     await t.fin();
   }
@@ -204,7 +207,7 @@ test('el título no termina en coma ni en otra puntuación', async () => {
   const t = await preparar({ elementos: [elemento('o1', 'voz', 'Hola, ahorita estoy probando el telegram, el audio de telegram')] });
   try {
     await bajar(t.vault);
-    assert.deepEqual(t.bandeja(), ['2026-10-21 1805 Hola, ahorita estoy probando el telegram.md']);
+    assert.deepEqual(t.bandeja(), ['📲 2026-10-21 1805 Hola, ahorita estoy probando el telegram.md']);
   } finally {
     await t.fin();
   }
@@ -256,7 +259,7 @@ test('descartar confirma sin escribir nada', async () => {
     const r = await descartar(t.vault, ['d1']);
     assert.match(r.texto, /1/);
     assert.deepEqual(t.cola.estado.confirmados, ['d1']);
-    assert.equal(existsSync(join(t.vault, '00-Bandeja/telegram')) ? t.bandeja().length : 0, 0);
+    assert.equal(existsSync(join(t.vault, '00 │ 📥 Bandeja/📲 telegram')) ? t.bandeja().length : 0, 0);
   } finally {
     await t.fin();
   }
@@ -333,15 +336,15 @@ test('agregarTarea usa la línea vacía de la plantilla o crea la sección', () 
   const v = vaultNuevo();
   process.env.OKT_CONFIG_DIR = v.configDir;
   try {
-    escribir(v.vault, '50-Diario/2026-10-22.md', '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n\n## Tareas\n\n- [ ] \n\n## Lo que aprendí\n');
+    escribir(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md', '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n\n## Tareas\n\n- [ ] \n\n## Lo que aprendí\n');
     agregarTarea(v.vault, 'Primera');
     agregarTarea(v.vault, 'Segunda');
-    const diaria = readFileSync(join(v.vault, '50-Diario/2026-10-22.md'), 'utf8');
+    const diaria = readFileSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md'), 'utf8');
     assert.match(diaria, /## Tareas\n\n- \[ \] Primera\n- \[ \] Segunda\n\n## Lo que aprendí/);
 
-    writeFileSync(join(v.vault, '50-Diario/2026-10-22.md'), '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n');
+    writeFileSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md'), '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n');
     agregarTarea(v.vault, 'Sin sección');
-    assert.match(readFileSync(join(v.vault, '50-Diario/2026-10-22.md'), 'utf8'), /## Tareas\n\n- \[ \] Sin sección\n$/);
+    assert.match(readFileSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md'), 'utf8'), /## Tareas\n\n- \[ \] Sin sección\n$/);
   } finally {
     v.borrar();
   }

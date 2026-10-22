@@ -1,5 +1,5 @@
 {
-  "folder": "50-Diario",
-  "format": "YYYY-MM-DD",
-  "template": "99-Sistema/plantillas/Diario"
+  "folder": "50 │ 📅 Diario",
+  "format": "[📅] YYYY-MM-DD",
+  "template": "99 │ ⚙️ Sistema/🧱 plantillas/📅 Diario"
 }

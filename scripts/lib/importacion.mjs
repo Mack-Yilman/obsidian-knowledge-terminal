@@ -5,14 +5,15 @@
 //   usuario agregó fuera de ellas;
 // - si el contenido parece traer datos de pacientes, no se escribe (salvo --forzar).
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { R, carpetaAdjuntos, conEmoji, resolverCarpeta } from './estructura.mjs';
 import { join, dirname, extname } from 'node:path';
 import { escribirFrontmatter, leerFrontmatter } from './frontmatter.mjs';
 import { reemplazarBloque } from './bloques.mjs';
 import { fechaISO } from './fechas.mjs';
-import { limpiarNombre } from './nombres.mjs';
+import { limpiarNombre, sinEmoji, recortar } from './nombres.mjs';
 import { mapaDeNombres } from './vault.mjs';
 import { patronSensible } from './sensibles.mjs';
-import { posix } from './rutas.mjs';
+import { posix, sobrescribir } from './rutas.mjs';
 
 export const errorUso = (m) => Object.assign(new Error(m), { codigo: 2 });
 
@@ -28,7 +29,7 @@ export function leerRegistro(vault) {
 
 function guardarRegistro(vault, registro) {
   mkdirSync(join(vault, '.cerebro'), { recursive: true });
-  writeFileSync(rutaRegistro(vault), `${JSON.stringify(registro, null, 2)}\n`);
+  sobrescribir(rutaRegistro(vault), `${JSON.stringify(registro, null, 2)}\n`);
 }
 
 // "1,3-5" o "todo" → índices (base 0) válidos para una lista de n elementos.
@@ -60,23 +61,24 @@ export function escribirImportada(vault, { clave, titulo, contenido, datos = {},
   const hoy = fechaISO();
   // El nombre del adjunto se guarda para que reimportar reemplace el mismo archivo y no otro.
   const adjunto = datos.adjunto ? String(datos.adjunto).replace(/^\[\[|\]\]$/g, '') : previa?.adjunto;
-  if (previa && existsSync(join(vault, previa.ruta)) && !previa.ruta.startsWith('90-Archivo/')) {
+  if (previa && existsSync(join(vault, previa.ruta)) && !/^90[ -]/.test(previa.ruta)) {
     const abs = join(vault, previa.ruta);
     const texto = readFileSync(abs, 'utf8');
     const { datos: fm, cuerpo } = leerFrontmatter(texto);
     const nuevo = escribirFrontmatter({ ...fm, ...datos, importado: hoy, actualizado: hoy }, reemplazarBloque(cuerpo, contenido.trim()));
-    writeFileSync(abs, nuevo);
+    sobrescribir(abs, nuevo);
     registro[clave] = { ...previa, importado: hoy, ...(adjunto ? { adjunto } : {}) };
     guardarRegistro(vault, registro);
     return { ruta: previa.ruta, accion: 'actualizada' };
   }
-  const destino = op.carpeta || carpeta || '00-Bandeja/importados';
-  const base = limpiarNombre(titulo) || 'Sin título';
+  const destino = op.carpeta ? resolverCarpeta(vault, op.carpeta) : carpeta || R.importados;
+  // Emoji del origen (🗒️ Notion, ☁️ Drive, 🤖 NotebookLM) y alias sin emoji para la búsqueda.
+  const base = conEmoji(datos.origen, limpiarNombre(titulo) || 'Sin título');
   let nombre = base;
   const nombres = mapaDeNombres(vault);
   for (let i = 2; nombres.has(nombre.toLowerCase()); i++) nombre = `${base} ${i}`;
   const rel = `${destino}/${nombre}.md`;
-  const fm = { tipo: 'nota', creado: hoy, actualizado: hoy, ...datos, importado: hoy };
+  const fm = { tipo: 'nota', creado: hoy, actualizado: hoy, aliases: [sinEmoji(base)], ...datos, importado: hoy };
   const cuerpo = `\n# ${nombre}\n\nImportado de ${datos.origen || 'una fuente externa'} el ${hoy}. Lo que está entre las marcas se reemplaza si vuelves a importar; escribe tus notas fuera de ellas.\n\n<!-- okt:inicio -->\n${contenido.trim()}\n<!-- okt:fin -->\n`;
   mkdirSync(join(vault, destino), { recursive: true });
   writeFileSync(join(vault, rel), escribirFrontmatter(fm, cuerpo));
@@ -87,9 +89,9 @@ export function escribirImportada(vault, { clave, titulo, contenido, datos = {},
 
 const EXT_POR_TIPO = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp', 'image/svg+xml': '.svg', 'application/pdf': '.pdf' };
 
-// Descarga un archivo a 40-Fuentes/adjuntos/<origen>/ y devuelve su nombre (para ![[nombre]]).
+// Descarga un archivo a la carpeta de adjuntos de su origen y devuelve su nombre (para ![[nombre]]).
 export async function descargarAdjunto(vault, url, origen, base) {
-  const dir = join(vault, '40-Fuentes', 'adjuntos', origen);
+  const dir = join(vault, carpetaAdjuntos(origen));
   mkdirSync(dir, { recursive: true });
   let bytes;
   let tipo = '';
@@ -103,14 +105,15 @@ export async function descargarAdjunto(vault, url, origen, base) {
   }
   let ext = extname(new URL(url).pathname).toLowerCase();
   if (!ext || ext.length > 5) ext = EXT_POR_TIPO[tipo] || '.bin';
-  let nombre = `${limpiarNombre(base)}${ext}`;
-  for (let i = 2; existsSync(join(dir, nombre)); i++) nombre = `${limpiarNombre(base)} ${i}${ext}`;
+  const raiz = recortar(limpiarNombre(base), 100);
+  let nombre = `${raiz}${ext}`;
+  for (let i = 2; existsSync(join(dir, nombre)); i++) nombre = `${raiz} ${i}${ext}`;
   writeFileSync(join(dir, nombre), bytes);
   return nombre;
 }
 
 export function rutaAdjunto(origen, nombre) {
-  return posix(join('40-Fuentes', 'adjuntos', origen, nombre));
+  return posix(`${carpetaAdjuntos(origen)}/${nombre}`);
 }
 
 export function asegurarCarpeta(vault, rel) {

@@ -4,22 +4,24 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO, semanaISO } from './fechas.mjs';
-import { limpiarNombre } from './nombres.mjs';
-import { mapaDeNombres } from './vault.mjs';
+import { limpiarNombre, sinEmoji } from './nombres.mjs';
+import { mismasNotas } from './vault.mjs';
 import { sobrescribir } from './rutas.mjs';
+import { C, R, conEmoji, resolverCarpeta } from './estructura.mjs';
 
+// alias: se agrega el título sin emoji, para que la búsqueda y el autocompletado de Obsidian lo encuentren.
 export const TIPOS = {
-  concepto: { carpeta: '30-Conocimiento/conceptos', estado: 'borrador', resumen: true, fuentes: true, cuerpo: ['Lo esencial', 'Relacionado', 'Historial'] },
-  entidad: { carpeta: '30-Conocimiento/entidades', estado: 'borrador', resumen: true, fuentes: true, cuerpo: ['Qué es', 'Relacionado', 'Historial'] },
-  sintesis: { carpeta: '30-Conocimiento/sintesis', estado: 'borrador', resumen: true, fuentes: true, cuerpo: ['Pregunta', 'Respuesta', 'Evidencia', 'Contradicciones', 'Relacionado', 'Historial'] },
-  fuente: { carpeta: '40-Fuentes', estado: 'borrador', resumen: true, cuerpo: ['TL;DR', 'Qué aporta', 'Puntos clave', 'Notas'] },
-  articulo: { tipo: 'fuente', carpeta: '40-Fuentes', estado: 'borrador', resumen: true, cuerpo: ['TL;DR', 'Pregunta', 'Método', 'Resultados', 'Limitaciones', 'Qué aporta', 'Notas'] },
-  proyecto: { carpeta: '10-Proyectos', propia: true, estado: 'activo', resumen: true, cuerpo: ['Objetivo', 'Próximos pasos', 'Decisiones', 'Relacionado', 'Historial'] },
-  area: { carpeta: '20-Areas', resumen: true, cuerpo: ['Proyectos', 'Conocimiento', 'Notas'] },
-  diario: { carpeta: '50-Diario', sinActualizado: true, titulo: () => fechaISO(), cuerpo: ['Foco del día', 'Notas', 'Tareas', 'Lo que aprendí'] },
-  semanal: { carpeta: '50-Diario', sinActualizado: true, titulo: () => semanaISO(), cuerpo: ['Qué pasó', 'Proyectos', 'Lo aprendido', 'Pendientes', 'Próxima semana'] },
-  nota: { carpeta: '00-Bandeja/notas', cuerpo: [] },
-  sesion: { carpeta: '00-Bandeja/sesiones', sinActualizado: true, cuerpo: [] },
+  concepto: { carpeta: R.conceptos, estado: 'borrador', resumen: true, fuentes: true, alias: true, cuerpo: ['Lo esencial', 'Relacionado', 'Historial'] },
+  entidad: { carpeta: R.entidades, estado: 'borrador', resumen: true, fuentes: true, alias: true, cuerpo: ['Qué es', 'Relacionado', 'Historial'] },
+  sintesis: { carpeta: R.sintesis, estado: 'borrador', resumen: true, fuentes: true, alias: true, cuerpo: ['Pregunta', 'Respuesta', 'Evidencia', 'Contradicciones', 'Relacionado', 'Historial'] },
+  fuente: { carpeta: C.fuentes, estado: 'borrador', resumen: true, alias: true, cuerpo: ['TL;DR', 'Qué aporta', 'Puntos clave', 'Notas'] },
+  articulo: { tipo: 'fuente', carpeta: C.fuentes, estado: 'borrador', resumen: true, alias: true, cuerpo: ['TL;DR', 'Pregunta', 'Método', 'Resultados', 'Limitaciones', 'Qué aporta', 'Notas'] },
+  proyecto: { carpeta: C.proyectos, propia: true, estado: 'activo', resumen: true, alias: true, cuerpo: ['Objetivo', 'Próximos pasos', 'Decisiones', 'Relacionado', 'Historial'] },
+  area: { carpeta: C.areas, resumen: true, alias: true, cuerpo: ['Proyectos', 'Conocimiento', 'Notas'] },
+  diario: { carpeta: C.diario, sinActualizado: true, titulo: () => fechaISO(), cuerpo: ['Foco del día', 'Notas', 'Tareas', 'Lo que aprendí'] },
+  semanal: { carpeta: C.diario, sinActualizado: true, titulo: () => semanaISO(), cuerpo: ['Qué pasó', 'Proyectos', 'Lo aprendido', 'Pendientes', 'Próxima semana'] },
+  nota: { carpeta: R.notas, alias: true, cuerpo: [] },
+  sesion: { carpeta: R.sesiones, sinActualizado: true, cuerpo: [] },
 };
 
 const lista = (v) => (v ? String(v).split(',').map((s) => s.trim()).filter(Boolean) : []);
@@ -32,19 +34,21 @@ export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
     e.codigo = 2;
     throw e;
   }
-  const titulo = limpiarNombre(tituloPedido || (def.titulo ? def.titulo() : ''));
-  if (!titulo) {
+  const limpio = limpiarNombre(tituloPedido || (def.titulo ? def.titulo() : ''));
+  if (!sinEmoji(limpio)) {
     const e = new Error('Falta el título: okt nota nueva <tipo> "<título>"');
     e.codigo = 2;
     throw e;
   }
-  const carpeta = op.carpeta || (def.propia ? `${def.carpeta}/${titulo}` : def.carpeta);
+  const titulo = conEmoji(tipoPedido, limpio);
+  const carpeta = op.carpeta ? resolverCarpeta(vault, op.carpeta) : def.propia ? `${def.carpeta}/${titulo}` : def.carpeta;
   const rel = `${carpeta}/${titulo}.md`;
 
-  const iguales = mapaDeNombres(vault).get(titulo.toLowerCase());
-  if (iguales?.length) {
+  // «💡 Anemia» y «🩸 Anemia» son la misma nota: se compara sin el emoji.
+  const iguales = mismasNotas(vault, titulo);
+  if (iguales.length) {
     if (def.titulo) return { texto: `Ya existía: ${iguales[0]}`, datos: { ruta: iguales[0], creada: false } };
-    const e = new Error(`Ya existe una nota llamada «${titulo}»: ${iguales[0]}. Actualízala en vez de duplicarla, o elige otro título.`);
+    const e = new Error(`Ya existe una nota llamada «${sinEmoji(titulo)}»: ${iguales[0]}. Actualízala en vez de duplicarla, o elige otro título.`);
     e.codigo = 3;
     throw e;
   }
@@ -54,6 +58,7 @@ export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
   if (!def.sinActualizado) datos.actualizado = hoy;
   if (def.estado) datos.estado = op.estado || def.estado;
   if (def.resumen) datos.resumen = op.resumen || '';
+  if (def.alias && sinEmoji(titulo) !== titulo) datos.aliases = [sinEmoji(titulo)];
   if (datos.tipo === 'fuente') {
     datos.origen = op.origen || '';
     if (op.url) datos.url = op.url;

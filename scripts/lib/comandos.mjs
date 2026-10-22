@@ -12,6 +12,7 @@ import { adjuntar, archivar } from './archivos.mjs';
 import { instalarAntigravity } from './instalar.mjs';
 import { leerConfigVault, guardarConfigVault } from './rutas.mjs';
 import { doctor } from './doctor.mjs';
+import { migrar, renombrar } from './migrar.mjs';
 import { importarNotion } from './importar-notion.mjs';
 import { importarDrive } from './importar-drive.mjs';
 import { configurar as tgConfigurar, bajar as tgBajar, descartar as tgDescartar } from './telegram.mjs';
@@ -35,14 +36,18 @@ Configuración
   config [excluir|incluir <proyecto>]    Ver o cambiar la configuración del vault
   config poner <clave> <valor>           frescura_dias, delegar (agy|ninguno), respaldo
   instalar antigravity [--aplicar]       Copia el plugin y las skills a Antigravity
+  migrar [--aplicar]                     Pasa un vault 0.2.x a la estructura con emojis (sin --aplicar: vista previa)
 
 Notas
   nota nueva <tipo> "<título>"           concepto entidad sintesis fuente articulo proyecto area
                                          diario semanal nota sesion  (--resumen --fuentes --area
                                          --proyecto --origen --url --autor --carpeta --tags)
+                                         Conocimiento, proyectos y áreas: pon un emoji temático al inicio
+                                         del título; los demás tipos reciben el emoji de su tipo
+  renombrar "<nota>" "<nombre nuevo>"     Cambia el nombre (y el emoji) y actualiza los enlaces
   buscar "<texto>" [--carpeta --tipo --limite]
-  adjuntar "<archivo>" [--origen pdf]    Copia un archivo a 40-Fuentes/adjuntos sin duplicar
-  archivar "<ruta>" […]                  Mueve a 90-Archivo (nada se borra)
+  adjuntar "<archivo>" [--origen pdf]    Copia un archivo a los adjuntos de Fuentes sin duplicar
+  archivar "<ruta>" […]                  Mueve a la carpeta Archivo (nada se borra)
 
 Sistema (las skills se comunican por aquí)
   bitacora <skill> "<texto>" [--notas "A,B"]
@@ -65,10 +70,11 @@ Importar (solo a pedido)
 
 Telegram (bot okt-telegram: el celular encola, aquí se baja)
   telegram config [--url <worker> --token <token>]   Guarda la conexión en ~/.config/okt/telegram.json
-  telegram bajar [--forzar]              Baja la cola a 00-Bandeja/telegram/ (también al iniciar sesión)
+  telegram bajar [--forzar <id…>|todo]  Baja la cola a la bandeja de Telegram (también al iniciar sesión)
   telegram descartar <id…>               Quita elementos de la cola sin escribirlos
 
 Opciones comunes: --vault <ruta>  --json
+--carpeta acepta nombres cortos: "proyectos/Tesis", "importados", "conceptos".
 `;
 
 export const COMANDOS = {
@@ -187,9 +193,11 @@ export const COMANDOS = {
       if (accion === 'config') return tgConfigurar(op);
       if (accion !== 'bajar' && accion !== 'descartar') throw Object.assign(new Error('Uso: okt telegram config [--url <worker> --token <token>] | bajar [--forzar] | descartar <id…>'), { codigo: 2 });
       if (!vault) throw Object.assign(new Error('No encontré un vault de OKT aquí ni en la configuración.'), { codigo: 1 });
-      return accion === 'bajar' ? tgBajar(vault, op) : tgDescartar(vault, pos);
+      return accion === 'bajar' ? tgBajar(vault, { ...op, ids: pos }) : tgDescartar(vault, pos);
     },
   },
+  migrar: { correr: ({ op, vault }) => migrar(vault, op) },
+  renombrar: { correr: ({ pos, vault }) => renombrar(vault, pos[0], pos.slice(1).join(' ')) },
   commit: {
     correr({ pos, vault }) {
       const r = commit(vault, pos.join(' ') || 'okt: cambios');

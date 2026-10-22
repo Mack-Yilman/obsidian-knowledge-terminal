@@ -8,7 +8,7 @@ Pide confirmación antes de cada instalación o cambio. Si el usuario ya tiene u
 - **macOS:** `brew install --cask obsidian` o la descarga.
 - **Linux:** AppImage o Flatpak (`flatpak install flathub md.obsidian.Obsidian`).
 
-Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `40-Fuentes/adjuntos`, notas nuevas en `00-Bandeja/notas`, plantillas en `99-Sistema/plantillas`, diario en `50-Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
+Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `40 │ 📚 Fuentes/📎 adjuntos`, notas nuevas en `00 │ 📥 Bandeja/📝 notas`, plantillas en `99 │ ⚙️ Sistema/🧱 plantillas`, diario en `50 │ 📅 Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
 
 ## Respaldo con Google Drive para escritorio
 
@@ -43,7 +43,9 @@ Al final: `okt doctor --completo` verifica las sesiones.
 
 `okt instalar antigravity` muestra qué hará: copiar el plugin a `~/.okt/plugin` y las 5 skills a `~/.gemini/config/skills/okt-*`. Con el sí del usuario, `okt instalar antigravity --aplicar`. Después de actualizar el plugin, se repite el comando.
 
-Antigravity no tiene hooks: sus sesiones se recogen en el lote con `okt sesiones agy`, que cuenta los pedidos y lee los cambios de git de cada carpeta sin copiar el texto de los pedidos.
+Con el vault ya creado, `--aplicar` deja también en `<vault>/.agents/hooks.json` un hook de inicio (SessionStart) que, al abrir `agy` en el vault, baja Telegram y carga `🔥 hot.md`, igual que en Claude Code. agy solo usa ese hook si el vault es una **carpeta de confianza**: la primera vez que el usuario abra `agy` en el vault, debe aceptar confiar en ella (`okt doctor` lo comprueba).
+
+Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen en el lote con `okt sesiones agy`, que cuenta los pedidos y lee los cambios de git de cada carpeta sin copiar el texto de los pedidos.
 
 ## Capa de formato (opcional)
 
@@ -70,4 +72,4 @@ Permite enviar notas, notas de voz, enlaces, fotos y tareas desde el móvil medi
 ### Comprobación
 
 - En Telegram: envía `/estado` al bot para ver cuántos elementos esperan en la cola.
-- En la PC: ejecuta `okt telegram bajar` para descargar los elementos en `00-Bandeja/telegram/` y confirmar la recepción.
+- En la PC: ejecuta `okt telegram bajar` para descargar los elementos en `00 │ 📥 Bandeja/📲 telegram/` y confirmar la recepción.

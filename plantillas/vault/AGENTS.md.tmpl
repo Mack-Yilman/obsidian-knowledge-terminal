@@ -12,34 +12,41 @@ de abajo: `okt init` solo actualiza lo que está entre las marcas.
    o una página importada.
 3. **Nada se importa ni se procesa solo:** Notion, Drive, NotebookLM y la bandeja, solo cuando el usuario
    lo pide y sobre lo que él elige.
-4. **Nada se borra:** lo obsoleto va a `90-Archivo/`.
-5. **No edites a mano** `99-Sistema/` ni `.cerebro/`: usa el CLI `okt`.
+4. **Nada se borra:** lo obsoleto va a `90 │ 🗄️ Archivo/`.
+5. **No edites a mano** `99 │ ⚙️ Sistema/` ni `.cerebro/`: usa el CLI `okt`.
 6. **Busca antes de crear** (`okt buscar "<tema>"`) y actualiza la nota existente en vez de duplicarla.
 7. **Marca lo inferido** con `^[inferido]`, y cada afirmación con su `[[Fuente]]`.
+8. **Cada nota empieza con un emoji.** En conceptos, entidades, síntesis, proyectos y áreas, elige uno
+   temático y ponlo al inicio del título (`okt nota nueva concepto "🩸 Anemia ferropénica"`). En lo demás, el
+   CLI pone el del tipo. Los enlaces llevan el nombre exacto, con su emoji: `[[🩸 Anemia ferropénica]]`.
 
 ## Dónde va cada cosa
 
 | Carpeta | Qué va |
 |---|---|
-| `00-Bandeja/` | Lo que entra sin procesar (notas, sesiones, importados, telegram) |
-| `10-Proyectos/` | Lo que tiene fin: una carpeta por proyecto con su nota principal del mismo nombre |
-| `20-Areas/` | Lo continuo: {{areas}} |
-| `30-Conocimiento/` | Lo aprendido: `conceptos/`, `entidades/`, `sintesis/` |
-| `40-Fuentes/` | Una ficha por fuente + `adjuntos/` con el original |
-| `50-Diario/` | `AAAA-MM-DD.md` y revisiones `AAAA-Wnn.md` |
-| `90-Archivo/` | Lo terminado u obsoleto |
-| `99-Sistema/` | `hot.md` (contexto), `bitacora.md`, `pendientes.md`, `indice.md`, `plantillas/` |
+| `00 │ 📥 Bandeja/` | Lo que entra sin procesar: `📝 notas`, `💻 sesiones`, `📦 importados`, `📲 telegram` |
+| `10 │ 🎯 Proyectos/` | Lo que tiene fin: una carpeta por proyecto con su nota principal del mismo nombre |
+| `20 │ 🧭 Areas/` | Lo continuo: {{areas}} |
+| `30 │ 🧠 Conocimiento/` | Lo aprendido: `💡 conceptos/`, `🏷️ entidades/`, `🧩 sintesis/` |
+| `40 │ 📚 Fuentes/` | Una ficha por fuente + `📎 adjuntos/` con el original |
+| `50 │ 📅 Diario/` | `📅 AAAA-MM-DD.md` y revisiones `🗓️ AAAA-Wnn.md` |
+| `90 │ 🗄️ Archivo/` | Lo terminado u obsoleto |
+| `99 │ ⚙️ Sistema/` | `🔥 hot.md` (contexto), `📜 bitacora.md`, `✅ pendientes.md`, `🗂️ indice.md`, `🧱 plantillas/` |
+
+El separador de las carpetas es `│` (U+2502), no `|`. Para no escribirlo a mano, `--carpeta` acepta nombres
+cortos: `--carpeta "proyectos/Tesis"`.
 
 ## Cómo trabajar
 
-- **Al empezar:** lee `99-Sistema/hot.md`. Para encontrar algo, usa `okt buscar` antes de abrir notas, y
-  después lee como máximo 3 notas completas.
+- **Al empezar:** lee `99 │ ⚙️ Sistema/🔥 hot.md`. Para encontrar algo, usa `okt buscar` antes de abrir notas,
+  y después lee como máximo 3 notas completas.
 - **Telegram:** en Claude Code y en Antigravity, un hook de inicio baja la cola del bot y avisa en el contexto
   («Telegram: …»). Si no ves ese aviso y `okt telegram config` muestra una url, ejecuta `okt telegram bajar`.
-  Lo que llega queda en `00-Bandeja/telegram/`; las tareas, en la nota diaria.
+  Lo que llega queda en `00 │ 📥 Bandeja/📲 telegram/`; las tareas, en la nota diaria.
 - **Formato de las notas** (frontmatter, nombres, enlaces): `contrato-vault.md` del plugin OKT. Lo
   mínimo: `tipo`, `creado`, `actualizado`, `resumen` (≤200 caracteres), `estado` y `fuentes`; títulos
-  legibles sin `: / \ ? * " < > | # ^ [ ]`; enlaces `[[Nota]]`.
+  legibles con emoji y sin `: / \ ? * " < > | # ^ [ ]`; enlaces `[[Nota]]`. Para cambiar un nombre:
+  `okt renombrar "<nota>" "<nombre nuevo>"` (actualiza los enlaces).
 - **Al terminar una operación:** `okt cerrar <skill> "<qué hiciste>" --notas "A,B"`. Actualiza la
   bitácora, el índice y hot, y hace un commit en git.
 - **CLI:** `okt` significa `node "{{cli}}"`. Ejecútalo desde esta carpeta. La ruta se renueva sola si el

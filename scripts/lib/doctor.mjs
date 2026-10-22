@@ -5,6 +5,8 @@ import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { ejecutar, resolverBinario, jsonDe } from './binarios.mjs';
 import { leerConfigVault, posix } from './rutas.mjs';
+import { dirSkillsAgy, deConfianza } from './instalar.mjs';
+import { necesitaMigrar } from './estructura.mjs';
 
 const plataforma = process.platform;
 
@@ -52,6 +54,7 @@ export function doctor(vault, op = {}) {
   const git = version('git');
   add('Base', 'Git', Boolean(git), git || 'no encontrado', 'Instala Git: https://git-scm.com (en Windows: winget install Git.Git)');
   add('Base', 'Vault', Boolean(vault), vault ? posix(vault) : 'no configurado', 'Abre tu agente en la carpeta de tus notas y pide «configura mi segundo cerebro» (okt init).');
+  if (vault) add('Base', 'Estructura con emojis (0.3.0)', !necesitaMigrar(vault), necesitaMigrar(vault) ? 'estructura anterior' : 'al día', 'okt migrar (vista previa) y okt migrar --aplicar');
   if (vault) add('Base', 'Git del vault', existsSync(join(vault, '.git')), existsSync(join(vault, '.git')) ? 'historial local activo' : 'sin historial', 'okt init --aplicar lo crea (git local, sin remoto).');
 
   const obs = obsidianInstalado();
@@ -78,8 +81,13 @@ export function doctor(vault, op = {}) {
       add('Conectores', `${k.nombre}: sesión`, ok, ok ? 'válida' : 'sin sesión o vencida', k.como.split('&&').pop().trim(), true);
     }
   }
-  const agySkills = existsSync(join(homedir(), '.gemini', 'config', 'skills', 'okt-cerebro', 'SKILL.md'));
+  const agySkills = existsSync(join(dirSkillsAgy(), 'okt-cerebro', 'SKILL.md'));
   add('Conectores', 'Skills de OKT en Antigravity', agySkills, agySkills ? 'instaladas' : 'no instaladas', 'okt instalar antigravity', true);
+  // agy solo usa el hook de inicio del vault (Telegram y hot.md) si el vault es una carpeta de confianza.
+  if (agySkills && vault) {
+    const confianza = deConfianza(vault);
+    add('Conectores', 'Vault de confianza en Antigravity', confianza, confianza ? 'sí' : 'no', 'Abre agy en la carpeta del vault y acepta confiar en ella: sin eso, agy no usa el hook de inicio.', true);
+  }
 
   const marca = { ok: '✔', falta: '✖', opcional: '·' };
   const grupos = [...new Set(c.map((x) => x.grupo))];

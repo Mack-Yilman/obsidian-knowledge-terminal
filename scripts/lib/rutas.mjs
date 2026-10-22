@@ -82,6 +82,6 @@ export function leerConfigVault(vault) {
 export function guardarConfigVault(vault, cambios) {
   const cfg = { ...leerConfigVault(vault), ...cambios };
   mkdirSync(join(vault, '.cerebro'), { recursive: true });
-  writeFileSync(join(vault, '.cerebro', 'config.json'), `${JSON.stringify(cfg, null, 2)}\n`);
+  sobrescribir(join(vault, '.cerebro', 'config.json'), `${JSON.stringify(cfg, null, 2)}\n`);
   return cfg;
 }

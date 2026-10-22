@@ -50,25 +50,26 @@ test('adjuntar copia sin tocar el original y no duplica el mismo contenido', () 
   let r = v.okt(['adjuntar', pdf, '--json']);
   assert.equal(r.codigo, 0, r.error);
   const d = JSON.parse(r.salida);
-  assert.equal(d.ruta, '40-Fuentes/adjuntos/pdf/Guía - anemia.pdf');
+  assert.equal(d.ruta, '40 │ 📚 Fuentes/📎 adjuntos/📕 pdf/Guía - anemia.pdf');
   assert.ok(existsSync(pdf));
   const copia = escribir(v.dir, 'otra copia.pdf', '%PDF-1');
   r = v.okt(['adjuntar', copia]);
-  assert.match(r.salida, /Ya estaba: 40-Fuentes\/adjuntos\/pdf\/Guía - anemia\.pdf/);
+  assert.match(r.salida, /Ya estaba: 40 │ 📚 Fuentes\/📎 adjuntos\/📕 pdf\/Guía - anemia\.pdf/);
   r = v.okt(['adjuntar', escribir(v.dir, 'Foto.PNG', 'img'), '--json']);
-  assert.equal(JSON.parse(r.salida).ruta, '40-Fuentes/adjuntos/imagenes/Foto.png');
+  assert.equal(JSON.parse(r.salida).ruta, '40 │ 📚 Fuentes/📎 adjuntos/🖼️ imagenes/Foto.png');
   v.borrar();
 });
 
-test('archivar mueve a 90-Archivo con la misma ruta y marca estado archivado; protege la raíz y el sistema', () => {
+test('archivar mueve a 90 │ 🗄️ Archivo con la misma ruta y marca estado archivado; protege la raíz y el sistema', () => {
   const v = vaultNuevo();
   v.okt(['nota', 'nueva', 'proyecto', 'Curso viejo']);
+  // Acepta el nombre sin emoji y la ruta de la estructura anterior.
   let r = v.okt(['archivar', '10-Proyectos/Curso viejo']);
   assert.equal(r.codigo, 0, r.error);
-  const movida = join(v.vault, '90-Archivo/10-Proyectos/Curso viejo/Curso viejo.md');
+  const movida = join(v.vault, '90 │ 🗄️ Archivo/10 │ 🎯 Proyectos/🎯 Curso viejo/🎯 Curso viejo.md');
   assert.ok(existsSync(movida));
   assert.match(readFileSync(movida, 'utf8'), /estado: archivado/);
-  for (const prohibido of ['99-Sistema/hot.md', 'AGENTS.md', '10-Proyectos', '../x']) {
+  for (const prohibido of ['99 │ ⚙️ Sistema/🔥 hot.md', 'AGENTS.md', '10 │ 🎯 Proyectos', '../x']) {
     r = v.okt(['archivar', prohibido]);
     assert.notEqual(r.codigo, 0, `debió rechazar ${prohibido}`);
   }

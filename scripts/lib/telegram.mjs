@@ -1,4 +1,4 @@
-// okt telegram: baja la cola del bot okt-telegram (un Worker de Cloudflare) a 00-Bandeja/telegram/.
+// okt telegram: baja la cola del bot okt-telegram (un Worker de Cloudflare) a la bandeja de Telegram del vault.
 // El bot solo encola; aquí se escribe. Contrato de la cola en el README (sección «Telegram»):
 // GET /cola[?cursor=] → { elementos, cursor }, GET /archivo/<key> → bytes,
 // POST /cola/confirmar { ids } → { borrados }. Todo con Authorization: Bearer <token>.
@@ -6,15 +6,17 @@
 // y solo se confirma (y se borra de la cola) lo que ya quedó escrito.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, closeSync, statSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { dirConfig, posix } from './rutas.mjs';
+import { dirConfig, posix, sobrescribir } from './rutas.mjs';
+import { R, EMOJI, carpetaAdjuntos, conEmoji } from './estructura.mjs';
+import { fechaISO, horaCorta } from './fechas.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
-import { limpiarNombre } from './nombres.mjs';
+import { limpiarNombre, sinEmoji } from './nombres.mjs';
 import { patronSensible } from './sensibles.mjs';
 import { agregarTarea } from './notas.mjs';
 import { cerrar } from './sistema.mjs';
 import { errorUso, rutaAdjunto } from './importacion.mjs';
 
-const CARPETA = '00-Bandeja/telegram';
+const CARPETA = R.telegram;
 const TOPE_MS = 180000; // a mano: ~30 archivos de ~5 s cada uno
 const RESERVA_ARCHIVO_MS = 10000; // un archivo solo se empieza si queda este margen; si no, espera a la próxima bajada
 const TOPE_CONFIRMAR_MS = 3000; // la confirmación tiene su propio plazo: sale aunque el tope general ya pasó
@@ -77,7 +79,7 @@ function guardarRegistro(vault, registro) {
   const limite = Date.now() - DIAS_REGISTRO * 86400000;
   for (const [id, r] of Object.entries(registro.escritos)) if (Date.parse(r.fecha) < limite) delete registro.escritos[id];
   mkdirSync(join(vault, '.cerebro'), { recursive: true });
-  writeFileSync(rutaRegistro(vault), `${JSON.stringify(registro, null, 2)}\n`);
+  sobrescribir(rutaRegistro(vault), `${JSON.stringify(registro, null, 2)}\n`);
 }
 
 function cliente(cfg, signal) {
@@ -134,20 +136,22 @@ function titulo(el) {
 
 function escribirNota(vault, el, datosExtra, cuerpo) {
   const { dia, hhmm } = partesFecha(el.fecha);
-  const base = limpiarNombre(`${dia} ${hhmm} ${titulo(el)}`) || `${dia} ${hhmm}`;
+  const base = conEmoji('telegram', limpiarNombre(`${dia} ${hhmm} ${titulo(el)}`) || `${dia} ${hhmm}`);
   mkdirSync(join(vault, CARPETA), { recursive: true });
   let nombre = base;
   for (let i = 2; existsSync(join(vault, CARPETA, `${nombre}.md`)); i++) nombre = `${base} ${i}`;
   const rel = `${CARPETA}/${nombre}.md`;
   const datos = { tipo: 'nota', creado: dia, origen: 'telegram', ...datosExtra };
-  writeFileSync(join(vault, rel), escribirFrontmatter(datos, `\n# ${nombre.slice(16) || nombre}\n\n${cuerpo.trim()}\n`));
+  // El título sin la fecha, que ya va en el nombre: «📲 2026-10-21 1805 comprar libro» → «📲 comprar libro».
+  const sinFecha = sinEmoji(nombre).slice(16);
+  writeFileSync(join(vault, rel), escribirFrontmatter(datos, `\n# ${sinFecha ? `${EMOJI.telegram} ${sinFecha}` : nombre}\n\n${cuerpo.trim()}\n`));
   return rel;
 }
 
 async function bajarArchivo(vault, pedir, el) {
   const r = await pedir(`/archivo/${encodeURIComponent(el.archivo_key)}`);
   const bytes = Buffer.from(await r.arrayBuffer());
-  const dir = join(vault, '40-Fuentes', 'adjuntos', 'telegram');
+  const dir = join(vault, carpetaAdjuntos('telegram'));
   mkdirSync(dir, { recursive: true });
   const original = limpiarNombre(el.nombre || `${el.id}.bin`) || `${el.id}.bin`;
   const punto = original.lastIndexOf('.');
@@ -171,12 +175,16 @@ async function escribirElemento(vault, pedir, el) {
   return escribirNota(vault, el, {}, texto);
 }
 
-// okt telegram bajar [--forzar] [--tope <ms>]. Un archivo solo se empieza si quedan op.reservaArchivo ms del
+// okt telegram bajar [--forzar <id…>|todo] [--tope <ms>]. --forzar escribe solo los retenidos que se nombran: cada uno
+// se decide aparte, como sugiere el aviso del bot. Un archivo solo se empieza si quedan op.reservaArchivo ms del
 // tope (10 s a mano, 6 s en el hook): cada uno tarda ~5 s (Telegram → Worker → PC) y lo demás es rápido. Los que
 // no alcanzan quedan en la cola, sin error, para la próxima bajada.
 export async function bajar(vault, op = {}) {
   const cfg = leerConfigTelegram();
   if (!cfg?.url || !cfg?.token) throw errorUso('Telegram sin configurar: okt telegram config --url <worker> --token <token>.');
+  const ids = [].concat(op.ids || [], typeof op.forzar === 'string' ? op.forzar.split(',') : []).map((x) => String(x).trim()).filter(Boolean);
+  if (op.forzar && !ids.length) throw errorUso('Indica qué elementos escribir: okt telegram bajar --forzar <id…> (los ids salen en okt estado), o --forzar todo.');
+  const forzado = (id) => Boolean(op.forzar) && (ids.includes('todo') || ids.includes(id));
   const soltar = tomarCandado(vault);
   const tope = Number(op.tope) || TOPE_MS;
   const reserva = op.reservaArchivo ?? RESERVA_ARCHIVO_MS;
@@ -201,7 +209,7 @@ export async function bajar(vault, op = {}) {
         }
         // El nombre del archivo también puede traer datos de un paciente.
         const p = patronSensible([el.texto || '', el.nombre || ''].join('\n'));
-        if ((el.sensible || p) && !op.forzar) {
+        if ((el.sensible || p) && !forzado(el.id)) {
           retenidos.push({ id: el.id, que: p?.que || 'datos de pacientes' });
           continue;
         }
@@ -231,6 +239,15 @@ export async function bajar(vault, op = {}) {
         sinConfirmar = true;
       }
     }
+    // okt estado muestra los retenidos y la última bajada con novedades. Sin novedades no se reescribe, para
+    // no dejar el git del vault con cambios en cada sesión.
+    try {
+      if (escritos.length || JSON.stringify(registro.retenidos || []) !== JSON.stringify(retenidos)) {
+        registro.retenidos = retenidos;
+        registro.ultima = `${fechaISO()} ${horaCorta()}`;
+        guardarRegistro(vault, registro);
+      }
+    } catch {}
     try {
       if (escritos.length) cerrar(vault, 'telegram', `${escritos.length} elementos de Telegram a la bandeja`);
     } finally {
@@ -242,7 +259,7 @@ export async function bajar(vault, op = {}) {
   for (const e of escritos) lineas.push(`- ${e}`);
   if (retenidos.length) {
     lineas.push(`Retenidos por parecer datos de pacientes (no se escribieron): ${retenidos.map((x) => `${x.id} (${x.que})`).join(', ')}.`);
-    lineas.push(`Si no lo son: okt telegram bajar --forzar. Para quitarlos de la cola: okt telegram descartar ${retenidos.map((x) => x.id).join(' ')}`);
+    lineas.push(`Si no lo son: okt telegram bajar --forzar <id…>. Para quitarlos de la cola: okt telegram descartar ${retenidos.map((x) => x.id).join(' ')}`);
   }
   for (const e of errores) lineas.push(`No pude escribir ${e.id}: ${e.error.replace(/\.$/, '')}. Queda en la cola para la próxima vez.`);
   if (diferidos.length) {

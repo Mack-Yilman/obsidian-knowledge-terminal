@@ -3,7 +3,7 @@ tipo: sistema
 creado: {{fecha}}
 ---
 
-# Bitácora
+# 📜 Bitácora
 
 Una línea por operación, la más nueva primero. La escribe `okt bitacora`.
 

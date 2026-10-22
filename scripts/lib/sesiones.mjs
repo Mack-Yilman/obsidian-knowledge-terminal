@@ -4,7 +4,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { join, basename, relative, resolve } from 'node:path';
 import { homedir } from 'node:os';
-import { leerConfigGlobal, guardarConfigGlobal, leerConfigVault, guardarConfigVault, esVault, dentroDe, dirConfig, CLI, posix } from './rutas.mjs';
+import { leerConfigGlobal, guardarConfigGlobal, leerConfigVault, guardarConfigVault, esVault, dentroDe, dirConfig, CLI, posix, sobrescribir } from './rutas.mjs';
+import { R, conEmoji, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
 import { leerBloque, reemplazarBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { ahora, fechaISO, horaCorta } from './fechas.mjs';
@@ -38,10 +39,11 @@ function renovarRutaCli(vault) {
   if (cfg.cli === actual) return;
   guardarConfigGlobal({ cli: actual });
   const ruta = join(vault, 'AGENTS.md');
-  if (!existsSync(ruta)) return;
+  // Sin migrar, el bloque nuevo describiría carpetas que aún no existen: lo regenera okt migrar.
+  if (!existsSync(ruta) || necesitaMigrar(vault)) return;
   const areas = (leerConfigVault(vault).areas || []).map((a) => `[[${a}]]`).join(', ');
   const nuevo = leerBloque(textoAgents({ fecha: fechaISO(), areas, cli: actual }));
-  writeFileSync(ruta, reemplazarBloque(readFileSync(ruta, 'utf8'), nuevo));
+  sobrescribir(ruta, reemplazarBloque(readFileSync(ruta, 'utf8'), nuevo));
   commit(vault, 'okt: ruta del CLI actualizada en AGENTS.md');
 }
 
@@ -63,12 +65,15 @@ async function lineaTelegram(vault) {
 // Contexto de inicio, igual para Claude Code y Antigravity: cabecera, lo que llegó de Telegram y hot.md
 // (se lee después de bajar Telegram, porque esa bajada lo actualiza).
 async function contextoInicio(vault) {
-  const telegram = await lineaTelegram(vault);
-  const hot = existsSync(join(vault, '99-Sistema', 'hot.md')) ? leerBloque(readFileSync(join(vault, '99-Sistema', 'hot.md'), 'utf8')) || '' : '';
-  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${telegram}## Contexto reciente (99-Sistema/hot.md)\n\n`;
+  // Con la estructura anterior no se baja Telegram: escribiría en carpetas nuevas junto a las viejas.
+  const migrar = necesitaMigrar(vault);
+  const telegram = migrar ? `${AVISO_MIGRAR} Propónselo al usuario antes de cualquier otra operación.\n\n` : await lineaTelegram(vault);
+  const rutaHot = existsSync(join(vault, R.hot)) ? join(vault, R.hot) : join(vault, '99-Sistema', 'hot.md');
+  const hot = existsSync(rutaHot) ? leerBloque(readFileSync(rutaHot, 'utf8')) || '' : '';
+  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${telegram}## Contexto reciente (${posix(rutaHot.slice(vault.length + 1))})\n\n`;
   const texto = cab + hot;
   if (texto.length <= TOPE_CONTEXTO) return texto;
-  return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(join(vault, '99-Sistema', 'hot.md'))}`;
+  return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(rutaHot)}`;
 }
 
 export async function hookInicio(entradaTexto) {
@@ -139,8 +144,8 @@ function escribirFicha(vault, { proyecto, cwd, agente, inicio, git, editados = [
   const commits = limpios(git?.commits || []);
   const archivos = limpios([...new Set([...editados, ...(git?.cambiados || [])])]);
   if (!commits.length && !archivos.length && !pedidos) return null;
-  const nombre = limpiarNombre(`${fechaISO(inicio)} ${horaCorta(inicio).replace(':', '')} ${proyecto}`);
-  const rel = `00-Bandeja/sesiones/${nombre}.md`;
+  const nombre = conEmoji('sesion', limpiarNombre(`${fechaISO(inicio)} ${horaCorta(inicio).replace(':', '')} ${proyecto}`));
+  const rel = `${R.sesiones}/${nombre}.md`;
   const datos = { tipo: 'sesion', creado: fechaISO(inicio), agente, proyecto, ruta: posix(cwd) };
   if (git?.rama) datos.rama = git.rama;
   if (pedidos) datos.pedidos = String(pedidos);
@@ -148,10 +153,10 @@ function escribirFicha(vault, { proyecto, cwd, agente, inicio, git, editados = [
   if (conversaciones?.length) partes.push(`Conversaciones de agy: ${conversaciones.join(', ')}\n`);
   partes.push(`## Commits\n\n${commits.length ? commits.map((c) => `- ${c}`).join('\n') : '- (ninguno)'}\n`);
   partes.push(`## Archivos tocados\n\n${archivos.length ? archivos.map((a) => `- ${a}`).join('\n') : '- (ninguno)'}\n`);
-  partes.push('## Para procesar\n\nFicha automática, sin resumen del modelo. Al procesar la bandeja: lo general va a 30-Conocimiento y lo propio del proyecto se propone para el `## Insights` de su CLAUDE.md.\n');
-  mkdirSync(join(vault, '00-Bandeja', 'sesiones'), { recursive: true });
+  partes.push('## Para procesar\n\nFicha automática, sin resumen del modelo. Al procesar la bandeja: lo general va a Conocimiento y lo propio del proyecto se propone para el `## Insights` de su CLAUDE.md.\n');
+  mkdirSync(join(vault, R.sesiones), { recursive: true });
   let abs = join(vault, rel);
-  for (let i = 2; existsSync(abs); i++) abs = join(vault, `00-Bandeja/sesiones/${nombre} ${i}.md`);
+  for (let i = 2; existsSync(abs); i++) abs = join(vault, `${R.sesiones}/${nombre} ${i}.md`);
   writeFileSync(abs, escribirFrontmatter(datos, partes.join('\n')));
   return posix(relative(vault, abs));
 }
@@ -161,7 +166,7 @@ export function hookFin(entradaTexto) {
     const e = leerEntrada(entradaTexto);
     const vault = vaultGlobal();
     const cwd = e.cwd ? resolve(e.cwd) : null;
-    if (!vault || !cwd || !existsSync(cwd) || dentroDe(vault, cwd) || excluido(vault, cwd)) return '';
+    if (!vault || !cwd || !existsSync(cwd) || dentroDe(vault, cwd) || excluido(vault, cwd) || necesitaMigrar(vault)) return '';
     let inicioMs = Date.now() - 12 * 3600 * 1000;
     if (e.session_id && existsSync(archivoSesion(e.session_id))) {
       inicioMs = JSON.parse(readFileSync(archivoSesion(e.session_id), 'utf8')).inicio - 60000;
@@ -209,5 +214,5 @@ export function sesionesAgy(vault) {
     if (f) fichas.push(f);
   }
   guardarConfigVault(vault, { agy_ultimo: maximo });
-  return { texto: `${fichas.length} fichas de sesiones de agy en 00-Bandeja/sesiones.${fichas.length ? `\n${fichas.map((f) => `- ${f}`).join('\n')}` : ''}`, datos: { fichas } };
+  return { texto: `${fichas.length} fichas de sesiones de agy en ${R.sesiones}.${fichas.length ? `\n${fichas.map((f) => `- ${f}`).join('\n')}` : ''}`, datos: { fichas } };
 }

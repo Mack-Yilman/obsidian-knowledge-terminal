@@ -7,8 +7,11 @@ import { join } from 'node:path';
 const activo = () => process.env.OKT_SIN_GIT !== '1';
 
 function git(vault, args) {
-  const r = spawnSync('git', args, { cwd: vault, encoding: 'utf8' });
-  return { ok: r.status === 0, salida: (r.stdout || '').replace(/\r/g, '').trim(), error: (r.stderr || r.error?.message || '').trim() };
+  // core.quotepath=false: sin él, git escapa los nombres con tildes o emojis («"\360\237…"»).
+  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd: vault, encoding: 'utf8' });
+  // trimEnd y no trim: en «git status --porcelain» la primera línea de un archivo modificado empieza con espacio
+  // (« M archivo»), y quitarlo cortaba el primer carácter del nombre en la ficha de sesión.
+  return { ok: r.status === 0, salida: (r.stdout || '').replace(/\r/g, '').trimEnd(), error: (r.stderr || r.error?.message || '').trim() };
 }
 
 export function hayGit() {
@@ -39,11 +42,19 @@ export function cambiosDesde(dir, desdeISO) {
   // Para la ficha de sesión: commits y archivos cambiados en un repo ajeno (solo lectura).
   if (!existsSync(join(dir, '.git'))) return null;
   const commits = git(dir, ['log', `--since=${desdeISO}`, '--pretty=%s', '-n', '20']);
-  const estado = git(dir, ['status', '--porcelain']);
+  // -z: separado por NUL y sin comillas, aunque el nombre lleve espacios, tildes o emojis.
+  const estado = git(dir, ['status', '--porcelain', '-z']);
   const rama = git(dir, ['rev-parse', '--abbrev-ref', 'HEAD']);
+  const cambiados = [];
+  const partes = estado.ok ? estado.salida.split('\0') : [];
+  for (let i = 0; i < partes.length; i++) {
+    if (partes[i].length < 4) continue;
+    cambiados.push(partes[i].slice(3));
+    if (/^[RC]/.test(partes[i])) i++; // en un renombre, el siguiente es el nombre anterior
+  }
   return {
     rama: rama.ok ? rama.salida : '',
     commits: commits.ok && commits.salida ? commits.salida.split('\n') : [],
-    cambiados: estado.ok && estado.salida ? estado.salida.split('\n').map((l) => l.slice(3)) : [],
+    cambiados,
   };
 }

@@ -18,7 +18,7 @@ function proyectoGit(base, nombre) {
 }
 
 const fichas = (v) => {
-  const d = join(v.vault, '00-Bandeja', 'sesiones');
+  const d = join(v.vault, '00 │ 📥 Bandeja', '💻 sesiones');
   return existsSync(d) ? readdirSync(d) : [];
 };
 
@@ -49,8 +49,8 @@ test('hook fin en un proyecto con cambios escribe una ficha sin usar el modelo',
   assert.equal(r.codigo, 0, r.error);
   const lista = fichas(v);
   assert.equal(lista.length, 1);
-  assert.match(lista[0], /^2026-10-22 1030 mi-plugin\.md$/);
-  const texto = readFileSync(join(v.vault, '00-Bandeja', 'sesiones', lista[0]), 'utf8');
+  assert.match(lista[0], /^💻 2026-10-22 1030 mi-plugin\.md$/);
+  const texto = readFileSync(join(v.vault, '00 │ 📥 Bandeja', '💻 sesiones', lista[0]), 'utf8');
   assert.match(texto, /tipo: sesion/);
   assert.match(texto, /agente: claude/);
   assert.match(texto, /agrega app/);
@@ -94,7 +94,7 @@ test('sesiones agy agrupa por carpeta y día, sin copiar el texto de los pedidos
   assert.equal(r.codigo, 0, r.error);
   const lista = fichas(v);
   assert.equal(lista.length, 1);
-  const texto = readFileSync(join(v.vault, '00-Bandeja', 'sesiones', lista[0]), 'utf8');
+  const texto = readFileSync(join(v.vault, '00 │ 📥 Bandeja', '💻 sesiones', lista[0]), 'utf8');
   assert.match(texto, /agente: antigravity/);
   assert.match(texto, /pedidos: 2/);
   assert.doesNotMatch(texto, /secreto/);
@@ -103,21 +103,21 @@ test('sesiones agy agrupa por carpeta y día, sin copiar el texto de los pedidos
   v.borrar();
 });
 
-test('bandeja preparar junta lo pendiente en un paquete; archivar lo mueve a 90-Archivo', () => {
+test('bandeja preparar junta lo pendiente en un paquete; archivar lo mueve a 90 │ 🗄️ Archivo', () => {
   const v = vaultNuevo();
-  escribir(v.vault, '00-Bandeja/notas/Idea.md', '---\ntipo: nota\ncreado: 2026-10-20\n---\nUna idea sobre hierro.\n');
-  escribir(v.vault, '00-Bandeja/importados/Apuntes.md', 'Apuntes importados.\n');
+  escribir(v.vault, '00 │ 📥 Bandeja/📝 notas/Idea.md', '---\ntipo: nota\ncreado: 2026-10-20\n---\nUna idea sobre hierro.\n');
+  escribir(v.vault, '00 │ 📥 Bandeja/📦 importados/Apuntes.md', 'Apuntes importados.\n');
   let r = v.okt(['bandeja', 'preparar', '--json']);
   assert.equal(r.codigo, 0, r.error);
   const d = JSON.parse(r.salida);
   assert.equal(d.elementos.length, 2);
   const paquete = readFileSync(join(v.vault, d.paquete), 'utf8');
-  assert.match(paquete, /## 00-Bandeja\/notas\/Idea\.md/);
+  assert.match(paquete, /## 00 │ 📥 Bandeja\/📝 notas\/Idea\.md/);
   assert.match(paquete, /Una idea sobre hierro/);
-  r = v.okt(['bandeja', 'archivar', '00-Bandeja/notas/Idea.md']);
+  r = v.okt(['bandeja', 'archivar', '00 │ 📥 Bandeja/📝 notas/Idea.md']);
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(v.vault, '90-Archivo/00-Bandeja/notas/Idea.md')));
-  assert.ok(!existsSync(join(v.vault, '00-Bandeja/notas/Idea.md')));
+  assert.ok(existsSync(join(v.vault, '90 │ 🗄️ Archivo/00 │ 📥 Bandeja/📝 notas/Idea.md')));
+  assert.ok(!existsSync(join(v.vault, '00 │ 📥 Bandeja/📝 notas/Idea.md')));
   r = v.okt(['bandeja', 'archivar', '../fuera.md']);
   assert.notEqual(r.codigo, 0);
   v.borrar();

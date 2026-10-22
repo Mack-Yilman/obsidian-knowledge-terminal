@@ -10,11 +10,11 @@ export const FRASE_RAIZ = 'dos niveles arriba del directorio base de esta skill'
 const PARTES_PLUGIN = ['scripts', 'references', 'plantillas', 'skills', 'package.json'];
 
 const dirOkt = () => process.env.OKT_HOME || join(homedir(), '.okt');
-const dirSkillsAgy = () => process.env.OKT_AGY_SKILLS || join(homedir(), '.gemini', 'config', 'skills');
+export const dirSkillsAgy = () => process.env.OKT_AGY_SKILLS || join(homedir(), '.gemini', 'config', 'skills');
 const dirAgyCli = () => process.env.OKT_AGY_CLI_DIR || join(homedir(), '.gemini', 'antigravity-cli');
 
 // agy solo carga los hooks de un workspace de confianza (trustedWorkspaces, que incluye sus subcarpetas).
-function deConfianza(vault) {
+export function deConfianza(vault) {
   try {
     const { trustedWorkspaces = [] } = JSON.parse(readFileSync(join(dirAgyCli(), 'settings.json'), 'utf8'));
     const v = resolve(vault).toLowerCase();
