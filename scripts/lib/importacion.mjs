@@ -46,10 +46,11 @@ export function parsearSeleccion(sel, n) {
   return [...idx].sort((x, y) => x - y);
 }
 
-// Escribe o actualiza la nota importada. clave = "notion:<id>", "drive:<id>", "notebooklm:<id>".
-export function escribirImportada(vault, { clave, titulo, contenido, datos = {}, carpeta, op = {} }) {
+// Escribe o actualiza la nota importada. clave = "notion:<id>", "drive:<id>", "notebooklm:<id>", "web:<url>"…
+// ruta: una captura que ya existe (un enlace que llegó de Telegram) y se completa en su lugar.
+export function escribirImportada(vault, { clave, titulo, contenido, datos = {}, carpeta, ruta, op = {} }) {
   const registro = leerRegistro(vault);
-  const previa = registro[clave];
+  const previa = ruta ? { ...registro[clave], ruta } : registro[clave];
   const hoy = fechaISO();
   // El nombre del adjunto se guarda para que reimportar reemplace el mismo archivo y no otro.
   const adjunto = datos.adjunto ? String(datos.adjunto).replace(/^\[\[|\]\]$/g, '') : previa?.adjunto;
@@ -57,7 +58,8 @@ export function escribirImportada(vault, { clave, titulo, contenido, datos = {},
     const abs = join(vault, previa.ruta);
     const texto = readFileSync(abs, 'utf8');
     const { datos: fm, cuerpo } = leerFrontmatter(texto);
-    const nuevo = escribirFrontmatter({ ...fm, ...datos, importado: hoy, actualizado: hoy }, reemplazarBloque(cuerpo, contenido.trim()));
+    // Una captura no lleva «actualizado» (contrato: propiedades sin relleno).
+    const nuevo = escribirFrontmatter({ ...fm, ...datos, importado: hoy, ...(fm.tipo === 'captura' ? {} : { actualizado: hoy }) }, reemplazarBloque(cuerpo, contenido.trim()));
     sobrescribir(abs, nuevo);
     registro[clave] = { ...previa, importado: hoy, ...(adjunto ? { adjunto } : {}) };
     guardarRegistro(vault, registro);

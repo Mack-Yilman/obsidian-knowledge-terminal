@@ -1,6 +1,6 @@
 // okt importar drive <enlace o id> [--seleccion 1,3|todo] [--aplicar] [--carpeta <destino>]
-// Solo lectura en Drive (gws). Un Google Doc se exporta a Markdown; un PDF u otro archivo se baja a
-// la carpeta de adjuntos de Drive con una nota que lo enlaza; una carpeta se lista para elegir.
+// Solo lectura en Drive (gws). Un Google Doc se exporta a Markdown; un video se incrusta sin descargarlo; un PDF u
+// otro archivo se baja a la carpeta de adjuntos de Drive con una nota que lo enlaza; una carpeta se lista para elegir.
 // Las hojas de cálculo no se importan: en Drive suele haber datos clínicos.
 import { readFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -52,6 +52,13 @@ async function importarArchivo(vault, f, op) {
     const md = readFileSync(join(cache, nombre), 'utf8');
     rmSync(join(cache, nombre), { force: true });
     return escribirImportada(vault, { clave: `drive:${f.id}`, titulo: f.name.replace(/\.(md|txt)$/i, ''), contenido: md, datos, op });
+  }
+
+  // Un video no se descarga (pesa demasiado): se ve en la nota con el reproductor de Drive. Si el archivo es privado,
+  // el reproductor puede pedir iniciar sesión dentro de Obsidian; el enlace lo abre en el navegador.
+  if (f.mimeType.startsWith('video/')) {
+    const contenido = `<iframe src="https://drive.google.com/file/d/${f.id}/preview" width="100%" height="420" allow="autoplay; fullscreen" allowfullscreen></iframe>\n\n[▶️ Abrir en Drive](${datos.url})`;
+    return escribirImportada(vault, { clave: `drive:${f.id}`, titulo: f.name.replace(/\.[a-z0-9]{2,5}$/i, ''), contenido, datos, op });
   }
 
   // Binario (PDF, imagen, Word…): se guarda el original y una nota que lo enlaza.

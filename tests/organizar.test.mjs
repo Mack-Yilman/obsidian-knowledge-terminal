@@ -97,7 +97,7 @@ test('revisión de Argon: el área no pasa a ser tema, la Bandeja y el Sistema n
   v.borrar();
 });
 
-test('mover: una nota a otro tema y un tema entero con su carpeta, sin pasar de 3 niveles', () => {
+test('mover: una nota a otro tema y un tema entero con su carpeta', () => {
   const v = vaultNuevo();
   v.okt(['tema', 'nuevo', 'Medicina/🫀 Cardiología']);
   v.okt(['tema', 'nuevo', 'Medicina/🦠 Infectología']);

@@ -89,7 +89,7 @@ test('bajar escribe cada tipo en su lugar y confirma todo', async () => {
 
     const enlace = t.leer(`00 │ 📥 Bandeja/${notas.find((n) => /youtube/i.test(n))}`);
     assert.match(enlace, /url: https:\/\/www.youtube.com\/watch\?v=abc/);
-    assert.match(enlace, /capturar/);
+    assert.match(enlace, /okt importar enlaces/);
 
     assert.equal(readFileSync(join(t.vault, '99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
     const archivo = t.leer(`00 │ 📥 Bandeja/${notas.find((n) => /Pizarra/.test(n))}`);

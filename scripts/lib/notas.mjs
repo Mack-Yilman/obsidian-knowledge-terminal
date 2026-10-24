@@ -7,7 +7,7 @@ import { ahora, fechaISO, semanaISO } from './fechas.mjs';
 import { limpiarNombre, sinEmoji } from './nombres.mjs';
 import { mismasNotas } from './vault.mjs';
 import { sobrescribir } from './rutas.mjs';
-import { C, MAX_NIVELES_TEMA, conEmoji, resolverCarpeta, tituloDiario, ubicar, dentroDeLaEstructura } from './estructura.mjs';
+import { C, conEmoji, resolverCarpeta, tituloDiario, ubicar, dentroDeLaEstructura } from './estructura.mjs';
 
 // Tipos de la versión 2 que se aceptan como alias de nota.
 export const ALIAS_TIPOS = { concepto: 'nota', entidad: 'nota', sintesis: 'nota' };
@@ -31,17 +31,15 @@ const lista = (v) => (v ? String(v).split(',').map((s) => s.trim()).filter(Boole
 export const wiki = (n) => `[[${String(n).replace(/^\[\[|\]\]$/g, '')}]]`;
 const errorUso = (m, codigo = 2) => Object.assign(new Error(m), { codigo });
 
-// Carpeta de destino de un tipo que vive dentro de un área, un proyecto o un tema. Comprueba que exista y que no
-// pase de los niveles de tema permitidos.
+// Carpeta de destino de un tipo que vive dentro de un área, un proyecto o un tema. Comprueba que exista.
 export function carpetaDeDestino(vault, pedida, { propia = false } = {}) {
   const carpeta = resolverCarpeta(vault, pedida);
   if (!dentroDeLaEstructura(carpeta)) throw errorUso(`No encontré «${pedida}» en el vault: usa un área, un proyecto o un tema que exista (p. ej. --carpeta "Medicina/Cardiología"). Míralos en 99 │ ⚙️ Sistema/🗂️ indice.md.`);
   if (!existsSync(join(vault, carpeta))) throw errorUso(`La carpeta «${carpeta}» no existe. Créala primero (okt tema nuevo "${pedida}") o elige otra.`);
-  const { raiz, base, niveles } = ubicar(`${carpeta}/x.md`);
+  const { raiz, base } = ubicar(`${carpeta}/x.md`);
   // Solo dentro de un área o un proyecto: la Bandeja, el Diario, el Archivo y el Sistema no llevan notas ni temas aquí.
   if (!raiz) throw errorUso(`«${carpeta}» no es un área, un proyecto ni un tema. Sin --carpeta, la nota va a la Bandeja.`);
   if (!base) throw errorUso(`«${carpeta}» es la carpeta raíz: elige un área o un proyecto dentro de ella.`);
-  if (niveles + (propia ? 1 : 0) > MAX_NIVELES_TEMA) throw errorUso(`«${carpeta}» ya tiene ${niveles} niveles de tema: el máximo es ${MAX_NIVELES_TEMA}. Reorganiza la rama en vez de anidar más.`);
   return carpeta;
 }
 

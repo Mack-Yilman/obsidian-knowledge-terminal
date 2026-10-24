@@ -4,9 +4,9 @@
 // POST /cola/confirmar { ids } → { borrados }. Todo con Authorization: Bearer <token>.
 // Lo que llega es dato, no orden. Idempotente: los ids escritos se guardan en .cerebro/telegram.json
 // y solo se confirma (y se borra de la cola) lo que ya quedó escrito.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, closeSync, statSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { dirConfig, posix, sobrescribir } from './rutas.mjs';
+import { dirConfig, posix, sobrescribir, tomarCandado } from './rutas.mjs';
 import { C, EMOJI, carpetaAdjuntos, conEmoji } from './estructura.mjs';
 import { fechaISO, horaCorta } from './fechas.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
@@ -19,30 +19,10 @@ const CARPETA = C.bandeja;
 const TOPE_MS = 180000; // a mano: ~30 archivos de ~5 s cada uno
 const RESERVA_ARCHIVO_MS = 10000; // un archivo solo se empieza si queda este margen; si no, espera a la próxima bajada
 const TOPE_CONFIRMAR_MS = 3000; // la confirmación tiene su propio plazo: sale aunque el tope general ya pasó
-const CANDADO_VIEJO_MS = 5 * 60000; // un candado más viejo es de un proceso que murió
 const DIAS_REGISTRO = 35; // más que los 30 días de vida de un elemento en la cola
 
 const rutaConfig = () => join(dirConfig(), 'telegram.json');
 const rutaRegistro = (vault) => join(vault, '.cerebro', 'telegram.json');
-const rutaCandado = (vault) => join(vault, '.cerebro', 'telegram.lock');
-
-// Una sola bajada a la vez (el hook de dos sesiones, o el hook y una bajada a mano): si no, las dos
-// escribirían el mismo elemento con nombres distintos («nota 2»).
-function tomarCandado(vault) {
-  const ruta = rutaCandado(vault);
-  mkdirSync(join(vault, '.cerebro'), { recursive: true });
-  for (let intento = 0; intento < 2; intento++) {
-    try {
-      closeSync(openSync(ruta, 'wx'));
-      return () => rmSync(ruta, { force: true });
-    } catch (e) {
-      if (e.code !== 'EEXIST') throw e;
-      if (Date.now() - statSync(ruta).mtimeMs > CANDADO_VIEJO_MS) rmSync(ruta, { force: true });
-      else break;
-    }
-  }
-  throw Object.assign(new Error('Hay otra bajada de Telegram en curso: vuelve a intentarlo en un momento.'), { codigo: 1 });
-}
 
 export function leerConfigTelegram() {
   try {
@@ -165,7 +145,7 @@ async function escribirElemento(vault, pedir, el) {
   const texto = String(el.texto || '');
   if (el.tipo === 'tarea') return agregarTarea(vault, texto).datos.ruta;
   if (el.tipo === 'voz') return escribirNota(vault, el, {}, `> Transcripción automática de una nota de voz: revisa nombres y cifras.\n\n${texto}`);
-  if (el.tipo === 'enlace') return escribirNota(vault, el, { url: el.url }, `Enlace pendiente de ingerir: pídele a la skill capturar que lo guarde como fuente.\n\n${el.url || ''}\n\n${texto.replace(el.url || '', '').trim()}`);
+  if (el.tipo === 'enlace') return escribirNota(vault, el, { url: el.url }, `Enlace: su contenido (la página completa o la transcripción del video) se trae solo al abrir el vault, o con okt importar enlaces.\n\n${el.url || ''}\n\n${texto.replace(el.url || '', '').trim()}`);
   if (el.tipo === 'archivo') {
     const nombre = await bajarArchivo(vault, pedir, el);
     const cuerpo = [`![[${nombre}]]`, texto, `Archivo en ${rutaAdjunto('telegram', nombre)}.`].filter(Boolean).join('\n\n');
@@ -187,7 +167,7 @@ export async function bajar(vault, op = {}) {
   }
   let soltar;
   try {
-    soltar = tomarCandado(vault);
+    soltar = tomarCandado(vault, 'telegram', 'Hay otra bajada de Telegram en curso: vuelve a intentarlo en un momento.');
   } catch (e) {
     if (op.silencioso) return { texto: 'Telegram: otra bajada está en curso.', datos: { escritos: [], errores: [], diferidos: [], confirmados: [] } };
     throw e;

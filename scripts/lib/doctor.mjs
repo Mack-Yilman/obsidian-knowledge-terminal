@@ -80,6 +80,8 @@ export function doctor(vault, op = {}) {
     { bin: 'ntn', nombre: 'Notion (ntn)', como: 'npm install -g ntn && ntn login', auth: ['whoami'] },
     { bin: 'gws', nombre: 'Google Docs y Drive (gws)', como: 'npm install -g @googleworkspace/cli && gws auth login', auth: ['auth', 'status'] },
     { bin: 'agy', nombre: 'Antigravity (agy)', como: 'Instala Antigravity CLI y ábrelo una vez para iniciar sesión.' },
+    { bin: 'defuddle', nombre: 'Páginas web completas (defuddle)', como: 'npm install -g defuddle' },
+    { bin: 'yt-dlp', nombre: 'Transcripciones de YouTube (yt-dlp)', como: 'uv tool install yt-dlp' },
   ];
   for (const k of conectores) {
     const v = version(k.bin);

@@ -83,7 +83,7 @@ test('lint detecta enlaces rotos, frontmatter incompleto, resumen largo, notas s
   v.borrar();
 });
 
-test('lint: notas fuera de lugar, tipos de la 0.3 y temas demasiado profundos', () => {
+test('lint: notas fuera de lugar y tipos de la 0.3; los temas profundos ya no son un hallazgo', () => {
   const v = vaultConNotas();
   escribir(v.vault, '20 │ 🧭 Areas/Suelta.md', nota({ tipo: 'nota', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'r' }, '[[Hierro]]'));
   escribir(v.vault, `${MEDICINA}/Viejo.md`, nota({ tipo: 'concepto', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'r' }, '[[Hierro]]'));
@@ -91,7 +91,7 @@ test('lint: notas fuera de lugar, tipos de la 0.3 y temas demasiado profundos', 
   const h = JSON.parse(v.okt(['lint', '--json']).salida).hallazgos;
   assert.ok(h.some((x) => x.regla === 'fuera_de_lugar' && x.archivo.endsWith('Areas/Suelta.md')));
   assert.ok(h.some((x) => x.regla === 'tipo_antiguo' && x.archivo.endsWith('Viejo.md')));
-  assert.ok(h.some((x) => x.regla === 'muy_profunda' && x.archivo.endsWith('Hondo.md')));
+  assert.ok(!h.some((x) => x.regla === 'muy_profunda'), 'sin límite de niveles desde la 0.5.0');
   v.borrar();
 });
 
