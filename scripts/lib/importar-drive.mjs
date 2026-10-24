@@ -1,12 +1,11 @@
-// okt importar drive <enlace o id> [--seleccion 1,3|todo] [--aplicar] [--carpeta <destino>] [--forzar]
+// okt importar drive <enlace o id> [--seleccion 1,3|todo] [--aplicar] [--carpeta <destino>]
 // Solo lectura en Drive (gws). Un Google Doc se exporta a Markdown; un PDF u otro archivo se baja a
 // la carpeta de adjuntos de Drive con una nota que lo enlaza; una carpeta se lista para elegir.
 // Las hojas de cálculo no se importan: en Drive suele haber datos clínicos.
 import { readFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { ejecutar, jsonDe } from './binarios.mjs';
-import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, rutaAdjunto, leerRegistro } from './importacion.mjs';
-import { pareceSensible } from './sensibles.mjs';
+import { errorUso, parsearSeleccion, escribirImportada, rutaAdjunto, leerRegistro } from './importacion.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { carpetaAdjuntos } from './estructura.mjs';
 
@@ -42,8 +41,7 @@ function bajar(args, dir, nombre) {
 async function importarArchivo(vault, f, op) {
   const quien = f.name;
   if (f.mimeType === CARPETA) throw new Error('es una carpeta: ábrela con su propio enlace');
-  if (HOJA.test(f.mimeType)) throw new Error('las hojas de cálculo no se importan (en Drive suele haber datos clínicos)');
-  if (pareceSensible(f.name) && !op.forzar) throw new Error('el nombre sugiere datos de pacientes; no se importa (usa --forzar si no lo es)');
+  if (HOJA.test(f.mimeType)) throw new Error('las hojas de cálculo no se importan: Drive solo exporta la primera pestaña como texto (descárgala como PDF o pásala a un Doc)');
   const datos = { origen: 'drive', url: f.webViewLink || `https://drive.google.com/file/d/${f.id}`, id_externo: f.id };
   const cache = join(vault, '.cerebro', 'cache', 'drive');
 
@@ -53,7 +51,6 @@ async function importarArchivo(vault, f, op) {
     else bajar(['drive', 'files', 'get', '--params', JSON.stringify({ fileId: f.id, alt: 'media', supportsAllDrives: true })], cache, nombre);
     const md = readFileSync(join(cache, nombre), 'utf8');
     rmSync(join(cache, nombre), { force: true });
-    revisarSensible(md, op, quien);
     return escribirImportada(vault, { clave: `drive:${f.id}`, titulo: f.name.replace(/\.(md|txt)$/i, ''), contenido: md, datos, op });
   }
 

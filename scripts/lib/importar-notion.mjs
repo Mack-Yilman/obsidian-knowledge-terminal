@@ -1,9 +1,9 @@
-// okt importar notion <enlace o id> [--seleccion 1,3|todo] [--carpeta <destino>] [--forzar]
+// okt importar notion <enlace o id> [--seleccion 1,3|todo] [--carpeta <destino>]
 // Copia SOLO el contenido (Markdown) de la página, o de las páginas elegidas de una base. Las
 // propiedades de Notion no se copian y Notion no se modifica (solo lectura con ntn).
 import { ejecutar, jsonDe } from './binarios.mjs';
 import { notionAObsidian } from './notion-markdown.mjs';
-import { errorUso, parsearSeleccion, revisarSensible, escribirImportada, descargarAdjunto } from './importacion.mjs';
+import { errorUso, parsearSeleccion, escribirImportada, descargarAdjunto } from './importacion.mjs';
 
 const HOSTS_NOTION = /(prod-files-secure\.s3|s3\.us-west-2\.amazonaws\.com|file\.notion\.so|notion-static\.com|notion\.so\/image|notionusercontent\.com)/;
 
@@ -121,7 +121,6 @@ async function importarPagina(vault, id, op, meta, pagina) {
     const subs = p.relaciones.map((r) => `«${r.nombre}» (${r.ids.length})`).join(', ');
     throw new Error(`no tiene contenido propio${subs ? `; su contenido está en las páginas relacionadas ${subs}: okt importar notion ${id}` : ''}`);
   }
-  revisarSensible(md, op, info.titulo);
   md = await traerAdjuntos(vault, md, info.titulo);
   return escribirImportada(vault, {
     clave: `notion:${id}`,

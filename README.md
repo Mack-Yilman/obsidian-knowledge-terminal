@@ -1,13 +1,15 @@
 # 🧠 obsidian-knowledge-terminal (OKT)
 
 **Un segundo cerebro en Obsidian que gestionas hablando con tu IA**, en Claude Code, en Antigravity o en cualquier
-agente que lea skills. Guardas lo que aprendes (PDFs, páginas web, videos, apuntes de Notion o de Google Docs,
-respuestas e infografías de NotebookLM, mensajes desde Telegram, lo que resolviste en una sesión de trabajo). La IA
-lo ordena en notas enlazadas y te responde citando tus propias notas.
+agente que lea skills. Escribes como te salga (ideas sueltas, notas de voz desde Telegram, apuntes de Notion o de
+Google Docs, PDFs, páginas web, respuestas de NotebookLM) y la IA **lo ordena dentro de tus áreas y proyectos, lo
+enlaza y, si se lo pides, lo pasa a limpio**. Te responde citando tus propias notas.
+
+Sirve para cualquier persona y cualquier tema: al configurarlo, la IA te pregunta a qué te dedicas y crea tus áreas,
+tus proyectos y tus temas a partir de tus respuestas.
 
 Está pensado para gastar poco en tus planes (Claude Pro, Google One):
-- **Lo mecánico lo hace un script, no el modelo:** índice, búsqueda, revisión, importaciones, emojis y fichas de
-  sesión.
+- **Lo mecánico lo hace un script, no el modelo:** índices, búsqueda, revisión, importaciones, mover y renombrar.
 - **El arranque de cada sesión es corto:** el agente lee un resumen de 500 palabras como máximo, no todo el vault.
 - **El orden se hace por lotes y a pedido**, y se puede delegar a Gemini Flash vía Antigravity.
 
@@ -15,49 +17,50 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 
 | Dices… | Pasa |
 |---|---|
-| «Configura mi segundo cerebro» | Crea el vault en la carpeta abierta y te guía con Obsidian, el respaldo en Google Drive y los conectores |
+| «Configura mi segundo cerebro» | Te pregunta a qué te dedicas, propone tus áreas, proyectos y temas, y crea las carpetas con tu sí |
+| «Guarda esta idea: …» / «guárdalo en Cardiología» | Lo guarda en la Bandeja o directo en el área, el proyecto o el tema que digas |
+| «Procesa mi bandeja» | Ubica cada cosa en su carpeta (propone las nuevas), la ordena sin cambiar tus frases y la enlaza con tus otras notas |
+| «Pasa a limpio esta nota» | Quita muletillas y corrige la redacción sin agregar ni resumir nada; guarda el original por si acaso |
+| «Organiza mi área de Medicina» | Agrupa sus notas en temas: Medicina → Cardiología → Síndrome coronario agudo → Infarto |
 | «Guarda este PDF» / «guarda este enlace» | Copia el original, crea su ficha y te ofrece compilarlo en tus notas |
-| «Importa esta base de Notion» | Lista las páginas, tú eliges cuáles y trae solo su contenido (sin propiedades; Notion queda intacto) |
-| «Trae este documento de Drive» | Exporta el Google Doc a Markdown o guarda el PDF con una nota que lo enlaza |
-| «Pregúntale a mi cuaderno de la tesis…» | Consulta NotebookLM y guarda la respuesta con sus fuentes |
-| «Crea una infografía del cuaderno X» | La crea en NotebookLM, la descarga y la muestra dentro de una nota |
-| «¿Qué sé de anemia?» | Responde con tus notas, citando cada una con `[[enlace]]` |
-| «Procesa mi bandeja» / «baja lo de Telegram» | Ordena lo pendiente: lo general a conocimiento, lo de cada proyecto como propuesta para su `CLAUDE.md` |
-| «Revisión semanal» / «revisa mi vault» | Arma la semana y revisa enlaces rotos, notas huérfanas, datos vencidos y notas sin emoji |
-| «Cambia el emoji de Anemia» | Renombra la nota y actualiza todos sus enlaces |
+| «Importa esta base de Notion» / «trae este documento de Drive» | Lista lo que hay, tú eliges qué, y lo trae sin tocar el original |
+| «Pregúntale a mi cuaderno de la tesis…» / «crea una infografía del cuaderno X» | Usa NotebookLM y guarda el resultado en una nota |
+| «¿Qué sé de anemia?» / «¿qué tengo en Finanzas?» | Responde con tus notas, citando cada una con `[[enlace]]` |
+| «Revisión semanal» / «revisa mi vault» | Arma la semana y revisa enlaces rotos, notas sueltas o sin enlaces y datos vencidos |
 
-Nada se importa ni se procesa solo, y nada se borra: lo terminado va al archivo.
+Nada se importa ni se procesa solo, y nada se borra sin tu sí: lo terminado va al archivo.
 
 ## Cómo se ve tu vault
 
 ```text
-00 │ 📥 Bandeja/          lo que entra sin procesar: 📝 notas · 💻 sesiones · 📦 importados · 📲 telegram
-10 │ 🎯 Proyectos/        lo que tiene fin: una carpeta por proyecto (🐍 Curso de Python/🐍 Curso de Python.md)
-20 │ 🧭 Areas/            lo continuo: 🩺 Medicina.md, 🌱 Personal.md…
-30 │ 🧠 Conocimiento/     lo aprendido: 💡 conceptos · 🏷️ entidades · 🧩 sintesis
-40 │ 📚 Fuentes/          una ficha por fuente (📄 o 🔬) + 📎 adjuntos con los originales
-50 │ 📅 Diario/           📅 2026-10-22.md (o 📅 22∕10∕26.md) y revisiones 🗓️ 2026-W43.md
-90 │ 🗄️ Archivo/          lo terminado
-99 │ ⚙️ Sistema/          🔥 hot · 📜 bitácora · ✅ pendientes · 🗂️ índice · 🧱 plantillas
-AGENTS.md               reglas del vault para cualquier agente
+00 │ 📥 Bandeja/            todo lo que entra, sin procesar (📝 notas, 📲 Telegram, 🗒️ Notion, 💻 sesiones…)
+10 │ 🎯 Proyectos/          lo que termina: una carpeta por proyecto
+   🎓 Tesis/
+      🎓 Tesis.md          nota principal: objetivo, próximos pasos y el índice de su contenido
+20 │ 🧭 Areas/              lo continuo: una carpeta por área, con temas de hasta 3 niveles
+   🩺 Medicina/
+      🩺 Medicina.md       nota principal: sus proyectos y el índice de su contenido
+      🫀 Cardiología/
+         💔 Síndrome coronario agudo/
+            🫀 Infarto agudo de miocardio.md
+            📄 Guía ESC 2023.md      las fuentes van junto a lo que alimentan
+50 │ 📅 Diario/             📅 2026-10-22.md (o 📅 22∕10∕26.md) y revisiones 🗓️ 2026-W43.md
+90 │ 🗄️ Archivo/            lo terminado, y 📥 Bruto/ con los originales ya pasados a limpio
+99 │ ⚙️ Sistema/            🔥 hot · ✅ pendientes · 📜 bitácora · 🗂️ índice · 📎 adjuntos · 🧱 plantillas
+AGENTS.md                 reglas del vault para cualquier agente
 ```
 
-**Cada carpeta y cada nota empieza con un emoji:**
-- en conceptos, entidades, síntesis, proyectos y áreas, la IA elige uno **según el tema** (🩸 Anemia ferropénica,
-  🫀 Insuficiencia cardiaca, 🐍 Curso de Python);
-- en lo demás, el CLI pone el **del tipo**: 📄 fuente, 🔬 artículo, 📅 diario, 📝 nota, 📲 Telegram, 💻 sesión,
-  🗒️ Notion, ☁️ Drive, 🤖 NotebookLM.
-
-La nota diaria se llama `📅 2026-10-22` o, si lo prefieres, `📅 22∕10∕26`
-(`okt config poner formato_diario DD/MM/YY`; también ajusta la nota diaria de Obsidian).
-
-Cada nota guarda también su nombre **sin** emoji como alias, así que en Obsidian puedes buscar «Anemia» y el
-autocompletado la encuentra. El separador de las carpetas es `│` (línea fina, U+2502): la barra `|` no está
-permitida en los nombres de Windows.
-
-Cada nota lleva un frontmatter corto (`tipo`, `estado`, `resumen`, `fuentes`…), y cada afirmación, su fuente. Las
-contradicciones quedan a la vista, no se resuelven en silencio. El formato completo está en
-[references/contrato-vault.md](references/contrato-vault.md).
+- **Todo es carpeta:** cada área, proyecto y tema tiene una nota principal del mismo nombre con el índice
+  automático de lo que contiene. Así la jerarquía se navega por enlaces, y el grafo de Obsidian la muestra.
+- **De bruto a procesado:** lo que entra se queda en la Bandeja hasta que pides procesarlo. Si una captura pasa a
+  ser la nota tal cual, se mueve; si se reescribe o se reparte en varias notas, el original queda en
+  `90 │ 🗄️ Archivo/📥 Bruto/`, enlazado desde la nota (`okt bruto limpiar` borra los viejos con tu sí).
+- **Emojis:** en notas, temas, proyectos y áreas, la IA elige uno según el tema (🫀, 🐍, 💰); en lo demás, el CLI
+  pone el del tipo (📄 fuente, 🔬 artículo, 📅 diario, 📲 Telegram…). Cada nota guarda su nombre sin emoji como alias,
+  así que en Obsidian puedes buscar «Infarto» y la encuentra.
+- **Propiedades justas:** `tipo`, `estado` (borrador o revisado), `resumen` y `fuentes`; nada de campos vacíos. El
+  formato completo está en [references/contrato-vault.md](references/contrato-vault.md).
+- El separador de las carpetas es `│` (línea fina, U+2502): la barra `|` no está permitida en los nombres de Windows.
 
 ## Instalación
 
@@ -91,10 +94,11 @@ Después **cierra y vuelve a abrir Claude Code**: los hooks del plugin se cargan
 2. Abre Claude Code **en esa carpeta** (`cd` a la carpeta y `claude`).
 3. Pide: **«configura mi segundo cerebro»**.
 
-El agente te pregunta por tus áreas (salud, estudios, trabajo…), te muestra la lista de carpetas y archivos que
-creará y espera tu sí. Crea también un historial de git local (sin remoto) para que cualquier cambio de la IA se
-pueda deshacer. Luego te guía, paso a paso, con Obsidian, el respaldo y los conectores. Puedes saltarte lo que no
-quieras.
+El agente te hace unas pocas preguntas: a qué te dedicas, qué áreas tienes, qué proyectos llevas y si ya sabes qué
+temas vas a usar. Con eso te muestra el árbol de carpetas que creará y espera tu sí. Crea también un historial de git
+local (sin remoto) para que cualquier cambio de la IA se pueda deshacer. Luego te guía con Obsidian, el respaldo y
+los conectores; puedes saltarte lo que no quieras. Más adelante puedes pedir «agrega un área», «crea un proyecto» o
+«crea el tema X en Y».
 
 ### 4. Abrir el vault en Obsidian
 
@@ -139,14 +143,21 @@ Antigravity»**. Sin Claude Code, clona el repositorio y ejecútalo a mano:
 git clone https://github.com/Mack-Yilman/obsidian-knowledge-terminal.git
 cd obsidian-knowledge-terminal
 node scripts/okt.mjs instalar antigravity            # vista previa
-node scripts/okt.mjs instalar antigravity --aplicar  # copia el plugin a ~/.okt, las skills a ~/.gemini/config/skills y el hook al vault
+node scripts/okt.mjs instalar antigravity --aplicar  # plugin en ~/.okt, skills en ~/.gemini/config/skills, hooks y tarea del IDE
 ```
 
-Con un vault ya creado, `instalar` deja en `<vault>/.agents/hooks.json` un hook de inicio: al abrir `agy` en el
-vault, baja Telegram y carga el resumen `🔥 hot.md`, igual que en Claude Code. Antigravity solo usa los hooks de una
-**carpeta de confianza**: la primera vez que abras `agy` en el vault, acepta confiar en ella. Si creas el vault
-después, repite `instalar antigravity --aplicar`. El `AGENTS.md` del vault orienta a cualquier otro agente (Codex,
-Cursor…).
+Con un vault ya creado, `instalar` deja lo necesario para que Antigravity baje Telegram y cargue el resumen
+`🔥 hot.md` al empezar, como Claude Code:
+
+| Producto de Antigravity | Cuándo baja Telegram y carga el resumen | Qué lo hace |
+|---|---|---|
+| App de escritorio y CLI (`agy`) | Al abrir una conversación nueva con el vault abierto | El hook de inicio del vault (`<vault>/.agents/hooks.json`) y el global (`~/.gemini/config/hooks.json`); el segundo no repite lo del primero |
+| IDE | Al abrir la carpeta del vault | Una tarea de VS Code (`<vault>/.vscode/tasks.json`, `runOn: folderOpen`). La primera vez, el IDE pregunta si permites las tareas automáticas: elige «Permitir» |
+
+Ningún producto tiene un evento al abrir la aplicación: lo más temprano es la primera conversación (o abrir la
+carpeta, en el IDE). El hook del vault solo corre si el vault es una **carpeta de confianza** (acepta confiar en ella
+la primera vez); el global funciona igual. Si creas el vault después, repite `instalar antigravity --aplicar`. El
+`AGENTS.md` del vault orienta a cualquier otro agente (Codex, Cursor…).
 
 ### 9. Telegram (opcional)
 
@@ -162,10 +173,11 @@ falta, el comando que lo resuelve.
 ## Primeros pasos
 
 Abre tu agente en la carpeta del vault y prueba:
-- «Guarda esta idea: la ferritina baja confirma la ferropenia».
-- «Guarda este enlace: https://…».
-- «¿Qué sé de anemia?».
-- «¿Cómo va mi cerebro?» (bandeja, pendientes y el siguiente paso).
+- «Guarda esta idea: el interés compuesto rinde más si empiezo antes».
+- «Guarda este enlace en mi proyecto de tesis: https://…».
+- «Procesa mi bandeja».
+- «Pasa a limpio la última nota de voz».
+- «¿Cómo va mi cerebro?» (bandeja, pendientes, proyectos en foco y el siguiente paso).
 
 ## Actualizar
 
@@ -173,11 +185,13 @@ Abre tu agente en la carpeta del vault y prueba:
   `/plugin` → Marketplaces → «Enable auto-update».
 - **A mano:** `claude plugin marketplace update obsidian-knowledge-terminal` y luego
   `claude plugin update obsidian-knowledge-terminal@obsidian-knowledge-terminal`. Reinicia Claude Code.
-- **Antigravity:** después de cada actualización, repite `instalar antigravity --aplicar` (o pídeselo al agente).
-- **Desde 0.2.x (vault sin emojis):** la 0.3.0 cambió los nombres de las carpetas y las notas. Al abrir el vault, el
-  agente te avisa y te propone migrar. Cierra Obsidian y pide **«migra mi vault»**: `okt migrar` muestra qué cambia y
-  `okt migrar --aplicar` mueve todo (nada se borra), actualiza los enlaces y deja un commit que se deshace con git.
-  Hasta migrar, los comandos que escriben en el vault se detienen.
+- **Antigravity:** después de cada actualización, repite `instalar antigravity --aplicar` (o pídeselo al agente);
+  `okt doctor` avisa si la copia de Antigravity quedó en una versión anterior.
+- **Desde la 0.3 o la 0.2:** la 0.4.0 lleva el conocimiento a las áreas y los proyectos. Al abrir el vault, el agente
+  te avisa y te propone migrar. Cierra Obsidian y pide **«migra mi vault»**: `okt migrar` muestra qué cambia (qué
+  áreas pasan a ser carpetas y a dónde va cada nota) y `okt migrar --aplicar` mueve todo (nada se borra), actualiza
+  los enlaces y deja un commit que se deshace con git. Las notas que no decían su área quedan en la Bandeja, con un
+  pendiente para ubicarlas. Hasta migrar, los comandos que escriben en el vault se detienen.
 
 ## Usar el CLI a mano
 
@@ -185,25 +199,25 @@ Las skills llaman solas al CLI; no hace falta usarlo. Si quieres hacerlo, la rut
 `AGENTS.md` de tu vault (`okt` significa `node "<ruta>/scripts/okt.mjs"`). Ejecútalo desde la carpeta del vault:
 
 ```bash
-node "<ruta>/scripts/okt.mjs" ayuda     # lista de comandos
-node "<ruta>/scripts/okt.mjs" estado    # bandeja, pendientes y última actividad
+node "<ruta>/scripts/okt.mjs" ayuda                                  # lista de comandos
+node "<ruta>/scripts/okt.mjs" estado                                 # áreas, proyectos, bandeja y pendientes
+node "<ruta>/scripts/okt.mjs" tema nuevo "Medicina/🫀 Cardiología"    # una carpeta de tema
 ```
 
-`--carpeta` acepta nombres cortos (`proyectos/Tesis`, `importados`, `conceptos`), así no tienes que escribir `│` ni
-emojis.
+`--carpeta` acepta la ruta desde un área o un proyecto, sin la carpeta raíz ni los emojis (`"Medicina/Cardiología"`,
+`"Tesis"`), así no tienes que escribir `│` ni emojis.
 
 ## Telegram (captura desde el celular)
 
-Permite enviar notas, audios, enlaces, fotos y tareas a la bandeja del vault desde el móvil mediante el bot
+Permite enviar notas, audios, enlaces, fotos y tareas a la Bandeja del vault desde el móvil mediante el bot
 [okt-telegram](https://github.com/Mack-Yilman/okt-telegram). El bot solo encola en un Worker de Cloudflare con KV; el
-vault permanece siempre en la PC y baja el contenido a pedido o al iniciar sesión.
+vault permanece siempre en la PC y baja el contenido a pedido o al empezar a trabajar.
 
 - `okt telegram config --url <worker> --token <OKT_TOKEN>`: guarda la conexión en `~/.config/okt/telegram.json` (sin
   opciones muestra la URL guardada; el token nunca se imprime).
-- `okt telegram bajar`: baja todo, confirma lo escrito y cierra con bitácora + índice + commit del vault. Al abrir
-  Claude Code o Antigravity en el vault, el hook lo hace solo; también puedes pedir «baja lo de Telegram».
-- `okt telegram bajar --forzar <id…>`: escribe solo los elementos retenidos que nombras, después de comprobar que no
-  son datos de pacientes (`--forzar todo` para todos). `okt estado` lista los retenidos con su id.
+- `okt telegram bajar`: baja todo, confirma lo escrito y cierra con bitácora + índices + commit del vault. Lo hacen
+  solos el hook de Claude Code, los hooks de Antigravity y la tarea del IDE; también puedes pedir «baja lo de
+  Telegram».
 - `okt telegram descartar <id…>`: quita elementos de la cola sin escribirlos en el vault.
 
 **Capacidad de la cola:**
@@ -214,20 +228,20 @@ vault permanece siempre en la PC y baja el contenido a pedido o al iniciar sesi�
 
 | Mensaje | En el Worker | En el vault (al bajar) |
 |---|---|---|
-| Texto o `/nota <texto>` | encola `tipo: nota` | `00 │ 📥 Bandeja/📲 telegram/📲 AAAA-MM-DD HHmm <primeras palabras>.md` |
-| Nota de voz o audio (≤ 10 min) | transcribe con Whisper de Workers AI (`@cf/openai/whisper-large-v3-turbo`, en español) y encola `tipo: voz` con el texto. El audio no se guarda. Si la transcripción falla, no encola y pide reenviar | nota con la transcripción, marcada como automática |
-| Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | nota «pendiente de ingerir» con la url, para la skill `capturar` |
-| Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `40 │ 📚 Fuentes/📎 adjuntos/📲 telegram/` y una nota con `![[archivo]]` y la leyenda |
+| Texto o `/nota <texto>` | encola `tipo: nota` | `00 │ 📥 Bandeja/📲 AAAA-MM-DD HHmm <primeras palabras>.md` |
+| Nota de voz o audio (≤ 10 min) | transcribe con Whisper de Workers AI (`@cf/openai/whisper-large-v3-turbo`, en español) y encola `tipo: voz` con el texto. El audio no se guarda. Si la transcripción falla, no encola y pide reenviar | captura con la transcripción, marcada como automática (pide «pásala a limpio» para corregirla) |
+| Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | captura «pendiente de ingerir» con la url, para la skill `capturar` |
+| Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/` y una captura con `![[archivo]]` y la leyenda |
 | `/tarea <texto>` (o `/tarea` sola: el bot pregunta y toma el siguiente mensaje) | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`50 │ 📅 Diario/📅 AAAA-MM-DD.md`) |
 | `/estado`, `/start`, `/ayuda` | responde en Telegram (cuántos elementos esperan o ayuda) | — |
 
 ### Contrato de la cola
 
-- **Elemento**: `{ id, tipo: "nota"|"voz"|"enlace"|"archivo"|"tarea", texto, url?, archivo_key?, nombre?, mime?, fecha, chat_id, sensible? }`.
+- **Elemento**: `{ id, tipo: "nota"|"voz"|"enlace"|"archivo"|"tarea", texto, url?, archivo_key?, nombre?, mime?, fecha, chat_id }`.
   - `id`: `AAAAMMDDTHHmmss-<update_id de 10 dígitos>` (fecha UTC del mensaje): ordena por fecha y un reintento de Telegram reescribe el mismo elemento.
   - `fecha`: ISO con zona (`2026-10-21T18:05:00-05:00`, hora de Lima).
   - `archivo_key`: el `file_id` de Telegram.
-  - `sensible: true` si el texto parece traer datos de pacientes.
+  - El plugin ignora campos que no conoce (por ejemplo, `sensible`, que traían los elementos de la 0.1.x).
 - **Autenticación**: Todas las rutas de la API exigen `Authorization: Bearer <OKT_TOKEN>` (devuelve 401 si falta o no coincide).
 - **Rutas**:
   - `GET /cola[?cursor=<c>]` → `{ elementos: [...], cursor: <c>|null }`, del más antiguo al más nuevo, 50 por página.
@@ -247,14 +261,15 @@ Agregar carpeta → «Hacer copia de seguridad»), o usa otro servicio. El vault
 ## Automatización (sin gastar tokens)
 
 En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
-- **Al iniciar** dentro del vault, carga el resumen `99 │ ⚙️ Sistema/🔥 hot.md` y, si Telegram está configurado,
-  baja la cola del bot (tope de 10 s; nunca frena la sesión).
-- **Al cerrar** una sesión en otro proyecto, anota una ficha en la bandeja con el proyecto, los commits y los
-  archivos tocados. Nunca copia el contenido de los archivos ni nada que parezca un dato personal.
+- **Al iniciar** dentro del vault, carga el resumen `99 │ ⚙️ Sistema/🔥 hot.md` (proyectos en foco, actividad,
+  pendientes y aprendizajes) y, si Telegram está configurado, baja la cola del bot (tope de 10 s; nunca frena la
+  sesión).
+- **Al cerrar** una sesión en otro proyecto, anota una ficha en la Bandeja con el proyecto, los commits y los
+  archivos tocados. Nunca copia el contenido de los archivos.
 
-En **Antigravity**, el hook de inicio del vault (lo instala `instalar antigravity --aplicar`) hace lo mismo al abrir
-`agy` en el vault. Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen al procesar la bandeja
-(`okt sesiones agy`), sin copiar el texto de tus pedidos.
+En **Antigravity**, los hooks de inicio (App y CLI) y la tarea del IDE hacen lo mismo (sección «Antigravity»).
+Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen al procesar la bandeja (`okt sesiones agy`),
+sin copiar el texto de tus pedidos.
 
 Para excluir un proyecto de las fichas: `okt config excluir <proyecto>`.
 
@@ -265,31 +280,33 @@ Lo que guarda Claude lo encuentra Antigravity, y al revés.
 
 ## Privacidad
 
-- El vault guarda **conocimiento, no datos de pacientes ni de terceros**. El lint los busca (DNI, historia clínica,
-  celulares, «paciente Nombre Apellido»), y las importaciones se detienen si el contenido los trae.
-- De Drive nunca se importan hojas de cálculo. Los PDF e imágenes de Drive se revisan solo por el nombre, no por su
-  contenido: revísalos tú antes de importarlos.
-- Lo que delegues a Antigravity sale a los servidores de Google. Lo que proceses con Claude, a los de Anthropic.
-- Lo que mandas por Telegram pasa por Telegram y Cloudflare; los elementos que parecen datos de pacientes quedan
-  retenidos hasta que decidas.
+- **El vault es tuyo y vive en tu PC:** OKT no filtra ni rechaza lo que guardes. Lo que pongas ahí lo ves tú (y tu
+  respaldo).
+- Lo que proceses con una IA sale a sus servidores: lo que delegues a Antigravity, a los de Google; lo que proceses
+  con Claude, a los de Anthropic.
+- Lo que mandas por Telegram pasa por Telegram y Cloudflare (KV y Workers AI) antes de llegar a tu PC.
+- Si un proyecto no debe dejar fichas de sesión en el vault: `okt config excluir <proyecto>`.
 
 ## Problemas frecuentes
 
 | Síntoma | Qué hacer |
 |---|---|
 | «No encontré un vault de OKT aquí» | Abre el agente en la carpeta del vault (o en una subcarpeta) y vuelve a intentarlo |
-| «Este vault usa la estructura anterior a OKT 0.3.0» | Cierra Obsidian y pide «migra mi vault» (`okt migrar`, luego `--aplicar`) |
+| «Este vault usa una estructura anterior a OKT 0.4.0» | Cierra Obsidian y pide «migra mi vault» (`okt migrar`, luego `--aplicar`) |
 | El agente no ve el plugin después de instalarlo | Cierra y vuelve a abrir Claude Code |
 | «La sesión de NotebookLM venció» | `nlm login` |
-| En Antigravity no aparece el aviso de Telegram ni el resumen | Acepta confiar en la carpeta del vault al abrir `agy`; `okt doctor` lo comprueba |
+| En Antigravity no aparece el aviso de Telegram ni el resumen | Repite `okt instalar antigravity --aplicar`; en el IDE, permite las tareas automáticas; `okt doctor` lo comprueba |
 | Telegram: «El Worker rechazó el token» | Repite `okt telegram config --url … --token …` con el `OKT_TOKEN` del Worker |
 | Un enlace `[[Anemia]]` sale roto | La nota se llama con su emoji (`[[🩸 Anemia]]`); `okt lint` sugiere el nombre correcto |
+| «… ya tiene 3 niveles de tema» | Reorganiza esa rama en vez de anidar más: pide «organiza mi área de …» |
 | EPERM al escribir en Windows | Ya está resuelto desde la 0.1.1 (archivos ocultos de Obsidian); si vuelve a pasar, abre un issue |
 
 ## Proyectos relacionados
 
 - [okt-telegram](https://github.com/Mack-Yilman/okt-telegram): el bot para mandar notas, voz y enlaces desde el
-  celular a la bandeja del vault.
+  celular a la Bandeja del vault.
+- [transcriptor-academico](https://github.com/Mack-Yilman/transcriptor-academico): la skill de apuntes de la que salen
+  las reglas de redacción de «pasa a limpio».
 
 ## Licencia
 

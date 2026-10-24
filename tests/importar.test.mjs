@@ -66,17 +66,18 @@ test('notion: una página primero se previsualiza y solo se importa con --aplica
   let r = v.run(['importar', 'notion', `https://www.notion.so/mi/Apuntes-de-anemia-${P1}`]);
   assert.equal(r.codigo, 0, r.error);
   assert.match(r.salida, /«Apuntes de anemia»/);
-  assert.equal(existsSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados/🗒️ Apuntes de anemia.md')), false);
+  assert.equal(existsSync(join(v.vault, '00 │ 📥 Bandeja/🗒️ Apuntes de anemia.md')), false);
   r = v.run(['importar', 'notion', `https://www.notion.so/mi/Apuntes-de-anemia-${P1}`, '--aplicar']);
   assert.equal(r.codigo, 0, r.error);
-  const texto = leer(v, '00 │ 📥 Bandeja/📦 importados/🗒️ Apuntes de anemia.md');
+  const texto = leer(v, '00 │ 📥 Bandeja/🗒️ Apuntes de anemia.md');
+  assert.match(texto, /^---\ntipo: captura\n/, 'en la Bandeja, lo importado es una captura');
   assert.match(texto, /origen: notion/);
   assert.match(texto, /id_externo: 1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f801/);
   assert.match(texto, /La ferritina es clave/);
   assert.doesNotMatch(texto, /^# Apuntes de anemia\n\n# Apuntes/m);
   assert.match(texto, /!\[\[Apuntes de anemia 1\.png\]\]/, 'la imagen de Notion se descarga y se enlaza');
   assert.match(texto, /\(https:\/\/example\.com\/x\.png\)/, 'las imágenes externas quedan como están');
-  assert.ok(existsSync(join(v.vault, '40 │ 📚 Fuentes/📎 adjuntos/🗒️ notion/Apuntes de anemia 1.png')));
+  assert.ok(existsSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/🗒️ notion/Apuntes de anemia 1.png')));
   assert.ok(v.llamadas().every((c) => ['get', '/v1/'].some((x) => c.args.join(' ').includes(x)) || c.args[1] === 'query'), 'solo lecturas en Notion');
   v.borrar();
 });
@@ -88,13 +89,13 @@ test('notion: una base se lista; con --seleccion importa solo esas páginas, sin
   assert.match(r.salida, /3 páginas/);
   assert.match(r.salida, /1\. Apuntes de anemia/);
   assert.match(r.salida, /2\. Clase 2: hierro/);
-  assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados')).length, 0);
+  assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja')).filter((n) => n.endsWith('.md')).length, 0);
   r = v.run(['importar', 'notion', url, '--seleccion', '2']);
   assert.equal(r.codigo, 0, r.error);
-  const texto = leer(v, '00 │ 📥 Bandeja/📦 importados/🗒️ Clase 2 - hierro.md');
+  const texto = leer(v, '00 │ 📥 Bandeja/🗒️ Clase 2 - hierro.md');
   assert.match(texto, /Absorción del hierro/);
   assert.doesNotMatch(texto, /Curso|select/);
-  assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados')).length, 1);
+  assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja')).filter((n) => n.endsWith('.md')).length, 1);
   v.borrar();
 });
 
@@ -113,27 +114,27 @@ test('notion: navega por relaciones (curso → módulo → capítulos) y nunca c
   assert.match(r.salida, /«Capítulos»:\n1\. Capítulo 1 · ac2b3c4d[\s\S]*2\. Capítulo 2[\s\S]*«Curso»:\n3\. Curso de prueba/);
   r = v.run(['importar', 'notion', MOD, '--seleccion', '1-2']);
   assert.equal(r.codigo, 0, r.error);
-  const cap = leer(v, '00 │ 📥 Bandeja/📦 importados/🗒️ Capítulo 1.md');
+  const cap = leer(v, '00 │ 📥 Bandeja/🗒️ Capítulo 1.md');
   assert.match(cap, /cubre hasta el 90 %/);
   assert.doesNotMatch(cap, /Estado|Visto|Módulo:|ab2b3c4d/, 'las propiedades de Notion no se copian');
-  assert.match(leer(v, '00 │ 📥 Bandeja/📦 importados/🗒️ Capítulo 2.md'), /cuota inicial/);
+  assert.match(leer(v, '00 │ 📥 Bandeja/🗒️ Capítulo 2.md'), /cuota inicial/);
   v.borrar();
 });
 
-test('notion: no importa contenido con datos de pacientes y reimportar actualiza la misma nota', () => {
+test('notion: importa todo lo elegido, sin filtrar el contenido, y reimportar actualiza la misma nota', () => {
   const v = preparar();
   const url = `https://www.notion.so/mi/${BASE}?v=abc123`;
   let r = v.run(['importar', 'notion', url, '--seleccion', '1,3']);
-  assert.match(r.salida, /1 importadas, 1 sin importar/);
-  assert.match(r.salida, /Caso: .*DNI/);
-  const ruta = '00 │ 📥 Bandeja/📦 importados/🗒️ Apuntes de anemia.md';
+  assert.match(r.salida, /2 importadas/);
+  assert.doesNotMatch(r.salida, /sin importar/);
+  const ruta = '00 │ 📥 Bandeja/🗒️ Apuntes de anemia.md';
   escribir(v.vault, ruta, `${leer(v, ruta)}\nMi comentario propio.\n`);
   r = v.run(['importar', 'notion', url, '--seleccion', '1']);
   assert.match(r.salida, /actualizada/);
   const texto = leer(v, ruta);
   assert.match(texto, /Mi comentario propio\./);
   assert.equal(texto.match(/La ferritina es clave/g).length, 1);
-  assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados')).length, 1);
+  assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja')).filter((n) => n.endsWith('.md')).length, 2);
   v.borrar();
 });
 
@@ -141,11 +142,11 @@ test('drive: un Doc se exporta a Markdown; un PDF se baja a adjuntos; respeta la
   const v = preparar();
   let r = v.run(['importar', 'drive', 'https://docs.google.com/document/d/DOCID1234567890abc/edit', '--aplicar']);
   assert.equal(r.codigo, 0, r.error);
-  assert.match(leer(v, '00 │ 📥 Bandeja/📦 importados/☁️ Resumen de cardiología.md'), /Insuficiencia cardiaca/);
+  assert.match(leer(v, '00 │ 📥 Bandeja/☁️ Resumen de cardiología.md'), /Insuficiencia cardiaca/);
   r = v.run(['importar', 'drive', 'https://drive.google.com/file/d/PDFID1234567890abc/view', '--aplicar']);
   assert.equal(r.codigo, 0, r.error);
-  assert.equal(leer(v, '40 │ 📚 Fuentes/📎 adjuntos/☁️ drive/Guía de hipertensión.pdf'), '%PDF-fake');
-  assert.match(leer(v, '00 │ 📥 Bandeja/📦 importados/☁️ Guía de hipertensión.md'), /!\[\[Guía de hipertensión\.pdf\]\]/);
+  assert.equal(leer(v, '99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive/Guía de hipertensión.pdf'), '%PDF-fake');
+  assert.match(leer(v, '00 │ 📥 Bandeja/☁️ Guía de hipertensión.md'), /!\[\[Guía de hipertensión\.pdf\]\]/);
   const metodos = v.llamadas().filter((c) => c.cli === 'gws').map((c) => c.args[2]);
   assert.ok(metodos.every((m) => ['get', 'export', 'list'].includes(m)), 'solo lecturas en Drive');
   v.borrar();
@@ -153,15 +154,15 @@ test('drive: un Doc se exporta a Markdown; un PDF se baja a adjuntos; respeta la
 
 test('drive: otro archivo con el mismo nombre no pisa un adjunto; reimportar el mismo sí lo reemplaza', () => {
   const v = preparar();
-  escribir(v.vault, '40 │ 📚 Fuentes/📎 adjuntos/☁️ drive/Guía de hipertensión.pdf', 'ORIGINAL DEL USUARIO');
+  escribir(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive/Guía de hipertensión.pdf', 'ORIGINAL DEL USUARIO');
   const url = 'https://drive.google.com/file/d/PDFID1234567890abc/view';
   let r = v.run(['importar', 'drive', url, '--aplicar']);
   assert.equal(r.codigo, 0, r.error);
-  assert.equal(leer(v, '40 │ 📚 Fuentes/📎 adjuntos/☁️ drive/Guía de hipertensión.pdf'), 'ORIGINAL DEL USUARIO');
-  assert.equal(leer(v, '40 │ 📚 Fuentes/📎 adjuntos/☁️ drive/Guía de hipertensión 2.pdf'), '%PDF-fake');
+  assert.equal(leer(v, '99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive/Guía de hipertensión.pdf'), 'ORIGINAL DEL USUARIO');
+  assert.equal(leer(v, '99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive/Guía de hipertensión 2.pdf'), '%PDF-fake');
   r = v.run(['importar', 'drive', url, '--aplicar']);
   assert.match(r.salida, /actualizada/);
-  assert.deepEqual(readdirSync(join(v.vault, '40 │ 📚 Fuentes/📎 adjuntos/☁️ drive')).sort(), ['Guía de hipertensión 2.pdf', 'Guía de hipertensión.pdf']);
+  assert.deepEqual(readdirSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive')).sort(), ['Guía de hipertensión 2.pdf', 'Guía de hipertensión.pdf']);
   v.borrar();
 });
 
@@ -172,7 +173,7 @@ test('notion: un enlace con $ en el texto no se corrompe al reemplazarlo', () =>
   escribir(v.dir, 'fake.json', JSON.stringify(datos));
   const r = v.run(['importar', 'notion', `https://www.notion.so/${P2}`, '--aplicar']);
   assert.equal(r.codigo, 0, r.error);
-  assert.match(leer(v, '00 │ 📥 Bandeja/📦 importados/🗒️ Clase 2 - hierro.md'), /\[\[Clase 2 - hierro 1\.pdf\|Tarifa \$1 y \$&\]\]/);
+  assert.match(leer(v, '00 │ 📥 Bandeja/🗒️ Clase 2 - hierro.md'), /\[\[Clase 2 - hierro 1\.pdf\|Tarifa \$1 y \$&\]\]/);
   v.borrar();
 });
 
@@ -201,12 +202,12 @@ test('notebooklm: cuadernos, vínculo de carpeta, notas y pregunta guardada como
   assert.match(r.salida, /1\. Resumen de fuentes/);
   r = v.run(['notebooklm', 'notas', '--seleccion', '1'], { cwd: enTesis });
   assert.equal(r.codigo, 0, r.error);
-  assert.match(leer(v, '00 │ 📥 Bandeja/📦 importados/🤖 Resumen de fuentes.md'), /coinciden en la ferritina/);
+  assert.match(leer(v, '00 │ 📥 Bandeja/🤖 Resumen de fuentes.md'), /coinciden en la ferritina/);
   r = v.run(['notebooklm', 'preguntar', '¿Qué dicen sobre la ferritina?', '--cuaderno', 'Tesis anemia']);
   assert.equal(r.codigo, 0, r.error);
   assert.match(r.salida, /Respuesta sobre: ¿Qué dicen sobre la ferritina\?/);
-  const nota = readdirSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados')).find((n) => n.startsWith('🤖 NotebookLM'));
-  const texto = leer(v, `00 │ 📥 Bandeja/📦 importados/${nota}`);
+  const nota = readdirSync(join(v.vault, '00 │ 📥 Bandeja')).filter((n) => n.endsWith('.md')).find((n) => n.startsWith('🤖 NotebookLM'));
+  const texto = leer(v, `00 │ 📥 Bandeja/${nota}`);
   assert.match(texto, /- \[1\] Guía de prueba \(https:\/\/example\.org\/guia\): «Texto citado de la guía\.»/);
   assert.match(texto, /síntesis, no evidencia/);
   v.borrar();
@@ -219,25 +220,24 @@ test('notebooklm: crear una infografía espera, descarga e incrusta; el mapa men
   const llamadaCrear = v.llamadas().find((c) => c.args[1] === 'create');
   assert.ok(llamadaCrear.args.includes('--confirm'));
   assert.deepEqual(llamadaCrear.args.slice(llamadaCrear.args.indexOf('--language'), llamadaCrear.args.indexOf('--language') + 2), ['--language', 'es']);
-  const nota = leer(v, '00 │ 📥 Bandeja/📦 importados/🤖 Infografia - Tesis anemia.md');
+  const nota = leer(v, '00 │ 📥 Bandeja/🤖 Infografia - Tesis anemia.md');
   assert.match(nota, /!\[\[infografia Tesis anemia 2026-10-22\.png\]\]/);
-  assert.ok(existsSync(join(v.vault, '40 │ 📚 Fuentes/📎 adjuntos/🤖 notebooklm/📓 Tesis anemia/infografia Tesis anemia 2026-10-22.png')));
+  assert.ok(existsSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/🤖 notebooklm/📓 Tesis anemia/infografia Tesis anemia 2026-10-22.png')));
   r = v.run(['notebooklm', 'crear', 'mapa', '--cuaderno', 'Tesis anemia']);
   assert.equal(r.codigo, 0, r.error);
-  assert.match(leer(v, '00 │ 📥 Bandeja/📦 importados/🤖 Mapa - Tesis anemia.md'), /- Raíz\n  - Rama A\n    - Hoja\n  - Rama B/);
+  assert.match(leer(v, '00 │ 📥 Bandeja/🤖 Mapa - Tesis anemia.md'), /- Raíz\n  - Rama A\n    - Hoja\n  - Rama B/);
   v.borrar();
 });
 
-test('notebooklm: un informe con datos de pacientes no entra al vault (ni nota ni adjunto)', () => {
+test('notebooklm: un informe entra al vault aunque traiga datos de una persona (el vault no se filtra)', () => {
   const v = preparar();
   const datos = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
   datos.notebooklm.informe = '# Informe\n\nPaciente con HC 1234567 y anemia.';
   escribir(v.dir, 'fake.json', JSON.stringify(datos));
   const r = v.run(['notebooklm', 'crear', 'informe', '--cuaderno', 'Tesis anemia']);
-  assert.notEqual(r.codigo, 0);
-  assert.match(r.error, /historia clínica/);
-  assert.equal(existsSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados/🤖 Informe - Tesis anemia.md')), false);
-  assert.deepEqual(readdirSync(join(v.vault, '40 │ 📚 Fuentes/📎 adjuntos/🤖 notebooklm/📓 Tesis anemia')), []);
+  assert.equal(r.codigo, 0, r.error);
+  assert.match(leer(v, '00 │ 📥 Bandeja/🤖 Informe - Tesis anemia.md'), /HC 1234567/);
+  assert.equal(readdirSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/🤖 notebooklm/📓 Tesis anemia')).length, 1);
   assert.deepEqual(readdirSync(join(v.vault, '.cerebro/cache/notebooklm')), []);
   v.borrar();
 });

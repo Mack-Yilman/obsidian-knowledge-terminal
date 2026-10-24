@@ -5,8 +5,8 @@
 import { readFileSync, existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
 import { join, relative, basename } from 'node:path';
 import { ejecutar, jsonDe } from './binarios.mjs';
-import { errorUso, parsearSeleccion, revisarSensible, escribirImportada } from './importacion.mjs';
-import { C, carpetaAdjuntos, resolverCarpeta } from './estructura.mjs';
+import { errorUso, parsearSeleccion, escribirImportada } from './importacion.mjs';
+import { carpetaAdjuntos, resolverCarpeta } from './estructura.mjs';
 import { leerConfigVault, guardarConfigVault, posix } from './rutas.mjs';
 import { limpiarNombre, recortar } from './nombres.mjs';
 import { fechaISO } from './fechas.mjs';
@@ -90,7 +90,6 @@ export function notas(vault, op) {
   const importadas = [];
   for (const i of parsearSeleccion(op.seleccion, lista.length)) {
     const n = lista[i];
-    revisarSensible(n.content || '', op, n.title);
     importadas.push(escribirImportada(vault, { clave: `notebooklm:nota:${n.id}`, titulo: n.title || `Nota de ${c.titulo}`, contenido: n.content || n.preview || '', datos: { origen: 'notebooklm', id_externo: `${c.id}/${n.id}`, cuaderno: c.titulo }, op }));
   }
   return { texto: `NotebookLM: ${importadas.length} notas traídas.\n${importadas.map((x) => `- ${x.ruta} (${x.accion})`).join('\n')}`, datos: importadas };
@@ -118,8 +117,7 @@ export function preguntar(vault, pregunta, op) {
   } else {
     fuentes = [].concat(j.sources || []).map((s) => (typeof s === 'string' ? s : s.title || s.name || '')).filter(Boolean);
   }
-  revisarSensible(respuesta, op, pregunta);
-  const contenido = `**Pregunta:** ${pregunta}\n\n**Cuaderno:** ${c.titulo}\n\n${respuesta}${fuentes.length ? `\n\n**Fuentes citadas por NotebookLM:**\n${[...new Set(fuentes)].map((f) => `- ${f}`).join('\n')}` : ''}\n\n> Respuesta generada por NotebookLM: es una síntesis, no evidencia. Verifica en las fuentes antes de pasarla a ${C.conocimiento}.`;
+  const contenido = `**Pregunta:** ${pregunta}\n\n**Cuaderno:** ${c.titulo}\n\n${respuesta}${fuentes.length ? `\n\n**Fuentes citadas por NotebookLM:**\n${[...new Set(fuentes)].map((f) => `- ${f}`).join('\n')}` : ''}\n\n> Respuesta generada por NotebookLM: es una síntesis, no evidencia. Verifica en las fuentes antes de pasarla a una nota de tus áreas o proyectos.`;
   const res = escribirImportada(vault, { clave: `notebooklm:pregunta:${c.id}:${fechaISO()}:${recortar(pregunta, 60)}`, titulo: `NotebookLM - ${recortar(pregunta, 70)}`, contenido, datos: { origen: 'notebooklm', id_externo: c.id, cuaderno: c.titulo }, op });
   return { texto: `${respuesta}\n\n→ Guardado en ${res.ruta}`, datos: { respuesta, fuentes, ...res } };
 }
@@ -207,15 +205,15 @@ export function descargar(vault, tipo, op) {
   mkdirSync(dir, { recursive: true });
   let nombre = `${recortar(limpiarNombre(`${tipo} ${c.titulo}`), 80)} ${fechaISO()}.${def.ext}`;
   for (let i = 2; existsSync(join(dir, nombre)); i++) nombre = nombre.replace(/( \d+)?\.(\w+)$/, ` ${i}.$2`);
-  // Se baja primero a la caché: solo pasa a adjuntos si no parece traer datos de pacientes.
+  // Se baja primero a la caché y pasa a adjuntos cuando ya se convirtió (si falla, no deja un archivo a medias).
   const cache = join(vault, '.cerebro', 'cache', 'notebooklm');
   mkdirSync(cache, { recursive: true });
   const temporal = join(cache, `${id}.${def.ext}`);
   nlm(['download', def.bajar, c.id, '--output', temporal, '--id', id], 600000);
   if (!existsSync(temporal)) throw new Error('NotebookLM no entregó el archivo.');
-  const convertido = contenidoDescargado(temporal, nombre, tipo);
+  let convertido;
   try {
-    revisarSensible(convertido, op, `${tipo} de ${c.titulo}`);
+    convertido = contenidoDescargado(temporal, nombre, tipo);
   } catch (e) {
     rmSync(temporal, { force: true });
     throw e;

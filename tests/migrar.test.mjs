@@ -41,7 +41,10 @@ test('rutas: la estructura anterior se traduce y --carpeta acepta nombres cortos
   for (const pedido of ['proyectos/Curso de Python', '10-Proyectos/Curso de Python', '10 │ 🎯 Proyectos/🐍 Curso de Python']) {
     assert.equal(resolverCarpeta(v.vault, pedido), '10 │ 🎯 Proyectos/🐍 Curso de Python', pedido);
   }
-  assert.equal(resolverCarpeta(v.vault, 'importados'), '00 │ 📥 Bandeja/📦 importados');
+  assert.equal(resolverCarpeta(v.vault, 'importados'), '00 │ 📥 Bandeja', 'las subcarpetas de la bandeja de la 0.3 ya no existen');
+  v.okt(['tema', 'nuevo', 'Medicina/🫀 Cardiología']);
+  assert.equal(resolverCarpeta(v.vault, 'Medicina/Cardiología'), '20 │ 🧭 Areas/🧭 Medicina/🫀 Cardiología');
+  assert.equal(resolverCarpeta(v.vault, 'Curso de Python'), '10 │ 🎯 Proyectos/🐍 Curso de Python');
   v.borrar();
 });
 
@@ -81,7 +84,7 @@ function vaultAntiguo() {
   return { ...t, vault, configDir, okt: (args, o = {}) => okt(args, { cwd: vault, configDir, ...o }) };
 }
 
-test('migrar: vista previa sin cambios; con --aplicar mueve, renombra y actualiza enlaces y registros', () => {
+test('migrar desde la 0.2: vista previa sin cambios; con --aplicar llega a la 0.4 con enlaces y registros al día', () => {
   const v = vaultAntiguo();
   // Mientras no se migre, lo que escribe se detiene y estado avisa.
   let r = v.okt(['nota', 'nueva', 'nota', 'x']);
@@ -91,38 +94,51 @@ test('migrar: vista previa sin cambios; con --aplicar mueve, renombra y actualiz
 
   r = v.okt(['migrar']);
   assert.equal(r.codigo, 0, r.error);
+  assert.match(r.salida, /Paso 1 de 2/);
   assert.match(r.salida, /Anemia → 💡 Anemia/);
   assert.match(r.salida, /Guía MINSA → 🔬 Guía MINSA/, 'una ficha con ## Método es un artículo');
   assert.ok(existsSync(join(v.vault, '30-Conocimiento/conceptos/Anemia.md')), 'la vista previa no mueve nada');
 
   r = v.okt(['migrar', '--aplicar']);
   assert.equal(r.codigo, 0, r.error);
-  const anemia = leer(v.vault, '30 │ 🧠 Conocimiento/💡 conceptos/💡 Anemia.md');
-  assert.match(anemia, /area: "\[\[🧭 Medicina\]\]"/);
+  // Anemia decía su área: queda dentro de la carpeta del área, como nota.
+  const medicina = '20 │ 🧭 Areas/🧭 Medicina';
+  const anemia = leer(v.vault, `${medicina}/💡 Anemia.md`);
+  assert.match(anemia, /^---\ntipo: nota\n/);
   assert.match(anemia, / {2}- "\[\[🔬 Guía MINSA\]\]"/);
   assert.match(anemia, /\[\[🔬 Guía MINSA#Tabla 2\|la tabla\]\] y \[\[🎯 Tesis\]\]/);
   assert.match(anemia, /^# 💡 Anemia$/m);
   assert.match(anemia, /aliases:\n {2}- Anemia/);
+  // El área pasa a ser carpeta con su nota principal, sin las secciones vacías de la 0.3.
+  const area = leer(v.vault, `${medicina}/🧭 Medicina.md`);
+  assert.match(area, /## De qué trata/);
+  assert.match(area, /\[\[💡 Anemia\]\]/, 'el índice automático ya enlaza sus notas');
+  // La guía no decía área ni proyecto: va a la Bandeja y queda un pendiente para ubicarla.
+  assert.ok(existsSync(join(v.vault, '00 │ 📥 Bandeja/🔬 Guía MINSA.md')));
+  assert.match(leer(v.vault, '99 │ ⚙️ Sistema/✅ pendientes.md'), /## Para ti\n\n- \[ \] .*ubicar 1 notas/);
   assert.ok(existsSync(join(v.vault, '10 │ 🎯 Proyectos/🎯 Tesis/🎯 Tesis.md')), 'la carpeta del proyecto cambia con su nota');
   assert.ok(existsSync(join(v.vault, '10 │ 🎯 Proyectos/🎯 Tesis/Borrador.md')));
-  assert.ok(existsSync(join(v.vault, '40 │ 📚 Fuentes/📎 adjuntos/📕 pdf/Guía.pdf')));
-  assert.ok(existsSync(join(v.vault, '00 │ 📥 Bandeja/📦 importados/🗒️ Apuntes.md')));
-  assert.ok(existsSync(join(v.vault, '00 │ 📥 Bandeja/📲 telegram/📲 2026-10-21 1805 idea.md')));
+  assert.ok(existsSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/📕 pdf/Guía.pdf')));
+  // La bandeja se aplana y lo que había es captura.
+  assert.match(leer(v.vault, '00 │ 📥 Bandeja/🗒️ Apuntes.md'), /tipo: captura[\s\S]*origen: notion/);
+  assert.ok(existsSync(join(v.vault, '00 │ 📥 Bandeja/📲 2026-10-21 1805 idea.md')));
   assert.ok(existsSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md')));
   assert.match(leer(v.vault, '99 │ ⚙️ Sistema/🔥 hot.md'), /^# 🔥 Contexto reciente$/m);
   assert.match(leer(v.vault, '99 │ ⚙️ Sistema/📜 bitacora.md'), /\[\[💡 Anemia\]\]/);
   assert.match(leer(v.vault, '99 │ ⚙️ Sistema/🧱 plantillas/📅 Diario.md'), /^# 📅 \{\{date:YYYY-MM-DD\}\}$/m);
   // Nada viejo queda; nada se borró.
-  for (const viejo of ['00-Bandeja', '10-Proyectos', '20-Areas', '30-Conocimiento', '40-Fuentes', '50-Diario', '99-Sistema']) assert.ok(!existsSync(join(v.vault, viejo)), viejo);
+  for (const viejo of ['00-Bandeja', '10-Proyectos', '20-Areas', '30-Conocimiento', '40-Fuentes', '50-Diario', '99-Sistema', '30 │ 🧠 Conocimiento', '40 │ 📚 Fuentes', '00 │ 📥 Bandeja/📦 importados']) assert.ok(!existsSync(join(v.vault, viejo)), viejo);
 
   const cfg = JSON.parse(leer(v.vault, '.cerebro/config.json'));
-  assert.equal(cfg.version, 2);
+  assert.equal(cfg.version, 3);
   assert.deepEqual(cfg.areas, ['🧭 Medicina']);
   assert.deepEqual(Object.keys(cfg.cuadernos), ['10 │ 🎯 Proyectos/🎯 Tesis']);
-  assert.equal(JSON.parse(leer(v.vault, '.cerebro/importaciones.json'))['notion:p1'].ruta, '00 │ 📥 Bandeja/📦 importados/🗒️ Apuntes.md');
-  assert.equal(JSON.parse(leer(v.vault, '.cerebro/fuentes.json')).abc, '40 │ 📚 Fuentes/📎 adjuntos/📕 pdf/Guía.pdf');
-  assert.equal(JSON.parse(leer(v.vault, '.cerebro/telegram.json')).escritos.t1.ruta, '00 │ 📥 Bandeja/📲 telegram/📲 2026-10-21 1805 idea.md');
-  assert.equal(JSON.parse(leer(v.vault, '.obsidian/app.json')).newFileFolderPath, '00 │ 📥 Bandeja/📝 notas');
+  assert.equal(JSON.parse(leer(v.vault, '.cerebro/importaciones.json'))['notion:p1'].ruta, '00 │ 📥 Bandeja/🗒️ Apuntes.md');
+  assert.equal(JSON.parse(leer(v.vault, '.cerebro/fuentes.json')).abc, '99 │ ⚙️ Sistema/📎 adjuntos/📕 pdf/Guía.pdf');
+  assert.equal(JSON.parse(leer(v.vault, '.cerebro/telegram.json')).escritos.t1.ruta, '00 │ 📥 Bandeja/📲 2026-10-21 1805 idea.md');
+  const app = JSON.parse(leer(v.vault, '.obsidian/app.json'));
+  assert.equal(app.newFileFolderPath, '00 │ 📥 Bandeja');
+  assert.equal(app.attachmentFolderPath, '99 │ ⚙️ Sistema/📎 adjuntos');
   assert.deepEqual(JSON.parse(leer(v.vault, '.obsidian/daily-notes.json')), { folder: '50 │ 📅 Diario', format: '[📅] YYYY-MM-DD', template: '99 │ ⚙️ Sistema/🧱 plantillas/📅 Diario' });
   assert.match(leer(v.vault, '.gitignore'), /^\.tmp\.drivedownload\/$/m);
   const agents = leer(v.vault, 'AGENTS.md');
@@ -138,6 +154,50 @@ test('migrar: vista previa sin cambios; con --aplicar mueve, renombra y actualiz
   v.borrar();
 });
 
+// Un vault como lo dejaba OKT 0.3.x (como el de Mack el 2026-10-23: áreas como notas sueltas, bandeja con subcarpetas).
+function vault03() {
+  const t = temporal();
+  const vault = join(t.dir, 'cerebro');
+  const configDir = join(t.dir, 'config');
+  const e = (rel, texto) => escribir(vault, rel, texto);
+  e('.cerebro/config.json', JSON.stringify({ version: 2, areas: ['🩺 Medicina', '🌱 Personal'], formato_diario: 'DD/MM/YY' }));
+  e('.obsidian/app.json', JSON.stringify({ attachmentFolderPath: '40 │ 📚 Fuentes/📎 adjuntos', newFileFolderPath: '00 │ 📥 Bandeja/📝 notas' }));
+  e('AGENTS.md', '<!-- okt:inicio -->\nviejo\n<!-- okt:fin -->\n');
+  e('20 │ 🧭 Areas/🩺 Medicina.md', `${fm({ tipo: 'area', creado: '2026-10-22', actualizado: '2026-10-22', resumen: 'Área.' })}\n# 🩺 Medicina\n\n## Proyectos\n\n## Conocimiento\n\n## Notas\n`);
+  e('20 │ 🧭 Areas/🌱 Personal.md', `${fm({ tipo: 'area', creado: '2026-10-22', actualizado: '2026-10-22', resumen: 'Área.' })}\n# 🌱 Personal\n\n## Proyectos\n\n## Conocimiento\n\n## Notas\n\nMis cosas.\n`);
+  e('30 │ 🧠 Conocimiento/🧩 sintesis/🩸 Anemia.md', `${fm({ tipo: 'sintesis', creado: '2026-10-22', actualizado: '2026-10-22', estado: 'borrador', resumen: 'r', area: '"[[🩺 Medicina]]"' })}\n# 🩸 Anemia\n\nVer [[📝 idea]].\n`);
+  e('00 │ 📥 Bandeja/📝 notas/📝 idea.md', `${fm({ tipo: 'nota', creado: '2026-10-22' })}\n# 📝 idea\n`);
+  e('00 │ 📥 Bandeja/💻 sesiones/💻 2026-10-22 1030 app.md', `${fm({ tipo: 'sesion', creado: '2026-10-22', agente: 'claude' })}\n# Sesión\n`);
+  e('50 │ 📅 Diario/📅 22∕10∕26.md', `${fm({ tipo: 'diario', creado: '2026-10-22' })}\n# 📅 22∕10∕26\n`);
+  e('99 │ ⚙️ Sistema/🧱 plantillas/💡 Concepto.md', '---\ntipo: concepto\n---\n');
+  return { ...t, vault, configDir, okt: (args, o = {}) => okt(args, { cwd: vault, configDir, ...o }) };
+}
+
+test('migrar desde la 0.3: áreas como carpetas, conocimiento a su área, bandeja plana y tipos nuevos', () => {
+  const v = vault03();
+  let r = v.okt(['migrar']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.match(r.salida, /Áreas que pasan a ser carpetas \(2\)/);
+  assert.ok(existsSync(join(v.vault, '20 │ 🧭 Areas/🩺 Medicina.md')), 'la vista previa no mueve nada');
+  r = v.okt(['migrar', '--aplicar']);
+  assert.equal(r.codigo, 0, r.error);
+  const personal = leer(v.vault, '20 │ 🧭 Areas/🌱 Personal/🌱 Personal.md');
+  assert.match(personal, /## De qué trata/);
+  assert.match(personal, /## Notas\n\nMis cosas\./, 'lo que el usuario escribió se conserva');
+  assert.doesNotMatch(personal, /## Conocimiento/);
+  assert.match(leer(v.vault, '20 │ 🧭 Areas/🩺 Medicina/🩸 Anemia.md'), /^---\ntipo: nota\n/);
+  assert.match(leer(v.vault, '00 │ 📥 Bandeja/📝 idea.md'), /tipo: captura[\s\S]*origen: nota/);
+  assert.match(leer(v.vault, '00 │ 📥 Bandeja/💻 2026-10-22 1030 app.md'), /tipo: captura[\s\S]*origen: sesion/);
+  assert.ok(existsSync(join(v.vault, '99 │ ⚙️ Sistema/🧱 plantillas/💡 Nota.md')));
+  assert.ok(existsSync(join(v.vault, '90 │ 🗄️ Archivo/99 │ ⚙️ Sistema/🧱 plantillas/💡 Concepto.md')), 'la plantilla vieja se archiva, no se borra');
+  assert.equal(JSON.parse(leer(v.vault, '.cerebro/config.json')).formato_diario, 'DD/MM/YY');
+  assert.ok(existsSync(join(v.vault, '50 │ 📅 Diario/📅 22∕10∕26.md')));
+  for (const viejo of ['30 │ 🧠 Conocimiento', '00 │ 📥 Bandeja/📝 notas', '00 │ 📥 Bandeja/💻 sesiones']) assert.ok(!existsSync(join(v.vault, viejo)), viejo);
+  const lint = JSON.parse(v.okt(['lint', '--json']).salida);
+  assert.equal(lint.errores, 0, JSON.stringify(lint.hallazgos));
+  v.borrar();
+});
+
 test('migrar: si dos nombres chocarían, no toca nada', () => {
   const v = vaultAntiguo();
   escribir(v.vault, '30-Conocimiento/conceptos/💡 Anemia.md', `${fm({ tipo: 'concepto', creado: '2026-10-01' })}\n# 💡 Anemia\n`);
@@ -149,22 +209,27 @@ test('migrar: si dos nombres chocarían, no toca nada', () => {
   v.borrar();
 });
 
-test('renombrar cambia el emoji, actualiza enlaces, título y alias, y mueve la carpeta del proyecto', () => {
+test('renombrar cambia el emoji, actualiza enlaces, título y alias, y mueve la carpeta del proyecto o del área', () => {
   const v = vaultNuevo();
-  v.okt(['nota', 'nueva', 'concepto', 'Anemia']);
+  v.okt(['nota', 'nueva', 'nota', 'Anemia', '--carpeta', 'Medicina']);
   v.okt(['nota', 'nueva', 'proyecto', 'Tesis']);
-  escribir(v.vault, '00 │ 📥 Bandeja/📝 notas/📝 idea.md', 'Ver [[💡 Anemia]] y [[🎯 Tesis#Objetivo]].\n');
+  escribir(v.vault, '00 │ 📥 Bandeja/📝 idea.md', 'Ver [[💡 Anemia]] y [[🎯 Tesis#Objetivo]].\n');
   let r = v.okt(['renombrar', 'Anemia', '🩸 Anemia']);
   assert.equal(r.codigo, 0, r.error);
-  const nota = leer(v.vault, '30 │ 🧠 Conocimiento/💡 conceptos/🩸 Anemia.md');
+  const nota = leer(v.vault, '20 │ 🧭 Areas/🧭 Medicina/🩸 Anemia.md');
   assert.match(nota, /^# 🩸 Anemia$/m);
   assert.match(nota, /aliases:\n {2}- Anemia\n/);
   r = v.okt(['renombrar', '🎯 Tesis', '🎓 Tesis']);
   assert.equal(r.codigo, 0, r.error);
   assert.ok(existsSync(join(v.vault, '10 │ 🎯 Proyectos/🎓 Tesis/🎓 Tesis.md')));
-  assert.equal(leer(v.vault, '00 │ 📥 Bandeja/📝 notas/📝 idea.md'), 'Ver [[🩸 Anemia]] y [[🎓 Tesis#Objetivo]].\n');
+  assert.equal(leer(v.vault, '00 │ 📥 Bandeja/📝 idea.md'), 'Ver [[🩸 Anemia]] y [[🎓 Tesis#Objetivo]].\n');
+  // El área se renombra con su carpeta, lo que contiene y la configuración.
+  r = v.okt(['renombrar', '🧭 Medicina', '🩺 Medicina']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(v.vault, '20 │ 🧭 Areas/🩺 Medicina/🩸 Anemia.md')));
+  assert.ok(JSON.parse(leer(v.vault, '.cerebro/config.json')).areas.includes('🩺 Medicina'));
   // No pisa otra nota ni toca el sistema.
-  v.okt(['nota', 'nueva', 'concepto', 'Hierro']);
+  v.okt(['nota', 'nueva', 'nota', 'Hierro', '--carpeta', 'Medicina']);
   assert.equal(v.okt(['renombrar', 'Hierro', '🧲 Anemia']).codigo, 3);
   assert.notEqual(v.okt(['renombrar', '🔥 hot', '🔥 caliente']).codigo, 0);
   v.borrar();
@@ -172,8 +237,8 @@ test('renombrar cambia el emoji, actualiza enlaces, título y alias, y mueve la 
 
 test('lint: sugiere el nombre con emoji para un enlace que lo omite y avisa de notas sin emoji', () => {
   const v = vaultNuevo();
-  v.okt(['nota', 'nueva', 'concepto', '🩸 Anemia', '--resumen', 'Hb baja.']);
-  escribir(v.vault, '30 │ 🧠 Conocimiento/💡 conceptos/Hierro.md', `${fm({ tipo: 'concepto', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'Mineral.' })}\nVer [[Anemia]].\n`);
+  v.okt(['nota', 'nueva', 'nota', '🩸 Anemia', '--resumen', 'Hb baja.', '--carpeta', 'Medicina']);
+  escribir(v.vault, '20 │ 🧭 Areas/🧭 Medicina/Hierro.md', `${fm({ tipo: 'nota', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'Mineral.' })}\nVer [[Anemia]].\n`);
   const { hallazgos } = JSON.parse(v.okt(['lint', '--json']).salida);
   assert.ok(hallazgos.some((h) => h.regla === 'enlace_roto' && /¿quisiste decir \[\[🩸 Anemia\]\]\?/.test(h.detalle)));
   assert.ok(hallazgos.some((h) => h.regla === 'sin_emoji' && h.archivo.endsWith('/Hierro.md')));

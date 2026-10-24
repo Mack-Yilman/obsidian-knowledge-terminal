@@ -5,14 +5,13 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'node
 import { join, basename, relative, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { leerConfigGlobal, guardarConfigGlobal, leerConfigVault, guardarConfigVault, esVault, dentroDe, dirConfig, CLI, posix, sobrescribir } from './rutas.mjs';
-import { R, conEmoji, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
-import { leerBloque, reemplazarBloque } from './bloques.mjs';
+import { C, R, conEmoji, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
+import { leerBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { ahora, fechaISO, horaCorta } from './fechas.mjs';
 import { cambiosDesde, commit } from './git.mjs';
-import { pareceSensible } from './sensibles.mjs';
 import { limpiarNombre } from './nombres.mjs';
-import { textoAgents } from './init.mjs';
+import { actualizarAgents } from './init.mjs';
 import { bajar as bajarTelegram, leerConfigTelegram } from './telegram.mjs';
 
 const TOPE_TELEGRAM_MS = 10000; // el hook tiene 15 s: la sesión nunca espera más que esto
@@ -38,13 +37,9 @@ function renovarRutaCli(vault) {
   const actual = posix(CLI);
   if (cfg.cli === actual) return;
   guardarConfigGlobal({ cli: actual });
-  const ruta = join(vault, 'AGENTS.md');
   // Sin migrar, el bloque nuevo describiría carpetas que aún no existen: lo regenera okt migrar.
-  if (!existsSync(ruta) || necesitaMigrar(vault)) return;
-  const areas = (leerConfigVault(vault).areas || []).map((a) => `[[${a}]]`).join(', ');
-  const nuevo = leerBloque(textoAgents({ fecha: fechaISO(), areas, cli: actual }));
-  sobrescribir(ruta, reemplazarBloque(readFileSync(ruta, 'utf8'), nuevo));
-  commit(vault, 'okt: ruta del CLI actualizada en AGENTS.md');
+  if (necesitaMigrar(vault)) return;
+  if (actualizarAgents(vault, actual)) commit(vault, 'okt: ruta del CLI actualizada en AGENTS.md');
 }
 
 const archivoSesion = (id) => join(dirConfig(), 'sesiones', `${String(id).replace(/[^\w-]/g, '')}.json`);
@@ -55,8 +50,8 @@ async function lineaTelegram(vault) {
   try {
     // Cada archivo tarda ~5 s: solo se empieza uno si quedan 6 s del tope; los demás esperan a la bajada a mano.
     const r = await bajarTelegram(vault, { tope: TOPE_TELEGRAM_MS, reservaArchivo: 6000 });
-    const { escritos, retenidos, errores, diferidos } = r.datos;
-    return escritos.length || retenidos.length || errores.length || diferidos.length ? `${r.texto}\n\n` : '';
+    const { escritos, errores, diferidos } = r.datos;
+    return escritos.length || errores.length || diferidos.length ? `${r.texto}\n\n` : '';
   } catch {
     return '';
   }
@@ -93,16 +88,35 @@ export async function hookInicio(entradaTexto) {
   }
 }
 
-// SessionStart de Antigravity (<vault>/.agents/hooks.json). agy entrega el vault en workspacePaths y espera
-// {"injectSteps":[{"systemMessage":{"systemMessage":"…"}}]} (verificado en agy 1.4.5). No renueva la ruta del
-// CLI: la de AGENTS.md es la de Claude Code, y cambiarla haría que los dos agentes se la pisaran.
+// Antigravity corre el hook del vault (<vault>/.agents/hooks.json) y el global (~/.gemini/config/hooks.json) en
+// la misma conversación, con ~0,2 s de diferencia (sonda en la App, 2026-10-23). El primero que llega anota el
+// conversationId y el otro no repite la bajada ni el contexto.
+// En la caché (ignorada por git): cambia en cada conversación.
+const rutaHookAgy = (vault) => join(vault, '.cerebro', 'cache', 'hook-agy.json');
+
+function primeraVez(vault, id) {
+  if (!id) return true;
+  try {
+    const previo = JSON.parse(readFileSync(rutaHookAgy(vault), 'utf8'));
+    if (previo.conversationId === id) return false;
+  } catch {}
+  mkdirSync(join(vault, '.cerebro', 'cache'), { recursive: true });
+  writeFileSync(rutaHookAgy(vault), JSON.stringify({ conversationId: id, hora: new Date().toISOString() }));
+  return true;
+}
+
+// SessionStart de Antigravity (App, CLI y, cuando los cargue, el IDE). Entrega las carpetas abiertas en
+// workspacePaths y espera {"injectSteps":[{"systemMessage":{"systemMessage":"…"}}]} (verificado en agy 1.4.5 y en
+// la App). Solo actúa si alguna carpeta abierta es el vault (o está dentro de él). No renueva la ruta del CLI: la
+// de AGENTS.md es la de Claude Code, y cambiarla haría que los dos agentes se la pisaran.
 export async function hookInicioAntigravity(entradaTexto) {
   try {
     const e = leerEntrada(entradaTexto);
     if (e.invocationNum > 0) return '{}';
     const vault = vaultGlobal();
-    const cwd = e.workspacePaths?.[0] || e.cwd;
-    if (!vault || !cwd || !dentroDe(vault, cwd)) return '{}';
+    const carpetas = [...[].concat(e.workspacePaths || []), e.cwd].filter(Boolean);
+    if (!vault || !carpetas.some((c) => dentroDe(vault, c))) return '{}';
+    if (!primeraVez(vault, e.conversationId)) return '{}';
     const texto = await contextoInicio(vault);
     return texto ? JSON.stringify({ injectSteps: [{ systemMessage: { systemMessage: texto } }] }) : '{}';
   } catch {
@@ -140,23 +154,23 @@ function excluido(vault, cwd) {
 }
 
 function escribirFicha(vault, { proyecto, cwd, agente, inicio, git, editados = [], pedidos, conversaciones }) {
-  const limpios = (xs) => xs.filter((x) => x && !pareceSensible(x)).slice(0, 30);
+  const limpios = (xs) => xs.filter(Boolean).slice(0, 30);
   const commits = limpios(git?.commits || []);
   const archivos = limpios([...new Set([...editados, ...(git?.cambiados || [])])]);
   if (!commits.length && !archivos.length && !pedidos) return null;
   const nombre = conEmoji('sesion', limpiarNombre(`${fechaISO(inicio)} ${horaCorta(inicio).replace(':', '')} ${proyecto}`));
-  const rel = `${R.sesiones}/${nombre}.md`;
-  const datos = { tipo: 'sesion', creado: fechaISO(inicio), agente, proyecto, ruta: posix(cwd) };
+  const rel = `${C.bandeja}/${nombre}.md`;
+  const datos = { tipo: 'captura', creado: fechaISO(inicio), origen: 'sesion', agente, proyecto, ruta: posix(cwd) };
   if (git?.rama) datos.rama = git.rama;
   if (pedidos) datos.pedidos = String(pedidos);
   const partes = [`\n# Sesión ${agente} · ${proyecto}\n`];
   if (conversaciones?.length) partes.push(`Conversaciones de agy: ${conversaciones.join(', ')}\n`);
   partes.push(`## Commits\n\n${commits.length ? commits.map((c) => `- ${c}`).join('\n') : '- (ninguno)'}\n`);
   partes.push(`## Archivos tocados\n\n${archivos.length ? archivos.map((a) => `- ${a}`).join('\n') : '- (ninguno)'}\n`);
-  partes.push('## Para procesar\n\nFicha automática, sin resumen del modelo. Al procesar la bandeja: lo general va a Conocimiento y lo propio del proyecto se propone para el `## Insights` de su CLAUDE.md.\n');
-  mkdirSync(join(vault, R.sesiones), { recursive: true });
+  partes.push('## Para procesar\n\nFicha automática, sin resumen del modelo. Al procesar la bandeja: lo que sirve más allá del proyecto va al área o el tema que corresponda, y lo propio del proyecto se propone para el `## Insights` de su CLAUDE.md.\n');
+  mkdirSync(join(vault, C.bandeja), { recursive: true });
   let abs = join(vault, rel);
-  for (let i = 2; existsSync(abs); i++) abs = join(vault, `${R.sesiones}/${nombre} ${i}.md`);
+  for (let i = 2; existsSync(abs); i++) abs = join(vault, `${C.bandeja}/${nombre} ${i}.md`);
   writeFileSync(abs, escribirFrontmatter(datos, partes.join('\n')));
   return posix(relative(vault, abs));
 }
@@ -214,5 +228,5 @@ export function sesionesAgy(vault) {
     if (f) fichas.push(f);
   }
   guardarConfigVault(vault, { agy_ultimo: maximo });
-  return { texto: `${fichas.length} fichas de sesiones de agy en ${R.sesiones}.${fichas.length ? `\n${fichas.map((f) => `- ${f}`).join('\n')}` : ''}`, datos: { fichas } };
+  return { texto: `${fichas.length} fichas de sesiones de agy en ${C.bandeja}.${fichas.length ? `\n${fichas.map((f) => `- ${f}`).join('\n')}` : ''}`, datos: { fichas } };
 }

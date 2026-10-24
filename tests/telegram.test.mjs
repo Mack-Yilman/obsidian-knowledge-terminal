@@ -29,7 +29,7 @@ async function preparar(opciones = {}) {
     ...v,
     cola,
     leer: (rel) => readFileSync(join(v.vault, rel), 'utf8'),
-    bandeja: () => readdirSync(join(v.vault, '00 │ 📥 Bandeja', '📲 telegram')).sort(),
+    bandeja: () => readdirSync(join(v.vault, '00 │ 📥 Bandeja')).filter((n) => n.endsWith('.md')).sort(),
     async fin() {
       await cola.cerrar();
       v.borrar();
@@ -80,19 +80,19 @@ test('bajar escribe cada tipo en su lugar y confirma todo', async () => {
 
     const notas = t.bandeja();
     assert.ok(notas.includes('📲 2026-10-21 1805 Idea para el repaso de anemia ferropénica.md'), notas.join(' | '));
-    const nota = t.leer('00 │ 📥 Bandeja/📲 telegram/📲 2026-10-21 1805 Idea para el repaso de anemia ferropénica.md');
-    assert.match(nota, /^---\ntipo: nota\ncreado: 2026-10-21\norigen: telegram\n/);
+    const nota = t.leer('00 │ 📥 Bandeja/📲 2026-10-21 1805 Idea para el repaso de anemia ferropénica.md');
+    assert.match(nota, /^---\ntipo: captura\ncreado: 2026-10-21\norigen: telegram\n/);
     assert.match(nota, /Idea para el repaso de anemia ferropénica en niños/);
 
     const voz = notas.find((n) => n.startsWith('📲 2026-10-21 1806'));
-    assert.match(t.leer(`00 │ 📥 Bandeja/📲 telegram/${voz}`), /Transcripción automática/);
+    assert.match(t.leer(`00 │ 📥 Bandeja/${voz}`), /Transcripción automática/);
 
-    const enlace = t.leer(`00 │ 📥 Bandeja/📲 telegram/${notas.find((n) => /youtube/i.test(n))}`);
+    const enlace = t.leer(`00 │ 📥 Bandeja/${notas.find((n) => /youtube/i.test(n))}`);
     assert.match(enlace, /url: https:\/\/www.youtube.com\/watch\?v=abc/);
     assert.match(enlace, /capturar/);
 
-    assert.equal(readFileSync(join(t.vault, '40 │ 📚 Fuentes/📎 adjuntos/📲 telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
-    const archivo = t.leer(`00 │ 📥 Bandeja/📲 telegram/${notas.find((n) => /Pizarra/.test(n))}`);
+    assert.equal(readFileSync(join(t.vault, '99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
+    const archivo = t.leer(`00 │ 📥 Bandeja/${notas.find((n) => /Pizarra/.test(n))}`);
     assert.match(archivo, /adjunto: "\[\[foto.jpg\]\]"/);
     assert.match(archivo, /!\[\[foto.jpg\]\]/);
 
@@ -119,49 +119,38 @@ test('si falla la confirmación, la siguiente bajada no duplica y confirma', asy
   }
 });
 
-test('un elemento sensible se retiene sin --forzar y se escribe con él', async () => {
-  const t = await preparar({ elementos: [elemento('c1', 'nota', 'Control del DNI 45879632 mañana', { sensible: true })] });
-  try {
-    const r = await bajar(t.vault);
-    assert.equal(r.datos.escritos.length, 0);
-    assert.deepEqual(r.datos.retenidos.map((x) => x.id), ['c1']);
-    assert.match(r.texto, /okt telegram descartar c1/);
-    assert.deepEqual(t.cola.estado.confirmados, []);
-    assert.match(readFileSync(join(t.vault, '.cerebro', 'telegram.json'), 'utf8'), /"retenidos"[\s\S]*"c1"/, 'okt estado los muestra');
-    // --forzar sin ids no adivina: hay que nombrar cada elemento (o «todo»).
-    await assert.rejects(bajar(t.vault, { forzar: true }), /--forzar <id/);
-    const r2 = await bajar(t.vault, { forzar: true, ids: ['c1'] });
-    assert.equal(r2.datos.escritos.length, 1);
-    assert.deepEqual(t.cola.estado.confirmados, ['c1']);
-  } finally {
-    await t.fin();
-  }
-});
-
-test('también retiene lo que parece sensible aunque el Worker no lo marcara', async () => {
-  const t = await preparar({ elementos: [elemento('c2', 'nota', 'Paciente Juan Pérez con fiebre')] });
-  try {
-    const r = await bajar(t.vault);
-    assert.deepEqual(r.datos.retenidos.map((x) => x.id), ['c2']);
-  } finally {
-    await t.fin();
-  }
-});
-
-test('retiene por el nombre del archivo y por nombres en mayúsculas', async () => {
+test('no filtra el contenido: DNI, nombres y archivos con nombres se escriben (y se ignora el «sensible» de la 0.1)', async () => {
   const t = await preparar({
     elementos: [
+      elemento('c1', 'nota', 'Control del DNI 45879632 mañana', { sensible: true }),
+      elemento('c2', 'nota', 'Paciente JUAN PÉREZ con resultado crítico'),
       elemento('c3', 'archivo', '', { archivo_key: 'F', nombre: 'Paciente Juan Perez - HC 45892.pdf', mime: 'application/pdf' }),
-      elemento('c4', 'nota', 'Paciente JUAN PÉREZ con resultado crítico'),
     ],
     archivos: { F: { bytes: '%PDF', mime: 'application/pdf' } },
   });
   try {
+    // Un registro de la 0.3 con retenidos: la primera bajada lo limpia.
+    escribir(t.vault, '.cerebro/telegram.json', JSON.stringify({ escritos: {}, retenidos: [{ id: 'viejo', que: 'un DNI' }] }));
     const r = await bajar(t.vault);
-    assert.deepEqual(r.datos.retenidos.map((x) => x.id), ['c3', 'c4']);
-    assert.ok(!existsSync(join(t.vault, '40 │ 📚 Fuentes/📎 adjuntos/📲 telegram')) || readdirSync(join(t.vault, '40 │ 📚 Fuentes/📎 adjuntos/📲 telegram')).length === 0);
+    assert.equal(r.datos.escritos.length, 3);
+    assert.equal(r.datos.retenidos, undefined);
+    assert.deepEqual(t.cola.estado.confirmados.sort(), ['c1', 'c2', 'c3']);
+    assert.ok(existsSync(join(t.vault, '99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/Paciente Juan Perez - HC 45892.pdf')));
+    assert.doesNotMatch(readFileSync(join(t.vault, '.cerebro', 'telegram.json'), 'utf8'), /retenidos/);
+    assert.ok(t.bandeja().some((n) => /DNI 45879632/.test(n)));
   } finally {
     await t.fin();
+  }
+});
+
+test('--silencioso (la tarea del IDE) no falla sin configuración', async () => {
+  const v = vaultNuevo();
+  process.env.OKT_CONFIG_DIR = v.configDir;
+  try {
+    const r = await bajar(v.vault, { silencioso: true });
+    assert.equal(r.texto, '');
+  } finally {
+    v.borrar();
   }
 });
 
@@ -196,7 +185,7 @@ test('una foto sin leyenda: título sin extensión ni fecha repetida, sin renglo
   try {
     await bajar(t.vault);
     assert.deepEqual(t.bandeja(), ['📲 2026-10-21 1805 foto.md']);
-    const nota = t.leer('00 │ 📥 Bandeja/📲 telegram/📲 2026-10-21 1805 foto.md');
+    const nota = t.leer('00 │ 📥 Bandeja/📲 2026-10-21 1805 foto.md');
     assert.match(nota, /# 📲 foto\n\n!\[\[foto 2026-10-21 1805.jpg\]\]\n\nArchivo en /);
   } finally {
     await t.fin();
@@ -254,12 +243,12 @@ test('el hook avisa si algo no se pudo bajar', async () => {
 });
 
 test('descartar confirma sin escribir nada', async () => {
-  const t = await preparar({ elementos: [elemento('d1', 'nota', 'DNI 45879632', { sensible: true })] });
+  const t = await preparar({ elementos: [elemento('d1', 'nota', 'Un mensaje que no quiero guardar')] });
   try {
     const r = await descartar(t.vault, ['d1']);
     assert.match(r.texto, /1/);
     assert.deepEqual(t.cola.estado.confirmados, ['d1']);
-    assert.equal(existsSync(join(t.vault, '00 │ 📥 Bandeja/📲 telegram')) ? t.bandeja().length : 0, 0);
+    assert.equal(t.bandeja().length, 0);
   } finally {
     await t.fin();
   }

@@ -8,7 +8,7 @@ Pide confirmación antes de cada instalación o cambio. Si el usuario ya tiene u
 - **macOS:** `brew install --cask obsidian` o la descarga.
 - **Linux:** AppImage o Flatpak (`flatpak install flathub md.obsidian.Obsidian`).
 
-Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `40 │ 📚 Fuentes/📎 adjuntos`, notas nuevas en `00 │ 📥 Bandeja/📝 notas`, plantillas en `99 │ ⚙️ Sistema/🧱 plantillas`, diario en `50 │ 📅 Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
+Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `99 │ ⚙️ Sistema/📎 adjuntos`, notas nuevas en `00 │ 📥 Bandeja`, plantillas en `99 │ ⚙️ Sistema/🧱 plantillas`, diario en `50 │ 📅 Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
 
 ## Respaldo con Google Drive para escritorio
 
@@ -41,9 +41,17 @@ Al final: `okt doctor --completo` verifica las sesiones.
 
 ## Antigravity
 
-`okt instalar antigravity` muestra qué hará: copiar el plugin a `~/.okt/plugin` y las 5 skills a `~/.gemini/config/skills/okt-*`. Con el sí del usuario, `okt instalar antigravity --aplicar`. Después de actualizar el plugin, se repite el comando.
+`okt instalar antigravity` muestra qué hará: copiar el plugin a `~/.okt/plugin` y las 6 skills a `~/.gemini/config/skills/okt-*`. Con el sí del usuario, `okt instalar antigravity --aplicar`. Después de actualizar el plugin, se repite el comando.
 
-Con el vault ya creado, `--aplicar` deja también en `<vault>/.agents/hooks.json` un hook de inicio (SessionStart) que, al abrir `agy` en el vault, baja Telegram y carga `🔥 hot.md`, igual que en Claude Code. agy solo usa ese hook si el vault es una **carpeta de confianza**: la primera vez que el usuario abra `agy` en el vault, debe aceptar confiar en ella (`okt doctor` lo comprueba).
+Con el vault ya creado, `--aplicar` deja también lo que baja Telegram y carga `🔥 hot.md` al empezar, igual que en Claude Code:
+
+| Dónde | Qué | Cuándo corre |
+|---|---|---|
+| `<vault>/.agents/hooks.json` | Hook de inicio (SessionStart) | Al abrir una conversación nueva en la App o la CLI de Antigravity con el vault abierto, si el vault es una **carpeta de confianza** (la primera vez, acepta confiar en ella) |
+| `~/.gemini/config/hooks.json` | El mismo hook, global | Al abrir cualquier conversación en la App o la CLI: solo actúa si la carpeta abierta es el vault, y no repite lo que ya hizo el hook del vault en esa conversación |
+| `<vault>/.vscode/tasks.json` | Tarea «OKT: bajar Telegram» (`runOn: folderOpen`) | Al abrir la carpeta del vault en el Antigravity IDE, que hoy no carga hooks. La primera vez, el IDE pregunta si se permiten las tareas automáticas: elige «Permitir» |
+
+No hay evento al abrir la aplicación: lo más temprano es la primera conversación (o, en el IDE, abrir la carpeta).
 
 Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen en el lote con `okt sesiones agy`, que cuenta los pedidos y lee los cambios de git de cada carpeta sin copiar el texto de los pedidos.
 
@@ -80,4 +88,4 @@ Permite enviar notas, notas de voz, enlaces, fotos y tareas desde el móvil medi
 ### Comprobación
 
 - En Telegram: envía `/estado` al bot para ver cuántos elementos esperan en la cola.
-- En la PC: ejecuta `okt telegram bajar` para descargar los elementos en `00 │ 📥 Bandeja/📲 telegram/` y confirmar la recepción.
+- En la PC: ejecuta `okt telegram bajar` para descargar los elementos en `00 │ 📥 Bandeja/` y confirmar la recepción.

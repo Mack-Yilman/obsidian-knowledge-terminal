@@ -10,7 +10,7 @@ import { RAIZ_PLUGIN, posix, guardarConfigGlobal, leerConfigGlobal, esVault, sob
 export const FRASE_RAIZ = 'dos niveles arriba del directorio base de esta skill';
 const PARTES_PLUGIN = ['scripts', 'references', 'plantillas', 'skills', 'package.json'];
 
-const dirOkt = () => process.env.OKT_HOME || join(homedir(), '.okt');
+export const dirOkt = () => process.env.OKT_HOME || join(homedir(), '.okt');
 export const dirSkillsAgy = () => process.env.OKT_AGY_SKILLS || join(homedir(), '.gemini', 'config', 'skills');
 const dirAgyCli = () => process.env.OKT_AGY_CLI_DIR || join(homedir(), '.gemini', 'antigravity-cli');
 
@@ -28,24 +28,51 @@ export function deConfianza(vault) {
   }
 }
 
-// Hook SessionStart del vault, para que Antigravity baje Telegram y cargue hot.md al abrir la sesión, como
-// Claude Code. agy (1.4.5, Windows) no interpreta comillas en el comando y lo corre desde .agents/, así que
-// va la ruta absoluta y sin espacios. Se mezcla con los hooks que ya tenga el vault.
-function instalarHookVault(vault, cli) {
-  if (/\s/.test(cli)) return { aviso: `No instalé el hook de inicio: la ruta ${cli} tiene espacios y agy no admite comillas en el comando.` };
-  const ruta = join(vault, '.agents', 'hooks.json');
-  let hooks = {};
+// Archivo JSON de configuración: se mezcla la entrada de OKT con lo que ya tenga. Si no es JSON válido, no se toca.
+function mezclarJson(ruta, cambiar) {
+  let datos = {};
   if (existsSync(ruta)) {
     try {
-      hooks = JSON.parse(readFileSync(ruta, 'utf8'));
+      datos = JSON.parse(readFileSync(ruta, 'utf8'));
     } catch {
       return { aviso: `No toqué ${posix(ruta)}: no es JSON válido. Corrígelo y repite okt instalar antigravity --aplicar.` };
     }
   }
-  hooks.okt = { SessionStart: [{ type: 'command', command: `node ${cli} hook inicio --formato antigravity`, timeout: 20 }] };
+  const nuevo = cambiar(datos);
   mkdirSync(dirname(ruta), { recursive: true });
-  sobrescribir(ruta, `${JSON.stringify(hooks, null, 2)}\n`);
+  sobrescribir(ruta, `${JSON.stringify(nuevo, null, 2)}\n`);
   return { ruta: posix(ruta) };
+}
+
+// Hook SessionStart para que Antigravity baje Telegram y cargue hot.md al abrir una conversación, como Claude Code.
+// Va en dos lugares (sonda del 2026-10-23): el del vault (App y CLI, si el vault es de confianza) y el global de
+// ~/.gemini/config/hooks.json (App y CLI en cualquier carpeta; el hook solo actúa si la carpeta abierta es el vault, y
+// el de la misma conversación que llegue segundo no repite nada). agy no interpreta comillas en el comando y lo
+// corre desde .agents/ o desde ~/.gemini/config/: va la ruta absoluta y sin espacios.
+export const dirAgyConfig = () => process.env.OKT_AGY_CONFIG_DIR || join(homedir(), '.gemini', 'config');
+const hookOkt = (cli) => ({ SessionStart: [{ type: 'command', command: `node ${cli} hook inicio --formato antigravity`, timeout: 20 }] });
+
+function instalarHooks(vault, cli) {
+  if (/\s/.test(cli)) return [{ aviso: `No instalé el hook de inicio: la ruta ${cli} tiene espacios y agy no admite comillas en el comando.` }];
+  const conHook = (hooks) => ({ ...hooks, okt: hookOkt(cli) });
+  return [mezclarJson(join(vault, '.agents', 'hooks.json'), conHook), mezclarJson(join(dirAgyConfig(), 'hooks.json'), conHook)];
+}
+
+// El Antigravity IDE (2.5.5) no carga hooks: una tarea de VS Code con runOn folderOpen baja Telegram al abrir la
+// carpeta del vault. La primera vez, el IDE pregunta si se permiten las tareas automáticas.
+export const ETIQUETA_TAREA = 'OKT: bajar Telegram';
+
+function instalarTareaIde(vault, cli) {
+  const tarea = {
+    label: ETIQUETA_TAREA,
+    type: 'process',
+    command: 'node',
+    args: [cli, 'telegram', 'bajar', '--silencioso', '--vault', posix(vault)],
+    runOptions: { runOn: 'folderOpen' },
+    presentation: { reveal: 'silent', panel: 'dedicated', close: true },
+    problemMatcher: [],
+  };
+  return mezclarJson(join(vault, '.vscode', 'tasks.json'), (t) => ({ version: '2.0.0', ...t, tasks: [...[].concat(t.tasks || []).filter((x) => x?.label !== ETIQUETA_TAREA), tarea] }));
 }
 
 // okt instalar obsidian-skills [--aplicar]: las skills de kepano/obsidian-skills (Markdown de Obsidian, Bases, Canvas,
@@ -89,7 +116,10 @@ export function instalarAntigravity(op = {}) {
   const { vault } = leerConfigGlobal();
   const conVault = Boolean(vault && esVault(vault));
   const plan = [`Copiar el plugin a ${posix(destPlugin)} (${PARTES_PLUGIN.join(', ')})`, ...skills.map((s) => `Instalar la skill okt-${s} en ${posix(join(destSkills, `okt-${s}`))}`)];
-  if (conVault) plan.push(`Hook de inicio (SessionStart) en ${posix(join(vault, '.agents', 'hooks.json'))}: baja Telegram y carga hot.md al abrir agy en el vault`);
+  if (conVault) {
+    plan.push(`Hook de inicio (SessionStart) en ${posix(join(vault, '.agents', 'hooks.json'))} y en ${posix(join(dirAgyConfig(), 'hooks.json'))}: al abrir una conversación en el vault (App o CLI de Antigravity) baja Telegram y carga hot.md`);
+    plan.push(`Tarea «${ETIQUETA_TAREA}» en ${posix(join(vault, '.vscode', 'tasks.json'))}: el Antigravity IDE baja Telegram al abrir la carpeta del vault`);
+  }
   if (!op.aplicar) {
     return { texto: `Vista previa de la instalación en Antigravity:\n${plan.map((p) => `  - ${p}`).join('\n')}\nPara instalar: okt instalar antigravity --aplicar`, datos: { plan } };
   }
@@ -105,15 +135,16 @@ export function instalarAntigravity(op = {}) {
   const cli = posix(join(destPlugin, 'scripts', 'okt.mjs'));
   if (!leerConfigGlobal().cli || !existsSync(leerConfigGlobal().cli)) guardarConfigGlobal({ cli });
   const lineas = [`Instalado en Antigravity: ${skills.map((s) => `okt-${s}`).join(', ')}.`, `Plugin en ${posix(destPlugin)}.`];
-  let hook = null;
+  let hooks = [];
+  let tarea = null;
   if (conVault) {
-    hook = instalarHookVault(vault, cli);
-    if (hook.aviso) lineas.push(hook.aviso);
-    else {
-      lineas.push(`Hook de inicio en ${hook.ruta}: al abrir agy en el vault baja Telegram y carga hot.md.`);
-      if (!deConfianza(vault)) lineas.push(`Aviso: ${posix(vault)} aún no es una carpeta de confianza en agy, y agy no usa sus hooks hasta que lo sea. Abre agy en el vault y acepta confiar en la carpeta.`);
-    }
-  } else lineas.push('Sin vault configurado: el hook de inicio se agrega al repetir este comando después de okt init.');
-  lineas.push('Abre agy en la carpeta de tu vault y pide, por ejemplo, «¿cómo va mi cerebro?».');
-  return { texto: lineas.join('\n'), datos: { plan, destPlugin: posix(destPlugin), skills, hook } };
+    hooks = instalarHooks(vault, cli);
+    for (const h of hooks) lineas.push(h.aviso || `Hook de inicio en ${h.ruta}.`);
+    if (hooks.some((h) => !h.aviso)) lineas.push('Al abrir una conversación con el vault abierto (App o CLI de Antigravity), baja Telegram y carga hot.md.');
+    if (!deConfianza(vault)) lineas.push(`Aviso: ${posix(vault)} aún no es una carpeta de confianza en agy. El hook global funciona igual; para que corra también el del vault, abre agy en el vault y acepta confiar en la carpeta.`);
+    tarea = instalarTareaIde(vault, cli);
+    lineas.push(tarea.aviso || `Tarea del IDE en ${tarea.ruta}: el Antigravity IDE baja Telegram al abrir la carpeta. La primera vez pregunta si permites las tareas automáticas: elige «Permitir».`);
+  } else lineas.push('Sin vault configurado: los hooks de inicio se agregan al repetir este comando después de okt init.');
+  lineas.push('Abre Antigravity en la carpeta de tu vault y pide, por ejemplo, «¿cómo va mi cerebro?».');
+  return { texto: lineas.join('\n'), datos: { plan, destPlugin: posix(destPlugin), skills, hooks, tarea } };
 }

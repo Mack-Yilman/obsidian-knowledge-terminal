@@ -31,6 +31,8 @@ export function okt(args, { cwd, configDir, env = {}, input } = {}) {
       OKT_CONFIG_DIR: configDir,
       OKT_FECHA: '2026-10-22T10:30',
       OKT_SIN_GIT: '1',
+      // Nunca el ~/.gemini/config/hooks.json real (okt instalar antigravity escribe ahí el hook global).
+      OKT_AGY_CONFIG_DIR: join(configDir || tmpdir(), 'agy-config'),
       ...env,
     },
   });

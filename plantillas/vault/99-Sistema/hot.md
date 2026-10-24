@@ -5,22 +5,9 @@ creado: {{fecha}}
 
 # 🔥 Contexto reciente
 
-Lo lee el agente al empezar cada sesión. Lo regenera `okt hot`: no lo edites a mano.
+Lo lee el agente al empezar cada sesión: proyectos en foco, actividad, pendientes y aprendizajes. Lo regenera
+`okt hot`: no lo edites a mano.
 
 <!-- okt:inicio -->
-## Actividad reciente
-
-- {{fecha}}: vault creado.
-
-## Hilos abiertos
-
-- Sin pendientes.
-
-## Aprendizajes
-
-- Aún no hay aprendizajes.
-
-## Contradicciones
-
-- Ninguna.
+- Vault recién creado: aún no hay actividad.
 <!-- okt:fin -->

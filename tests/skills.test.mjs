@@ -7,11 +7,11 @@ import { COMANDOS } from '../scripts/lib/comandos.mjs';
 import { FRASE_RAIZ } from '../scripts/lib/instalar.mjs';
 import { leerFrontmatter } from '../scripts/lib/frontmatter.mjs';
 
-const SKILLS = ['cerebro', 'capturar', 'consultar', 'mantener', 'notebooklm'];
+const SKILLS = ['cerebro', 'capturar', 'consultar', 'mantener', 'notebooklm', 'redactar'];
 const leerSkill = (s) => readFileSync(join(RAIZ, 'skills', s, 'SKILL.md'), 'utf8');
 const bloque = (t) => t.match(/<!-- okt:contrato -->[\s\S]*?<!-- \/okt:contrato -->/)?.[0];
 
-test('las 5 skills existen con name igual a su carpeta y una description útil', () => {
+test('las 6 skills existen con name igual a su carpeta y una description útil', () => {
   assert.deepEqual(readdirSync(join(RAIZ, 'skills')).sort(), [...SKILLS].sort());
   for (const s of SKILLS) {
     const { datos } = leerFrontmatter(leerSkill(s));
@@ -20,7 +20,7 @@ test('las 5 skills existen con name igual a su carpeta y una description útil',
   }
 });
 
-test('el bloque del contrato es idéntico en las 5 skills y define <raíz> con la frase que adapta el instalador', () => {
+test('el bloque del contrato es idéntico en las 6 skills y define <raíz> con la frase que adapta el instalador', () => {
   const primero = bloque(leerSkill(SKILLS[0]));
   assert.ok(primero, 'falta el bloque en cerebro');
   assert.ok(primero.includes(FRASE_RAIZ));
@@ -44,19 +44,33 @@ test('los comandos okt que citan las skills existen en el CLI', () => {
   }
 });
 
+test('ninguna skill, el contrato ni las plantillas del vault conservan la estructura de la 0.3 ni filtros de contenido', () => {
+  const archivos = [
+    ...SKILLS.map((s) => join('skills', s, 'SKILL.md')),
+    ...SKILLS.flatMap((s) => (existsSync(join(RAIZ, 'skills', s, 'references')) ? readdirSync(join(RAIZ, 'skills', s, 'references')).map((f) => join('skills', s, 'references', f)) : [])),
+    join('references', 'contrato-vault.md'),
+    join('plantillas', 'vault', 'AGENTS.md.tmpl'),
+  ];
+  const prohibidos = [/📚 Fuentes\/📎/, /Bandeja\/(📝 notas|📦 importados|📲 telegram|💻 sesiones)/, /💡 conceptos|🏷️ entidades|🧩 sintesis/, /nota nueva (concepto|entidad|sintesis)/, /pacientes?/i, /\bDNI\b/, /--forzar/, /datos_sensibles/];
+  for (const f of archivos) {
+    const texto = readFileSync(join(RAIZ, f), 'utf8');
+    for (const p of prohibidos) assert.doesNotMatch(texto, p, `${f} todavía menciona ${p}`);
+  }
+});
+
 test('adjuntar copia sin tocar el original y no duplica el mismo contenido', () => {
   const v = vaultNuevo();
   const pdf = escribir(v.dir, 'Guía – anemia.pdf', '%PDF-1');
   let r = v.okt(['adjuntar', pdf, '--json']);
   assert.equal(r.codigo, 0, r.error);
   const d = JSON.parse(r.salida);
-  assert.equal(d.ruta, '40 │ 📚 Fuentes/📎 adjuntos/📕 pdf/Guía - anemia.pdf');
+  assert.equal(d.ruta, '99 │ ⚙️ Sistema/📎 adjuntos/📕 pdf/Guía - anemia.pdf');
   assert.ok(existsSync(pdf));
   const copia = escribir(v.dir, 'otra copia.pdf', '%PDF-1');
   r = v.okt(['adjuntar', copia]);
-  assert.match(r.salida, /Ya estaba: 40 │ 📚 Fuentes\/📎 adjuntos\/📕 pdf\/Guía - anemia\.pdf/);
+  assert.match(r.salida, /Ya estaba: 99 │ ⚙️ Sistema\/📎 adjuntos\/📕 pdf\/Guía - anemia\.pdf/);
   r = v.okt(['adjuntar', escribir(v.dir, 'Foto.PNG', 'img'), '--json']);
-  assert.equal(JSON.parse(r.salida).ruta, '40 │ 📚 Fuentes/📎 adjuntos/🖼️ imagenes/Foto.png');
+  assert.equal(JSON.parse(r.salida).ruta, '99 │ ⚙️ Sistema/📎 adjuntos/🖼️ imagenes/Foto.png');
   v.borrar();
 });
 

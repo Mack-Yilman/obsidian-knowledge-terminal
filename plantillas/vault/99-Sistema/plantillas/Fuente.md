@@ -5,17 +5,12 @@ actualizado: {{date:YYYY-MM-DD}}
 estado: borrador
 resumen: 
 origen: 
-url: 
-autor: 
-publicado: 
 ---
 
 # {{title}}
 
 ## TL;DR
 
-## Qué aporta
-
 ## Puntos clave
 
-## Notas
+## Qué aporta
