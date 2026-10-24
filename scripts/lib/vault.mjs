@@ -79,10 +79,13 @@ export function mapaDeNombres(vault) {
 
 // Notas que son «la misma» aunque cambie el emoji: «💡 Anemia» y «🩸 Anemia». Sirve para no duplicar; los
 // enlaces, en cambio, se resuelven por el nombre exacto, como en Obsidian (un alias no resuelve un enlace).
+// Lo archivado no cuenta: un original en bruto no impide usar su nombre en la nota procesada.
 export function mismasNotas(vault, nombre) {
   const base = sinEmoji(nombre).toLowerCase();
-  return listarNotas(vault).filter((rel) => sinEmoji(basename(rel, extname(rel))).toLowerCase() === base);
+  return listarNotas(vault).filter((rel) => !esArchivado(rel) && sinEmoji(basename(rel, extname(rel))).toLowerCase() === base);
 }
+
+export const esArchivado = (rel) => rel.startsWith(`${C.archivo}/`);
 
 export function existe(vault, rel) {
   return existsSync(join(vault, rel));

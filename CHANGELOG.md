@@ -1,5 +1,38 @@
 # Cambios
 
+## 0.4.0 — 2026-10-23
+
+**El conocimiento vive en tus áreas y proyectos, y el plugin sirve para cualquier persona.** Cambia la estructura del
+vault: un vault 0.3.x o 0.2.x se migra con `okt migrar`.
+
+- **Estructura nueva (versión 3):** sin `30 │ 🧠 Conocimiento` ni `40 │ 📚 Fuentes`. Cada área, proyecto y tema es una
+  carpeta con una nota principal del mismo nombre y su índice automático; los temas llegan hasta 3 niveles
+  (Área → Rama → Grupo → nota). Las fuentes van junto a lo que alimentan, los adjuntos a `99 │ ⚙️ Sistema/📎 adjuntos`
+  y la Bandeja ya no tiene subcarpetas.
+- **Configuración para cualquier usuario:** la skill `cerebro` entrevista al usuario (a qué se dedica, sus áreas, sus
+  proyectos y sus temas) y crea las carpetas con `okt init --areas … --proyectos "P@Área" --temas "Área/Tema"
+  --perfil …`. Sin respuestas no se crea ninguna área. El perfil va al `AGENTS.md` para que cualquier agente adapte
+  sus ejemplos.
+- **De bruto a procesado:** `okt procesar` convierte una captura en la nota de su carpeta (sin copia) o, con `--en`,
+  deja el original en `90 │ 🗄️ Archivo/📥 Bruto/` enlazado desde la propiedad `bruto`. `okt bruto guardar` y
+  `okt bruto limpiar` (borra solo con `--aplicar`). `okt tema nuevo` y `okt mover` organizan la jerarquía.
+- **Skill nueva `redactar`:** «pasa a limpio esta nota» u «ordénala», con reglas de fidelidad adaptadas del
+  transcriptor académico: no agrega, no resume, conserva los datos y marca `(¿?)` lo dudoso de las voces.
+- **Archivos del sistema útiles:** `🗂️ indice` es el árbol del vault; `🔥 hot` muestra los proyectos en foco con su
+  próximo paso; `✅ pendientes` separa «Para ti» y «Para la IA»; la bitácora guarda las últimas 300 líneas. Plantillas
+  de Obsidian para nota, fuente, tema, área, proyecto, diario y semanal, sin campos vacíos de relleno.
+- **Tipos y propiedades:** `nota` reemplaza a concepto, entidad y síntesis (que se aceptan como alias); `captura`
+  para lo que entra en bruto; `tema` para las notas principales de los temas. Sin `## Historial` (lo guarda git).
+- **Sin filtros de contenido:** el vault es del usuario. Se quitan la detección de datos de pacientes del lint, las
+  importaciones, Drive, NotebookLM, las fichas de sesión y Telegram (`--forzar` y los «retenidos» desaparecen; el
+  campo `sensible` de la cola se ignora).
+- **Antigravity en la App y el IDE:** además del hook del vault, `okt instalar antigravity --aplicar` pone un hook
+  global (App y CLI; no se repite en la misma conversación) y una tarea del IDE que baja Telegram al abrir la carpeta.
+  `okt telegram bajar --silencioso` para esa tarea. `okt doctor` muestra los tres y avisa si la copia de Antigravity
+  quedó en otra versión.
+- **Lint:** reglas nuevas `fuera_de_lugar`, `muy_profunda`, `sin_enlaces` y `tipo_antiguo`; el índice desactualizado
+  se mide por carpeta.
+
 ## 0.3.1 — 2026-10-22
 
 - **Nota diaria con formato a elegir:** `okt config poner formato_diario DD/MM/YY` la nombra `📅 22∕10∕26` (barra de

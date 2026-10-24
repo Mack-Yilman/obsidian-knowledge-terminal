@@ -8,7 +8,7 @@
     {
       "name": "obsidian-knowledge-terminal",
       "source": "./",
-      "description": "Segundo cerebro en Obsidian: capturar, importar (Notion, Drive, NotebookLM), consultar con citas y mantener el vault."
+      "description": "Segundo cerebro en Obsidian: ordena lo que escribes en tus áreas y proyectos, lo enlaza y lo pasa a limpio; importa de Notion, Drive y NotebookLM y responde con citas."
     }
   ]
 }

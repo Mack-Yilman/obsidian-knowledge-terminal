@@ -3,16 +3,15 @@
 // - la fuente no se modifica;
 // - lo importado va entre marcas okt, así reimportar actualiza la misma nota sin pisar lo que el
 //   usuario agregó fuera de ellas;
-// - si el contenido parece traer datos de pacientes, no se escribe (salvo --forzar).
+// - entra a la Bandeja como captura (o a la carpeta que se pida), para ubicarlo al procesarla.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { R, carpetaAdjuntos, conEmoji, resolverCarpeta } from './estructura.mjs';
+import { C, carpetaAdjuntos, conEmoji, resolverCarpeta } from './estructura.mjs';
 import { join, dirname, extname } from 'node:path';
 import { escribirFrontmatter, leerFrontmatter } from './frontmatter.mjs';
 import { reemplazarBloque } from './bloques.mjs';
 import { fechaISO } from './fechas.mjs';
 import { limpiarNombre, sinEmoji, recortar } from './nombres.mjs';
 import { mapaDeNombres } from './vault.mjs';
-import { patronSensible } from './sensibles.mjs';
 import { posix, sobrescribir } from './rutas.mjs';
 
 export const errorUso = (m) => Object.assign(new Error(m), { codigo: 2 });
@@ -47,13 +46,6 @@ export function parsearSeleccion(sel, n) {
   return [...idx].sort((x, y) => x - y);
 }
 
-export function revisarSensible(texto, op, quien) {
-  const p = patronSensible(texto);
-  if (p && !op.forzar) {
-    throw Object.assign(new Error(`No importé «${quien}»: el contenido parece incluir ${p.que}. El vault no guarda datos de pacientes ni de terceros. Si estás seguro de que no lo es, repite con --forzar.`), { codigo: 4 });
-  }
-}
-
 // Escribe o actualiza la nota importada. clave = "notion:<id>", "drive:<id>", "notebooklm:<id>".
 export function escribirImportada(vault, { clave, titulo, contenido, datos = {}, carpeta, op = {} }) {
   const registro = leerRegistro(vault);
@@ -71,14 +63,16 @@ export function escribirImportada(vault, { clave, titulo, contenido, datos = {},
     guardarRegistro(vault, registro);
     return { ruta: previa.ruta, accion: 'actualizada' };
   }
-  const destino = op.carpeta ? resolverCarpeta(vault, op.carpeta) : carpeta || R.importados;
+  const destino = op.carpeta ? resolverCarpeta(vault, op.carpeta) : carpeta || C.bandeja;
   // Emoji del origen (🗒️ Notion, ☁️ Drive, 🤖 NotebookLM) y alias sin emoji para la búsqueda.
   const base = conEmoji(datos.origen, limpiarNombre(titulo) || 'Sin título');
   let nombre = base;
   const nombres = mapaDeNombres(vault);
   for (let i = 2; nombres.has(nombre.toLowerCase()); i++) nombre = `${base} ${i}`;
   const rel = `${destino}/${nombre}.md`;
-  const fm = { tipo: 'nota', creado: hoy, actualizado: hoy, aliases: [sinEmoji(base)], ...datos, importado: hoy };
+  // En la Bandeja es una captura; en un área, un proyecto o un tema ya es una nota (en borrador).
+  const enBandeja = destino === C.bandeja || destino.startsWith(`${C.bandeja}/`);
+  const fm = enBandeja ? { tipo: 'captura', creado: hoy, aliases: [sinEmoji(base)], ...datos, importado: hoy } : { tipo: 'nota', creado: hoy, actualizado: hoy, estado: 'borrador', resumen: '', aliases: [sinEmoji(base)], ...datos, importado: hoy };
   const cuerpo = `\n# ${nombre}\n\nImportado de ${datos.origen || 'una fuente externa'} el ${hoy}. Lo que está entre las marcas se reemplaza si vuelves a importar; escribe tus notas fuera de ellas.\n\n<!-- okt:inicio -->\n${contenido.trim()}\n<!-- okt:fin -->\n`;
   mkdirSync(join(vault, destino), { recursive: true });
   writeFileSync(join(vault, rel), escribirFrontmatter(fm, cuerpo));

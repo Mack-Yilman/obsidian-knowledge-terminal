@@ -3,11 +3,15 @@
 OKT no copia código de estos proyectos, pero adapta ideas y patrones de diseño suyos. Se reconocen
 aquí, junto con sus avisos de licencia MIT.
 
+Las reglas de redacción de la skill `redactar` (`skills/redactar/references/reglas-redaccion.md`) se adaptaron del
+[transcriptor académico](https://github.com/Mack-Yilman/transcriptor-academico), del mismo autor (Mack Chirinos), que
+autoriza su uso en OKT.
+
 | Proyecto | Qué se adaptó |
 |---|---|
 | [Ar9av/obsidian-wiki](https://github.com/Ar9av/obsidian-wiki) | Patrón LLM Wiki; recuperación escalonada (resumen → fragmento → nota completa); `summary` corto en el frontmatter; hot cache acotado con poda; separación entre lint determinista y semántico; marcas de inferencia |
 | [eugeniughelbur/obsidian-second-brain](https://github.com/eugeniughelbur/obsidian-second-brain) | Una skill guía que enruta los pedidos; reglas de escritura (buscar antes de crear, bloques regenerables entre marcas); política de frescura (atemporal, fechado o puntero); contexto de inicio con tope de tamaño |
-| [AgriciDaniel/claude-obsidian](https://github.com/AgriciDaniel/claude-obsidian) | Estructura mínima del vault (hot, índice, bitácora); procedencia: contradicciones visibles, dos fuentes independientes en lo de alto riesgo, lo conversacional no es evidencia; filtro de valor antes de compilar |
+| [AgriciDaniel/claude-obsidian](https://github.com/AgriciDaniel/claude-obsidian) | Estructura mínima del vault (hot, índice, bitácora); procedencia: contradicciones visibles, lo conversacional no es evidencia; filtro de valor antes de compilar |
 | [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) | Capa de formato de Obsidian recomendada (opcional) |
 
 La idea de fondo, compilar el conocimiento una vez en lugar de recuperarlo en cada pregunta, viene

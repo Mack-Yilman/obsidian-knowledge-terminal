@@ -6,9 +6,9 @@ import { resolverVault, buscarVaultArriba, posix } from './lib/rutas.mjs';
 import { COMANDOS, AYUDA } from './lib/comandos.mjs';
 import { necesitaMigrar, AVISO_MIGRAR } from './lib/estructura.mjs';
 
-// Comandos que escriben en el vault: con la estructura anterior (0.2.x) se detienen hasta migrar, para no dejar
-// carpetas nuevas junto a las viejas. telegram se revisa aparte (config no toca el vault).
-const ESCRIBEN = new Set(['init', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'sesiones', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar']);
+// Comandos que escriben en el vault: con una estructura anterior se detienen hasta migrar, para no dejar carpetas
+// nuevas junto a las viejas. telegram se revisa aparte (config no toca el vault).
+const ESCRIBEN = new Set(['init', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'sesiones', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar', 'tema', 'mover', 'procesar', 'bruto']);
 
 const BOOLEANOS = new Set(['aplicar', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'nuevo', 'completo']);
 
@@ -49,6 +49,8 @@ async function main() {
     }
   }
   if (vault && (ESCRIBEN.has(nombre) || (nombre === 'telegram' && pos[0] === 'bajar')) && necesitaMigrar(vault)) {
+    // La tarea del IDE (telegram bajar --silencioso) no muestra un error al abrir la carpeta.
+    if (op.silencioso) return 0;
     process.stderr.write(`${AVISO_MIGRAR}\n`);
     return 2;
   }

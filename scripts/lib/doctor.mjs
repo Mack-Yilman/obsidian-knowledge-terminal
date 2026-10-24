@@ -4,8 +4,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { ejecutar, resolverBinario, jsonDe } from './binarios.mjs';
-import { leerConfigVault, posix } from './rutas.mjs';
-import { dirSkillsAgy, deConfianza, SKILL_OBSIDIAN } from './instalar.mjs';
+import { leerConfigVault, posix, RAIZ_PLUGIN } from './rutas.mjs';
+import { dirSkillsAgy, dirOkt, dirAgyConfig, deConfianza, SKILL_OBSIDIAN, ETIQUETA_TAREA } from './instalar.mjs';
 
 // Plugins de Claude Code instalados (~/.claude/plugins/installed_plugins.json; OKT_CLAUDE_PLUGINS para las pruebas).
 function pluginClaude(id) {
@@ -92,7 +92,29 @@ export function doctor(vault, op = {}) {
     }
   }
   const agySkills = existsSync(join(dirSkillsAgy(), 'okt-cerebro', 'SKILL.md'));
-  add('Conectores', 'Skills de OKT en Antigravity', agySkills, agySkills ? 'instaladas' : 'no instaladas', 'okt instalar antigravity', true);
+  // La copia de Antigravity se queda en la versión con la que se instaló: hay que repetir el comando tras actualizar.
+  const versionDe = (dir) => {
+    try {
+      return JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version;
+    } catch {
+      return null;
+    }
+  };
+  const esta = versionDe(RAIZ_PLUGIN);
+  const enAgy = agySkills ? versionDe(join(dirOkt(), 'plugin')) : null;
+  add('Conectores', 'Skills de OKT en Antigravity', agySkills && enAgy === esta, agySkills ? `instaladas (${enAgy || '?'}${enAgy === esta ? '' : `; este plugin es la ${esta}`})` : 'no instaladas', 'okt instalar antigravity --aplicar', true);
+  if (agySkills && vault) {
+    let global = false;
+    try {
+      global = Boolean(JSON.parse(readFileSync(join(dirAgyConfig(), 'hooks.json'), 'utf8')).okt);
+    } catch {}
+    add('Conectores', 'Hook de inicio global de Antigravity (App y CLI)', global, global ? 'instalado' : 'no instalado', 'okt instalar antigravity --aplicar', true);
+    let tarea = false;
+    try {
+      tarea = JSON.parse(readFileSync(join(vault, '.vscode', 'tasks.json'), 'utf8')).tasks?.some((t) => t?.label === ETIQUETA_TAREA);
+    } catch {}
+    add('Conectores', 'Tarea del Antigravity IDE que baja Telegram al abrir el vault', tarea, tarea ? 'instalada' : 'no instalada', 'okt instalar antigravity --aplicar', true);
+  }
   // Formato de Obsidian (kepano/obsidian-skills): plugin en Claude Code, skills copiadas en Antigravity.
   const enClaude = pluginClaude('obsidian@obsidian-skills');
   add('Conectores', 'Formato de Obsidian en Claude Code (obsidian-skills)', enClaude, enClaude ? 'instalado' : 'no instalado', 'claude plugin marketplace add kepano/obsidian-skills && claude plugin install obsidian@obsidian-skills', true);
@@ -103,7 +125,7 @@ export function doctor(vault, op = {}) {
   // agy solo usa el hook de inicio del vault (Telegram y hot.md) si el vault es una carpeta de confianza.
   if (agySkills && vault) {
     const confianza = deConfianza(vault);
-    add('Conectores', 'Vault de confianza en Antigravity', confianza, confianza ? 'sí' : 'no', 'Abre agy en la carpeta del vault y acepta confiar en ella: sin eso, agy no usa el hook de inicio.', true);
+    add('Conectores', 'Vault de confianza en Antigravity', confianza, confianza ? 'sí' : 'no', 'Abre agy en la carpeta del vault y acepta confiar en ella: sin eso, solo corre el hook global.', true);
   }
 
   const marca = { ok: '✔', falta: '✖', opcional: '·' };

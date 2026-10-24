@@ -1,6 +1,7 @@
 // okt buscar "<texto>": búsqueda por palabras sin embeddings. Pondera título > alias > resumen >
 // etiquetas > cuerpo y devuelve el fragmento con la coincidencia, para no abrir notas enteras.
-import { listarNotas, leerNota, esSistema } from './vault.mjs';
+import { listarNotas, leerNota, esSistema, esArchivado } from './vault.mjs';
+import { resolverCarpeta } from './estructura.mjs';
 
 export const normalizar = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -29,10 +30,13 @@ export function buscar(vault, consulta, op = {}) {
   const ts = terminos(consulta || '');
   if (!ts.length) throw Object.assign(new Error('Uso: okt buscar "<texto>" [--carpeta <carpeta>] [--tipo <tipo>] [--limite N]'), { codigo: 2 });
   const limite = Number(op.limite) || 10;
+  // --carpeta acepta «Medicina/Cardiología» sin la carpeta raíz ni los emojis. Lo archivado (y los originales en
+  // bruto) solo aparece si se pide esa carpeta.
+  const carpeta = op.carpeta && op.carpeta !== true ? resolverCarpeta(vault, op.carpeta) : null;
   const resultados = [];
   for (const rel of listarNotas(vault)) {
     if (esSistema(rel)) continue;
-    if (op.carpeta && !rel.startsWith(String(op.carpeta).replace(/\\/g, '/'))) continue;
+    if (carpeta ? !(rel === carpeta || rel.startsWith(`${carpeta}/`)) : esArchivado(rel)) continue;
     const n = leerNota(vault, rel);
     if (op.tipo && n.datos.tipo !== op.tipo) continue;
     const campos = {

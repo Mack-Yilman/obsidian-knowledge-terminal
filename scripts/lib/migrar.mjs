@@ -1,18 +1,20 @@
-// okt migrar: lleva un vault 0.2.x a la estructura con emojis (0.3.0). okt renombrar: cambia el nombre de una
-// nota y actualiza sus enlaces. Nada se borra: todo se mueve con renameSync, los registros se actualizan y la
-// migración termina en un commit (se deshace con git). Es reanudable: el plan se guarda en
-// .cerebro/migracion.json antes de mover nada, y una segunda corrida termina lo que haya quedado a medias.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmdirSync, rmSync, statSync } from 'node:fs';
+// okt migrar: lleva un vault de una versión anterior a la estructura actual, por pasos:
+//   v1 (0.2.x) → v2 (0.3.x): carpetas y notas con emojis;
+//   v2 (0.3.x) → v3 (0.4.x): el conocimiento y las fuentes pasan a las áreas y los proyectos, cada área es una
+//   carpeta, la bandeja se aplana y los adjuntos van al Sistema.
+// okt renombrar: cambia el nombre de una nota y actualiza sus enlaces. Nada se borra: todo se mueve con
+// renameSync, los registros se actualizan y la migración termina en un commit (se deshace con git). Es
+// reanudable: el plan de cada paso se guarda en .cerebro/migracion.json antes de mover nada, y una segunda
+// corrida termina lo que haya quedado a medias.
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmdirSync, rmSync, statSync, copyFileSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
-import { leerBloque, reemplazarBloque } from './bloques.mjs';
-import { leerConfigVault, guardarConfigVault, sobrescribir, posix, CLI } from './rutas.mjs';
-import { C, CARPETAS, EMOJI, ANTIGUAS, VERSION_ESTRUCTURA, conEmoji, traducir, necesitaMigrar } from './estructura.mjs';
+import { leerConfigVault, guardarConfigVault, sobrescribir, posix, RAIZ_PLUGIN } from './rutas.mjs';
+import { C, R, C2, R2, CARPETAS, CARPETAS2, EMOJI, ANTIGUAS, conEmoji, traducir, traducirV3, necesitaMigrar, versionDe, VERSION_ESTRUCTURA } from './estructura.mjs';
 import { empiezaConEmoji, sinEmoji, limpiarNombre, nombreValido } from './nombres.mjs';
 import { listarNotas, mismasNotas, esSistema } from './vault.mjs';
-import { textoAgents } from './init.mjs';
-import { fechaISO } from './fechas.mjs';
-import { cerrar } from './sistema.mjs';
+import { actualizarAgents } from './init.mjs';
+import { cerrar, pendiente } from './sistema.mjs';
 
 const errorUso = (m) => Object.assign(new Error(m), { codigo: 2 });
 const RAICES_ANTIGUAS = ['00-Bandeja', '10-Proyectos', '20-Areas', '30-Conocimiento', '40-Fuentes', '50-Diario', '90-Archivo', '99-Sistema'];
@@ -94,45 +96,78 @@ function reescribirVault(vault, nombres) {
   return cambiados;
 }
 
-// Ruta vieja → nueva: un archivo movido, una carpeta renombrada (la de un proyecto) o, si no, la traducción de
-// las carpetas de la estructura anterior (una ruta que ya es nueva no cambia).
-function conMapa(rel, archivos, carpetas) {
+// Ruta vieja → nueva: un archivo movido, una carpeta renombrada o, si no, la traducción por carpeta de la
+// estructura anterior (una ruta que ya es nueva no cambia).
+function conMapa(rel, archivos, carpetas, traductor = traducir) {
   if (!rel) return rel;
   const r = posix(String(rel));
   if (archivos[r]) return archivos[r];
   let mejor = null;
   for (const de of Object.keys(carpetas)) if ((r === de || r.startsWith(`${de}/`)) && (!mejor || de.length > mejor.length)) mejor = de;
-  return mejor ? carpetas[mejor] + r.slice(mejor.length) : traducir(r);
+  return mejor ? carpetas[mejor] + r.slice(mejor.length) : traductor(r);
 }
 
 // Registros de .cerebro: rutas de notas importadas, huellas de adjuntos, notas de Telegram y vínculos de cuadernos.
-function actualizarRegistros(vault, archivos, carpetas, nombres) {
+// La usan también okt mover, okt procesar y okt tema nuevo.
+export function actualizarRegistros(vault, archivos, carpetas, nombres, traductor = (r) => r) {
   const cer = (n) => join(vault, '.cerebro', n);
+  const mapa = (r) => conMapa(r, archivos, carpetas, traductor);
   const imp = leerJson(cer('importaciones.json'));
   if (imp) {
-    for (const v of Object.values(imp)) if (v?.ruta) v.ruta = conMapa(v.ruta, archivos, carpetas);
+    for (const v of Object.values(imp)) if (v?.ruta) v.ruta = mapa(v.ruta);
     guardarJson(cer('importaciones.json'), imp);
   }
   const huellas = leerJson(cer('fuentes.json'));
   if (huellas) {
-    for (const k of Object.keys(huellas)) huellas[k] = conMapa(huellas[k], archivos, carpetas);
+    for (const k of Object.keys(huellas)) huellas[k] = mapa(huellas[k]);
     guardarJson(cer('fuentes.json'), huellas);
   }
   const tg = leerJson(cer('telegram.json'));
   if (tg?.escritos) {
-    for (const v of Object.values(tg.escritos)) if (v?.ruta) v.ruta = conMapa(v.ruta, archivos, carpetas);
+    for (const v of Object.values(tg.escritos)) if (v?.ruta) v.ruta = mapa(v.ruta);
     guardarJson(cer('telegram.json'), tg);
   }
   const cfg = leerConfigVault(vault);
   const cambios = {};
-  if (Array.isArray(cfg.areas)) cambios.areas = cfg.areas.map((a) => nombres.get(String(a).toLowerCase()) || a);
-  if (cfg.cuadernos) cambios.cuadernos = Object.fromEntries(Object.entries(cfg.cuadernos).map(([k, v]) => [conMapa(k, archivos, carpetas), v]));
+  if (Array.isArray(cfg.areas) && nombres.size) cambios.areas = cfg.areas.map((a) => nombres.get(String(a).toLowerCase()) || a);
+  if (cfg.cuadernos) cambios.cuadernos = Object.fromEntries(Object.entries(cfg.cuadernos).map(([k, v]) => [mapa(k), v]));
   if (Object.keys(cambios).length) guardarConfigVault(vault, cambios);
 }
 
-// ---------- okt migrar ----------
+// Quita las carpetas viejas que quedaron vacías (solo vacías: nunca borra contenido).
+function quitarVacias(vault, rel) {
+  const abs = join(vault, rel);
+  if (!existsSync(abs) || !statSync(abs).isDirectory()) return;
+  for (const e of readdirSync(abs)) quitarVacias(vault, `${rel}/${e}`);
+  try {
+    if (!readdirSync(abs).length) rmdirSync(abs);
+  } catch {}
+}
 
-function calcularPlan(vault) {
+function moverTodo(vault, movimientos) {
+  for (const { de, a } of movimientos) {
+    if (!existsSync(join(vault, de))) continue;
+    mkdirSync(dirname(join(vault, a)), { recursive: true });
+    renameSync(join(vault, de), join(vault, a));
+  }
+}
+
+// Choques: dos archivos al mismo destino, o un destino que ya existe y es otro archivo.
+function choquesDe(vault, movimientos) {
+  const vistos = new Map();
+  const choques = [];
+  for (const m of movimientos) {
+    const k = m.a.toLowerCase();
+    if (vistos.has(k)) choques.push(`${vistos.get(k)} y ${m.de} → ${m.a}`);
+    vistos.set(k, m.de);
+    if (existsSync(join(vault, m.a)) && existsSync(join(vault, m.de)) && m.a.toLowerCase() !== m.de.toLowerCase()) choques.push(`${m.de} → ${m.a} (ya existe)`);
+  }
+  return choques;
+}
+
+// ---------- paso 1: v1 (0.2.x) → v2 (0.3.x) ----------
+
+function planV2(vault) {
   const archivos = RAICES_ANTIGUAS.flatMap((r) => archivosBajo(vault, r));
   const tipos = {};
   for (const f of archivos) if (f.endsWith('.md')) tipos[f] = tipoEmojiDe(readFileSync(join(vault, f), 'utf8'));
@@ -173,38 +208,22 @@ function calcularPlan(vault) {
     if (destino !== f) movimientos.push({ de: f, a: destino });
   }
   for (const a of ambiguos) delete nombres[a.toLowerCase()];
-
-  // Choques: dos archivos al mismo destino, o un destino que ya existe y es otro archivo.
-  const vistos = new Map();
-  const choques = [];
-  for (const m of movimientos) {
-    const k = m.a.toLowerCase();
-    if (vistos.has(k)) choques.push(`${vistos.get(k)} y ${m.de} → ${m.a}`);
-    vistos.set(k, m.de);
-    if (existsSync(join(vault, m.a)) && existsSync(join(vault, m.de))) choques.push(`${m.de} → ${m.a} (ya existe)`);
-  }
   const vista = [...ANTIGUAS.filter(([a]) => existsSync(join(vault, a))), ...Object.entries(carpetas)];
-  return { version: 1, movimientos, carpetas, vista, nombres, ambiguos: [...ambiguos], choques };
+  return { paso: 2, movimientos, carpetas, vista, nombres, ambiguos: [...ambiguos], choques: choquesDe(vault, movimientos) };
 }
 
-export function planMigrar(vault) {
-  const guardado = leerJson(rutaPlan(vault));
-  if (guardado) return { ...guardado, reanudado: true };
-  return calcularPlan(vault);
-}
-
-function describir(plan) {
+function describirV2(plan) {
   const carpetas = plan.vista || [];
   const notas = plan.movimientos.filter((m) => m.de.endsWith('.md') && basename(m.de) !== basename(m.a));
-  const lineas = [`Carpetas (${carpetas.length}):`, ...carpetas.map(([de, a]) => `  - ${de} → ${a}`)];
+  const lineas = ['Paso 1 de 2 (0.2 → 0.3): carpetas y notas con emojis.', `Carpetas (${carpetas.length}):`, ...carpetas.map(([de, a]) => `  - ${de} → ${a}`)];
   lineas.push(`Notas con nombre nuevo (${notas.length}):`, ...notas.map((m) => `  - ${basename(m.de, '.md')} → ${basename(m.a, '.md')}`));
   lineas.push(`Archivos que se mueven en total: ${plan.movimientos.length}.`);
-  lineas.push('También: enlaces [[…]] de todas las notas, registros de .cerebro, configuración de Obsidian (adjuntos, notas nuevas, diario y plantillas), el bloque de AGENTS.md y el .gitignore.');
   if (plan.ambiguos.length) lineas.push(`Enlaces que no se cambian porque varias notas se llamaban igual: ${plan.ambiguos.join(', ')}. Revísalos después con okt lint.`);
+  lineas.push('Paso 2 de 2 (0.3 → 0.4): el conocimiento y las fuentes pasan a sus áreas y proyectos. Su vista previa se calcula al terminar el paso 1; las dos van en el mismo --aplicar.');
   return lineas.join('\n');
 }
 
-function ajustarObsidian(vault, archivos, carpetas) {
+function ajustarObsidianV2(vault, archivos, carpetas) {
   const ruta = (n) => join(vault, '.obsidian', n);
   const sinMd = (r) => r.replace(/\.md$/, '');
   const app = leerJson(ruta('app.json'));
@@ -261,65 +280,228 @@ function asegurarGitignore(vault) {
   if (!/^\.tmp\.drivedownload\/?$/m.test(texto)) sobrescribir(ruta, `${texto.replace(/\s*$/, '')}\n.tmp.drivedownload/\n`);
 }
 
-// Quita las carpetas viejas que quedaron vacías (solo vacías: nunca borra contenido).
-function quitarVacias(vault, rel) {
-  const abs = join(vault, rel);
-  if (!existsSync(abs) || !statSync(abs).isDirectory()) return;
-  for (const e of readdirSync(abs)) quitarVacias(vault, `${rel}/${e}`);
-  try {
-    if (!readdirSync(abs).length) rmdirSync(abs);
-  } catch {}
-}
-
-export function migrar(vault, op = {}) {
-  if (!necesitaMigrar(vault)) return { texto: 'El vault ya usa la estructura con emojis de OKT 0.3.0: no hay nada que migrar.', datos: { hecho: false } };
-  const plan = planMigrar(vault);
-  if (plan.choques?.length) {
-    throw Object.assign(new Error(`No migré nada: hay nombres que chocarían.\n${plan.choques.map((c) => `- ${c}`).join('\n')}\nRenombra o archiva una de cada par y vuelve a intentarlo.`), { codigo: 3 });
-  }
-  if (!op.aplicar) {
-    return { texto: `Vista previa de okt migrar en ${posix(vault)}${plan.reanudado ? ' (continúa una migración que quedó a medias)' : ''}\n${describir(plan)}\n\nAntes de aplicar, cierra Obsidian. Para migrar: okt migrar --aplicar (hace commit: se deshace con git).`, datos: plan };
-  }
-
-  // 1. El plan queda guardado antes de mover nada: si algo falla, otra corrida lo termina.
-  mkdirSync(join(vault, '.cerebro'), { recursive: true });
-  if (!plan.reanudado) writeFileSync(rutaPlan(vault), `${JSON.stringify(plan, null, 2)}\n`);
-  // 2. Mover (lo ya movido en una corrida anterior se salta).
-  for (const { de, a } of plan.movimientos) {
-    if (!existsSync(join(vault, de))) continue;
-    mkdirSync(dirname(join(vault, a)), { recursive: true });
-    renameSync(join(vault, de), join(vault, a));
-  }
-  // 3. Enlaces, registros y configuración.
+function aplicarV2(vault, plan) {
+  moverTodo(vault, plan.movimientos);
   const archivos = Object.fromEntries(plan.movimientos.map((m) => [m.de, m.a]));
   const nombres = new Map(Object.entries(plan.nombres));
   ajustarTitulos(vault, plan.movimientos);
   const enlaces = reescribirVault(vault, nombres);
-  actualizarRegistros(vault, archivos, plan.carpetas, nombres);
-  ajustarObsidian(vault, archivos, plan.carpetas);
+  actualizarRegistros(vault, archivos, plan.carpetas, nombres, traducir);
+  ajustarObsidianV2(vault, archivos, plan.carpetas);
   asegurarGitignore(vault);
-  for (const c of CARPETAS) mkdirSync(join(vault, c), { recursive: true });
+  for (const c of CARPETAS2) mkdirSync(join(vault, c), { recursive: true });
   for (const r of RAICES_ANTIGUAS) quitarVacias(vault, r);
-  guardarConfigVault(vault, { version: VERSION_ESTRUCTURA });
-  const agents = join(vault, 'AGENTS.md');
-  if (existsSync(agents)) {
-    const areas = (leerConfigVault(vault).areas || []).map((a) => `[[${a}]]`).join(', ');
-    sobrescribir(agents, reemplazarBloque(readFileSync(agents, 'utf8'), leerBloque(textoAgents({ fecha: fechaISO(), areas, cli: posix(CLI) }))));
-  }
-  rmSync(rutaPlan(vault), { force: true });
-  // 4. Bitácora, índice, hot y commit.
-  const c = cerrar(vault, 'migrar', `estructura con emojis (0.3.0): ${plan.movimientos.length} archivos movidos, enlaces en ${enlaces} notas`);
-  return {
-    texto: `Migración lista: ${plan.movimientos.length} archivos movidos y enlaces actualizados en ${enlaces} notas.\n${c.texto}\nSiguiente paso: elegir un emoji temático para conceptos, entidades, síntesis, proyectos y áreas (okt renombrar "<nota>" "<emoji> <nombre>").`,
-    datos: { movimientos: plan.movimientos.length, enlaces, commit: c.datos.commit },
+  guardarConfigVault(vault, { version: 2 });
+  return { movidos: plan.movimientos.length, enlaces };
+}
+
+// ---------- paso 2: v2 (0.3.x) → v3 (0.4.x) ----------
+
+const nombreDeEnlace = (v) => String([].concat(v || [])[0] || '').replace(/^\[\[|\]\]$/g, '').split('|')[0].split('#')[0].trim();
+const SUBS_BANDEJA = () => [R2.notas, R2.sesiones, R2.importados, R2.telegram];
+
+function planV3(vault) {
+  const movimientos = [];
+  const usados = new Set();
+  const nombres = {};
+  // Un destino ya usado o ya existente lleva « 2», « 3»… (y el enlace se actualiza si es una nota).
+  const reservar = (de, dir, archivo) => {
+    const punto = archivo.lastIndexOf('.');
+    const [raiz, ext] = punto > 0 ? [archivo.slice(0, punto), archivo.slice(punto)] : [archivo, ''];
+    let nombre = archivo;
+    for (let i = 2; usados.has(`${dir}/${nombre}`.toLowerCase()) || (existsSync(join(vault, dir, nombre)) && `${dir}/${nombre}` !== de); i++) nombre = `${raiz} ${i}${ext}`;
+    usados.add(`${dir}/${nombre}`.toLowerCase());
+    if (nombre !== archivo && ext === '.md') nombres[raiz.toLowerCase()] = basename(nombre, '.md');
+    return `${dir}/${nombre}`;
   };
+
+  // 1. Cada área pasa a ser una carpeta con su nota principal.
+  const areas = new Map(); // nombre sin emoji, en minúsculas → carpeta del área
+  const carpetasArea = [];
+  for (const e of existsSync(join(vault, C.areas)) ? readdirSync(join(vault, C.areas), { withFileTypes: true }) : []) {
+    if (e.isFile() && e.name.endsWith('.md')) {
+      const nombre = e.name.slice(0, -3);
+      const dir = `${C.areas}/${nombre}`;
+      movimientos.push({ de: `${C.areas}/${e.name}`, a: reservar(`${C.areas}/${e.name}`, dir, e.name) });
+      areas.set(sinEmoji(nombre).toLowerCase(), dir);
+      carpetasArea.push(dir);
+    } else if (e.isDirectory()) areas.set(sinEmoji(e.name).toLowerCase(), `${C.areas}/${e.name}`);
+  }
+  const proyectos = new Map();
+  for (const e of existsSync(join(vault, C.proyectos)) ? readdirSync(join(vault, C.proyectos), { withFileTypes: true }) : []) {
+    if (e.isDirectory()) proyectos.set(sinEmoji(e.name).toLowerCase(), `${C.proyectos}/${e.name}`);
+  }
+
+  // 2. Conocimiento y fichas de fuentes: al proyecto o al área que dicen sus propiedades; si no dicen, a la Bandeja.
+  const sinUbicar = [];
+  const conocimiento = [...archivosBajo(vault, C2.conocimiento), ...archivosBajo(vault, C2.fuentes).filter((f) => !f.startsWith(`${R2.adjuntos}/`))];
+  for (const f of conocimiento) {
+    let dir = C.bandeja;
+    if (f.endsWith('.md')) {
+      const { datos } = leerFrontmatter(readFileSync(join(vault, f), 'utf8'));
+      const proyecto = proyectos.get(sinEmoji(nombreDeEnlace(datos.proyecto)).toLowerCase());
+      const area = areas.get(sinEmoji(nombreDeEnlace(datos.area)).toLowerCase());
+      dir = (datos.proyecto && proyecto) || (datos.area && area) || C.bandeja;
+      if (dir === C.bandeja) sinUbicar.push(basename(f, '.md'));
+    }
+    movimientos.push({ de: f, a: reservar(f, dir, basename(f)) });
+  }
+
+  // 3. La bandeja se aplana y los adjuntos pasan al Sistema.
+  for (const sub of SUBS_BANDEJA()) for (const f of archivosBajo(vault, sub)) movimientos.push({ de: f, a: reservar(f, C.bandeja, basename(f)) });
+  for (const f of archivosBajo(vault, R2.adjuntos)) movimientos.push({ de: f, a: traducirV3(f) });
+
+  return { paso: 3, movimientos, carpetasArea, sinUbicar, nombres, choques: choquesDe(vault, movimientos) };
+}
+
+function describirV3(plan) {
+  const lineas = ['Reorganización de OKT 0.4.0: el conocimiento vive en sus áreas y proyectos.'];
+  if (plan.carpetasArea.length) lineas.push(`Áreas que pasan a ser carpetas (${plan.carpetasArea.length}):`, ...plan.carpetasArea.map((d) => `  - ${d}/`));
+  const grupos = {};
+  for (const m of plan.movimientos) {
+    const dir = dirname(m.a);
+    const clave = dir.startsWith(R.adjuntos) ? R.adjuntos : dir;
+    grupos[clave] = (grupos[clave] || 0) + 1;
+  }
+  lineas.push('Destino de los archivos:', ...Object.entries(grupos).map(([d, n]) => `  - ${d}: ${n}`));
+  if (plan.sinUbicar.length) lineas.push(`Notas de Conocimiento o Fuentes sin área ni proyecto, que van a la Bandeja para ubicarlas con la skill mantener (${plan.sinUbicar.length}): ${plan.sinUbicar.slice(0, 12).join(', ')}${plan.sinUbicar.length > 12 ? '…' : ''}`);
+  if (Object.keys(plan.nombres).length) lineas.push(`Nombres que cambian para no chocar (los enlaces se actualizan): ${Object.entries(plan.nombres).map(([a, b]) => `${a} → ${b}`).join(', ')}`);
+  lineas.push(`Archivos que se mueven en total: ${plan.movimientos.length}.`);
+  lineas.push('También: tipos concepto/entidad/sintesis → nota y lo de la Bandeja → captura, notas de área con «De qué trata», plantillas nuevas, adjuntos y notas nuevas en Obsidian, registros de .cerebro, el bloque de AGENTS.md y los índices automáticos de cada carpeta.');
+  return lineas.join('\n');
+}
+
+// Frontmatter de la versión 3: tipos nuevos y lo de la Bandeja como captura.
+function ajustarTipos(vault) {
+  let n = 0;
+  for (const rel of listarNotas(vault)) {
+    if (esSistema(rel) || rel.startsWith(`${C.archivo}/`)) continue;
+    const abs = join(vault, rel);
+    const texto = readFileSync(abs, 'utf8');
+    const { datos, cuerpo, tiene } = leerFrontmatter(texto);
+    if (!tiene) continue;
+    let tipo = datos.tipo;
+    const extra = {};
+    if (['concepto', 'entidad', 'sintesis'].includes(tipo)) tipo = 'nota';
+    if (rel.startsWith(`${C.bandeja}/`) && ['nota', 'sesion'].includes(datos.tipo)) {
+      tipo = 'captura';
+      extra.origen = datos.tipo === 'sesion' ? 'sesion' : datos.origen || 'nota';
+    }
+    let cuerpoNuevo = cuerpo;
+    // Las notas de área de la 0.3 traían secciones vacías («Proyectos», «Conocimiento», «Notas»), que ahora llena el
+    // índice, y un resumen de relleno («Área continua: X.»). Solo se quitan si están vacías o son el relleno.
+    if (tipo === 'area') {
+      // Vacía = solo líneas en blanco hasta el siguiente encabezado, las marcas o el final (no \s*$ con la bandera m:
+      // $ coincidiría antes de la primera línea en blanco y se llevaría secciones con texto).
+      cuerpoNuevo = cuerpo.replace(/^## (Proyectos|Conocimiento|Notas)[ \t]*\n(?=(?:[ \t]*\n)*(?:## |<!-- okt:inicio -->|(?![\s\S])))/gm, '').replace(/\n{3,}/g, '\n\n');
+      if (!/^## De qué trata/m.test(cuerpoNuevo)) cuerpoNuevo = cuerpoNuevo.replace(/^(# .+\n)/m, '$1\n## De qué trata\n');
+      if (/^Área continua: .*\.$/.test(datos.resumen || '')) extra.resumen = '';
+    }
+    if (tipo !== datos.tipo || cuerpoNuevo !== cuerpo || Object.keys(extra).length) {
+      sobrescribir(abs, escribirFrontmatter({ ...datos, tipo, ...extra }, cuerpoNuevo));
+      n++;
+    }
+  }
+  return n;
+}
+
+function ajustarObsidianV3(vault) {
+  const ruta = join(vault, '.obsidian', 'app.json');
+  const app = leerJson(ruta);
+  if (!app) return;
+  if (typeof app.attachmentFolderPath === 'string') app.attachmentFolderPath = traducirV3(app.attachmentFolderPath);
+  if (typeof app.newFileFolderPath === 'string') app.newFileFolderPath = traducirV3(app.newFileFolderPath);
+  guardarJson(ruta, app);
+}
+
+// Plantillas de Obsidian de la 0.4: se agregan las que faltan; la de Concepto pasa al Archivo (sigue ahí).
+function ajustarPlantillas(vault) {
+  const origen = join(RAIZ_PLUGIN, 'plantillas', 'vault', '99-Sistema', 'plantillas');
+  if (!existsSync(origen)) return;
+  mkdirSync(join(vault, R.plantillas), { recursive: true });
+  const tipos = { Nota: 'nota', Fuente: 'fuente', Proyecto: 'proyecto', Area: 'area', Tema: 'tema', Diario: 'diario', Semanal: 'semanal' };
+  for (const f of readdirSync(origen)) {
+    const base = f.replace(/\.md$/, '');
+    const dest = join(vault, R.plantillas, `${conEmoji(tipos[base] || 'nota', base)}.md`);
+    if (!existsSync(dest)) copyFileSync(join(origen, f), dest);
+  }
+  const concepto = `${R.plantillas}/${EMOJI.concepto} Concepto.md`;
+  if (existsSync(join(vault, concepto))) {
+    const dest = `${C.archivo}/${concepto}`;
+    mkdirSync(dirname(join(vault, dest)), { recursive: true });
+    if (!existsSync(join(vault, dest))) renameSync(join(vault, concepto), join(vault, dest));
+  }
+}
+
+function aplicarV3(vault, plan) {
+  moverTodo(vault, plan.movimientos);
+  const archivos = Object.fromEntries(plan.movimientos.map((m) => [m.de, m.a]));
+  const nombres = new Map(Object.entries(plan.nombres));
+  const enlaces = reescribirVault(vault, nombres);
+  actualizarRegistros(vault, archivos, { [R2.adjuntos]: R.adjuntos }, nombres, traducirV3);
+  const tipos = ajustarTipos(vault);
+  ajustarObsidianV3(vault);
+  ajustarPlantillas(vault);
+  for (const c of CARPETAS) mkdirSync(join(vault, c), { recursive: true });
+  for (const r of [C2.conocimiento, C2.fuentes, ...SUBS_BANDEJA()]) quitarVacias(vault, r);
+  guardarConfigVault(vault, { version: VERSION_ESTRUCTURA });
+  actualizarAgents(vault);
+  if (plan.sinUbicar.length) pendiente(vault, 'agregar', [`ubicar ${plan.sinUbicar.length} notas que la migración dejó en la Bandeja (no decían su área ni su proyecto): procesa la bandeja`], { para: 'usuario', de: 'migrar' });
+  return { movidos: plan.movimientos.length, enlaces, tipos };
+}
+
+// ---------- okt migrar ----------
+
+export function planMigrar(vault) {
+  const guardado = leerJson(rutaPlan(vault));
+  const paso = versionDe(vault) < 2 ? 2 : 3;
+  if (guardado && (guardado.paso || 2) === paso) return { ...guardado, paso, reanudado: true };
+  return paso === 2 ? planV2(vault) : planV3(vault);
+}
+
+function guardarPlan(vault, plan) {
+  mkdirSync(join(vault, '.cerebro'), { recursive: true });
+  if (!plan.reanudado) writeFileSync(rutaPlan(vault), `${JSON.stringify(plan, null, 2)}\n`);
+}
+
+const errorChoques = (plan) => Object.assign(new Error(`No migré nada: hay nombres que chocarían.\n${plan.choques.map((c) => `- ${c}`).join('\n')}\nRenombra o archiva una de cada par y vuelve a intentarlo.`), { codigo: 3 });
+
+export function migrar(vault, op = {}) {
+  if (!necesitaMigrar(vault)) return { texto: 'El vault ya usa la estructura de OKT 0.4.0: no hay nada que migrar.', datos: { hecho: false } };
+  let plan = planMigrar(vault);
+  if (plan.choques?.length) throw errorChoques(plan);
+  if (!op.aplicar) {
+    const texto = plan.paso === 2 ? describirV2(plan) : describirV3(plan);
+    return { texto: `Vista previa de okt migrar en ${posix(vault)}${plan.reanudado ? ' (continúa una migración que quedó a medias)' : ''}\n${texto}\n\nAntes de aplicar, cierra Obsidian. Para migrar: okt migrar --aplicar (hace commit: se deshace con git).`, datos: plan };
+  }
+
+  const resumen = [];
+  if (plan.paso === 2) {
+    guardarPlan(vault, plan);
+    const r = aplicarV2(vault, plan);
+    rmSync(rutaPlan(vault), { force: true });
+    resumen.push(`0.2 → 0.3: ${r.movidos} archivos movidos, enlaces en ${r.enlaces} notas`);
+    plan = planV3(vault);
+    // Un choque del segundo paso deja el vault en la 0.3, sano y con su commit.
+    if (plan.choques.length) {
+      cerrar(vault, 'migrar', `estructura con emojis (0.3): ${resumen[0]}`);
+      throw errorChoques(plan);
+    }
+  }
+  guardarPlan(vault, plan);
+  const r = aplicarV3(vault, plan);
+  rmSync(rutaPlan(vault), { force: true });
+  resumen.push(`0.3 → 0.4: ${r.movidos} archivos movidos, ${r.tipos} notas con el tipo nuevo${r.enlaces ? `, enlaces en ${r.enlaces} notas` : ''}`);
+  const c = cerrar(vault, 'migrar', `estructura por áreas y proyectos (0.4.0): ${resumen.join('; ')}`);
+  const siguiente = plan.sinUbicar.length ? `Siguiente paso: ${plan.sinUbicar.length} notas quedaron en la Bandeja sin área ni proyecto: «procesa mi bandeja» las ubica.` : 'Siguiente paso: revisa el índice de cada área y crea temas cuando haya 3 o más notas de un mismo tema.';
+  return { texto: `Migración lista. ${resumen.join('. ')}.\n${c.texto}\n${siguiente}`, datos: { pasos: resumen, sinUbicar: plan.sinUbicar, commit: c.datos.commit } };
 }
 
 // ---------- okt renombrar ----------
 
 export function renombrar(vault, nota, nuevoPedido) {
   if (!nota || !nuevoPedido) throw errorUso('Uso: okt renombrar "<nota>" "<nombre nuevo>" (p. ej. okt renombrar "💡 Anemia" "🩸 Anemia")');
-  const notas = listarNotas(vault);
+  const notas = listarNotas(vault).filter((r) => !r.startsWith(`${C.archivo}/`));
   const pedida = String(nota).replace(/^\[\[|\]\]$/g, '').replace(/\.md$/i, '');
   let candidatas = notas.filter((r) => basename(r, '.md').toLowerCase() === pedida.toLowerCase());
   if (!candidatas.length) candidatas = mismasNotas(vault, pedida);
@@ -334,12 +516,12 @@ export function renombrar(vault, nota, nuevoPedido) {
   const otras = mismasNotas(vault, nuevo).filter((r) => r !== rel);
   if (otras.length) throw Object.assign(new Error(`Ya existe una nota llamada «${sinEmoji(nuevo)}»: ${otras[0]}.`), { codigo: 3 });
 
-  // La nota principal de un proyecto vive en una carpeta con su mismo nombre: cambian las dos.
+  // La nota principal de un área, un proyecto o un tema vive en una carpeta con su mismo nombre: cambian las dos.
   const dir = dirname(rel);
-  const esProyecto = basename(dir) === viejo && dir.startsWith(`${C.proyectos}/`);
+  const conCarpeta = basename(dir) === viejo && (dir.startsWith(`${C.proyectos}/`) || dir.startsWith(`${C.areas}/`));
   const carpetas = {};
   let destino;
-  if (esProyecto) {
+  if (conCarpeta) {
     const dirNuevo = `${dirname(dir)}/${nuevo}`;
     if (existsSync(join(vault, dirNuevo)) && dirNuevo.toLowerCase() !== dir.toLowerCase()) throw Object.assign(new Error(`Ya existe la carpeta ${dirNuevo}.`), { codigo: 3 });
     renameSync(join(vault, dir), join(vault, dirNuevo));
@@ -363,5 +545,7 @@ export function renombrar(vault, nota, nuevoPedido) {
   const nombres = new Map([[viejo.toLowerCase(), nuevo]]);
   const enlaces = reescribirVault(vault, nombres);
   actualizarRegistros(vault, { [rel]: destino }, carpetas, nombres);
+  if (datos.tipo === 'area') actualizarAgents(vault);
   return { texto: `Renombrada: ${rel} → ${destino}. Enlaces actualizados en ${enlaces} notas. Cierra con okt cerrar <skill> "renombró …".`, datos: { de: rel, a: destino, enlaces } };
 }
+

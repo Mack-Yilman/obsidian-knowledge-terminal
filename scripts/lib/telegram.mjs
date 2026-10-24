@@ -1,4 +1,4 @@
-// okt telegram: baja la cola del bot okt-telegram (un Worker de Cloudflare) a la bandeja de Telegram del vault.
+// okt telegram: baja la cola del bot okt-telegram (un Worker de Cloudflare) a la Bandeja del vault.
 // El bot solo encola; aquí se escribe. Contrato de la cola en el README (sección «Telegram»):
 // GET /cola[?cursor=] → { elementos, cursor }, GET /archivo/<key> → bytes,
 // POST /cola/confirmar { ids } → { borrados }. Todo con Authorization: Bearer <token>.
@@ -7,16 +7,15 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, closeSync, statSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { dirConfig, posix, sobrescribir } from './rutas.mjs';
-import { R, EMOJI, carpetaAdjuntos, conEmoji } from './estructura.mjs';
+import { C, EMOJI, carpetaAdjuntos, conEmoji } from './estructura.mjs';
 import { fechaISO, horaCorta } from './fechas.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { limpiarNombre, sinEmoji } from './nombres.mjs';
-import { patronSensible } from './sensibles.mjs';
 import { agregarTarea } from './notas.mjs';
 import { cerrar } from './sistema.mjs';
 import { errorUso, rutaAdjunto } from './importacion.mjs';
 
-const CARPETA = R.telegram;
+const CARPETA = C.bandeja;
 const TOPE_MS = 180000; // a mano: ~30 archivos de ~5 s cada uno
 const RESERVA_ARCHIVO_MS = 10000; // un archivo solo se empieza si queda este margen; si no, espera a la próxima bajada
 const TOPE_CONFIRMAR_MS = 3000; // la confirmación tiene su propio plazo: sale aunque el tope general ya pasó
@@ -141,7 +140,7 @@ function escribirNota(vault, el, datosExtra, cuerpo) {
   let nombre = base;
   for (let i = 2; existsSync(join(vault, CARPETA, `${nombre}.md`)); i++) nombre = `${base} ${i}`;
   const rel = `${CARPETA}/${nombre}.md`;
-  const datos = { tipo: 'nota', creado: dia, origen: 'telegram', ...datosExtra };
+  const datos = { tipo: 'captura', creado: dia, origen: 'telegram', ...datosExtra };
   // El título sin la fecha, que ya va en el nombre: «📲 2026-10-21 1805 comprar libro» → «📲 comprar libro».
   const sinFecha = sinEmoji(nombre).slice(16);
   writeFileSync(join(vault, rel), escribirFrontmatter(datos, `\n# ${sinFecha ? `${EMOJI.telegram} ${sinFecha}` : nombre}\n\n${cuerpo.trim()}\n`));
@@ -165,7 +164,7 @@ async function bajarArchivo(vault, pedir, el) {
 async function escribirElemento(vault, pedir, el) {
   const texto = String(el.texto || '');
   if (el.tipo === 'tarea') return agregarTarea(vault, texto).datos.ruta;
-  if (el.tipo === 'voz') return escribirNota(vault, el, {}, `> Transcripción automática de una nota de voz: revisa nombres, cifras y dosis.\n\n${texto}`);
+  if (el.tipo === 'voz') return escribirNota(vault, el, {}, `> Transcripción automática de una nota de voz: revisa nombres y cifras.\n\n${texto}`);
   if (el.tipo === 'enlace') return escribirNota(vault, el, { url: el.url }, `Enlace pendiente de ingerir: pídele a la skill capturar que lo guarde como fuente.\n\n${el.url || ''}\n\n${texto.replace(el.url || '', '').trim()}`);
   if (el.tipo === 'archivo') {
     const nombre = await bajarArchivo(vault, pedir, el);
@@ -175,24 +174,30 @@ async function escribirElemento(vault, pedir, el) {
   return escribirNota(vault, el, {}, texto);
 }
 
-// okt telegram bajar [--forzar <id…>|todo] [--tope <ms>]. --forzar escribe solo los retenidos que se nombran: cada uno
-// se decide aparte, como sugiere el aviso del bot. Un archivo solo se empieza si quedan op.reservaArchivo ms del
-// tope (10 s a mano, 6 s en el hook): cada uno tarda ~5 s (Telegram → Worker → PC) y lo demás es rápido. Los que
-// no alcanzan quedan en la cola, sin error, para la próxima bajada.
+// okt telegram bajar [--tope <ms>] [--silencioso]. Todo lo que llega se escribe: el vault es del usuario y no se
+// filtra su contenido. Un archivo solo se empieza si quedan op.reservaArchivo ms del tope (10 s a mano, 6 s en el
+// hook): cada uno tarda ~5 s (Telegram → Worker → PC) y lo demás es rápido. Los que no alcanzan quedan en la cola,
+// sin error, para la próxima bajada. --silencioso (la tarea del IDE al abrir la carpeta) no falla si Telegram no
+// está configurado o si otra bajada está en curso.
 export async function bajar(vault, op = {}) {
   const cfg = leerConfigTelegram();
-  if (!cfg?.url || !cfg?.token) throw errorUso('Telegram sin configurar: okt telegram config --url <worker> --token <token>.');
-  const ids = [].concat(op.ids || [], typeof op.forzar === 'string' ? op.forzar.split(',') : []).map((x) => String(x).trim()).filter(Boolean);
-  if (op.forzar && !ids.length) throw errorUso('Indica qué elementos escribir: okt telegram bajar --forzar <id…> (los ids salen en okt estado), o --forzar todo.');
-  const forzado = (id) => Boolean(op.forzar) && (ids.includes('todo') || ids.includes(id));
-  const soltar = tomarCandado(vault);
+  if (!cfg?.url || !cfg?.token) {
+    if (op.silencioso) return { texto: '', datos: { escritos: [], errores: [], diferidos: [], confirmados: [] } };
+    throw errorUso('Telegram sin configurar: okt telegram config --url <worker> --token <token>.');
+  }
+  let soltar;
+  try {
+    soltar = tomarCandado(vault);
+  } catch (e) {
+    if (op.silencioso) return { texto: 'Telegram: otra bajada está en curso.', datos: { escritos: [], errores: [], diferidos: [], confirmados: [] } };
+    throw e;
+  }
   const tope = Number(op.tope) || TOPE_MS;
   const reserva = op.reservaArchivo ?? RESERVA_ARCHIVO_MS;
   const inicio = Date.now();
   const pedir = cliente(cfg, AbortSignal.timeout(tope));
   const registro = leerRegistro(vault);
   const escritos = [];
-  const retenidos = [];
   const errores = [];
   const diferidos = [];
   const confirmar = [];
@@ -205,12 +210,6 @@ export async function bajar(vault, op = {}) {
       for (const el of pagina.elementos || []) {
         if (registro.escritos[el.id]) {
           confirmar.push(el.id);
-          continue;
-        }
-        // El nombre del archivo también puede traer datos de un paciente.
-        const p = patronSensible([el.texto || '', el.nombre || ''].join('\n'));
-        if ((el.sensible || p) && !forzado(el.id)) {
-          retenidos.push({ id: el.id, que: p?.que || 'datos de pacientes' });
           continue;
         }
         if (el.tipo === 'archivo' && reserva && tope - (Date.now() - inicio) < reserva) {
@@ -239,11 +238,11 @@ export async function bajar(vault, op = {}) {
         sinConfirmar = true;
       }
     }
-    // okt estado muestra los retenidos y la última bajada con novedades. Sin novedades no se reescribe, para
-    // no dejar el git del vault con cambios en cada sesión.
+    // okt estado muestra la última bajada con novedades. Sin novedades no se reescribe, para no dejar el git del
+    // vault con cambios en cada sesión. Los retenidos de versiones anteriores dejan de existir.
     try {
-      if (escritos.length || JSON.stringify(registro.retenidos || []) !== JSON.stringify(retenidos)) {
-        registro.retenidos = retenidos;
+      if (escritos.length || registro.retenidos) {
+        delete registro.retenidos;
         registro.ultima = `${fechaISO()} ${horaCorta()}`;
         guardarRegistro(vault, registro);
       }
@@ -257,20 +256,16 @@ export async function bajar(vault, op = {}) {
 
   const lineas = [`Telegram: ${escritos.length} ${escritos.length === 1 ? 'elemento nuevo' : 'elementos nuevos'} en ${CARPETA}/.`];
   for (const e of escritos) lineas.push(`- ${e}`);
-  if (retenidos.length) {
-    lineas.push(`Retenidos por parecer datos de pacientes (no se escribieron): ${retenidos.map((x) => `${x.id} (${x.que})`).join(', ')}.`);
-    lineas.push(`Si no lo son: okt telegram bajar --forzar <id…>. Para quitarlos de la cola: okt telegram descartar ${retenidos.map((x) => x.id).join(' ')}`);
-  }
   for (const e of errores) lineas.push(`No pude escribir ${e.id}: ${e.error.replace(/\.$/, '')}. Queda en la cola para la próxima vez.`);
   if (diferidos.length) {
     const n = diferidos.length;
     lineas.push(`${n} ${n === 1 ? 'archivo espera' : 'archivos esperan'} en la cola: se bajan con okt telegram bajar o al procesar la bandeja.`);
   }
   if (sinConfirmar) lineas.push('No pude confirmar la bajada al Worker: se confirmará la próxima vez, sin duplicar notas.');
-  return { texto: lineas.join('\n'), datos: { escritos, retenidos, errores, diferidos, confirmados: sinConfirmar ? [] : confirmar } };
+  return { texto: lineas.join('\n'), datos: { escritos, errores, diferidos, confirmados: sinConfirmar ? [] : confirmar } };
 }
 
-// okt telegram descartar <id…>: quita elementos de la cola sin escribirlos (p. ej. los sensibles).
+// okt telegram descartar <id…>: quita elementos de la cola sin escribirlos.
 export async function descartar(vault, ids) {
   if (!ids?.length) throw errorUso('Uso: okt telegram descartar <id> [<id>…]');
   const cfg = leerConfigTelegram();

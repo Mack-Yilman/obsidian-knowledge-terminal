@@ -16,9 +16,3 @@ area:
 - [ ] 
 
 ## Decisiones
-
-## Relacionado
-
-## Historial
-
-- {{date:YYYY-MM-DD}}: creado.

@@ -18,7 +18,23 @@ test('hook inicio --formato antigravity: JSON con injectSteps y el contexto del 
     const datos = JSON.parse(r.salida);
     const texto = datos.injectSteps[0].systemMessage.systemMessage;
     assert.match(texto, /Segundo cerebro OKT/);
-    assert.match(texto, /## Actividad reciente/);
+    assert.match(texto, /Vault recién creado/);
+  } finally {
+    v.borrar();
+  }
+});
+
+test('hook antigravity: el global y el del vault de la misma conversación no repiten; cualquier carpeta abierta dentro del vault cuenta', () => {
+  const v = vaultNuevo();
+  try {
+    const correr = (extra) => JSON.parse(v.okt(['hook', 'inicio', '--formato', 'antigravity'], { input: entradaAgy(v.vault, extra) }).salida);
+    // La App entrega la ruta con la unidad en minúscula y puede abrir varias carpetas.
+    const otra = join(v.dir, 'otra');
+    mkdirSync(otra);
+    const primero = correr({ conversationId: 'conv-1', workspacePaths: [otra, v.vault.replace(/\\/g, '/').replace(/^C:/, 'c:')] });
+    assert.ok(primero.injectSteps, 'el primero inyecta el contexto');
+    assert.deepEqual(correr({ conversationId: 'conv-1' }), {}, 'el segundo hook de la misma conversación no repite');
+    assert.ok(correr({ conversationId: 'conv-2' }).injectSteps, 'una conversación nueva vuelve a inyectar');
   } finally {
     v.borrar();
   }
@@ -81,6 +97,32 @@ function instalar(v, extra = {}) {
   const env = { OKT_HOME: join(v.dir, 'okt'), OKT_AGY_SKILLS: join(v.dir, 'skills'), OKT_AGY_CLI_DIR: join(v.dir, 'agy'), ...extra };
   return okt(['instalar', 'antigravity', '--aplicar'], { cwd: v.dir, configDir: v.configDir, env });
 }
+
+test('instalar antigravity pone el hook global sin pisar otros, y la tarea del IDE que baja Telegram al abrir la carpeta', () => {
+  const v = vaultNuevo();
+  try {
+    escribir(v.configDir, 'config.json', JSON.stringify({ vault: v.vault }));
+    const agyConfig = join(v.dir, 'agy-config');
+    escribir(agyConfig, 'hooks.json', JSON.stringify({ otro: { Stop: [{ type: 'command', command: 'echo x' }] } }));
+    escribir(v.vault, '.vscode/tasks.json', JSON.stringify({ version: '2.0.0', tasks: [{ label: 'mía', type: 'shell', command: 'echo' }] }));
+    let r = instalar(v, { OKT_AGY_CONFIG_DIR: agyConfig });
+    assert.equal(r.codigo, 0, r.error);
+    const global = JSON.parse(readFileSync(join(agyConfig, 'hooks.json'), 'utf8'));
+    assert.ok(global.otro, 'conserva los hooks globales del usuario');
+    assert.match(global.okt.SessionStart[0].command, /^node \S+okt\.mjs hook inicio --formato antigravity$/);
+    const tareas = JSON.parse(readFileSync(join(v.vault, '.vscode', 'tasks.json'), 'utf8')).tasks;
+    assert.ok(tareas.some((t) => t.label === 'mía'), 'conserva las tareas del usuario');
+    const okt = tareas.find((t) => t.label === 'OKT: bajar Telegram');
+    assert.deepEqual(okt.runOptions, { runOn: 'folderOpen' });
+    assert.deepEqual(okt.args.slice(1, 4), ['telegram', 'bajar', '--silencioso']);
+    assert.match(r.salida, /Permitir/);
+    // Repetirlo no duplica.
+    r = instalar(v, { OKT_AGY_CONFIG_DIR: agyConfig });
+    assert.equal(JSON.parse(readFileSync(join(v.vault, '.vscode', 'tasks.json'), 'utf8')).tasks.filter((t) => t.label === 'OKT: bajar Telegram').length, 1);
+  } finally {
+    v.borrar();
+  }
+});
 
 test('instalar antigravity agrega el hook SessionStart al vault sin pisar otros hooks', () => {
   const v = vaultNuevo();
