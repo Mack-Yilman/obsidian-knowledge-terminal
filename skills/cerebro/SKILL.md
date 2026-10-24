@@ -68,8 +68,9 @@ Cada uno es una carpeta con su nota principal. Muestra siempre qué se creará o
 |---|---|
 | «Agrega un área» | `okt nota nueva area "<emoji> <nombre>"` (entra también a la configuración y a `AGENTS.md`) |
 | «Crea un proyecto» | Pregunta a qué área pertenece y `okt nota nueva proyecto "<emoji> <nombre>" --area "<área>"`. Ofrece anotar el objetivo y los próximos pasos en su nota |
-| «Crea el tema X en Y» | `okt tema nuevo "<área o proyecto>/<rama>/<emoji> <tema>"`: hasta 3 niveles debajo del área o el proyecto |
-| «Organiza Medicina» / reordenar una rama | Lee el índice de esa área, propón la tabla «nota → tema» con los temas nuevos marcados 🆕 y, con su sí, `okt tema nuevo` y `okt mover` |
+| «Crea el tema X en Y» | `okt tema nuevo "<área o proyecto>/<rama>/<emoji> <tema>"`: tantos niveles como pida el tema (un curso: Módulo → Clase) |
+| «Organiza Medicina» / «reorganiza mi cerebro» | Skill `mantener` («Organizar un área en temas» o «Reorganizar el conocimiento») |
+| Ver la carpeta y no su nota repetida en Obsidian | Recomienda el plugin Folder Notes (`references/configuracion.md`, «Obsidian») |
 | Renombrar o cambiar el emoji | `okt renombrar "<nombre>" "<nombre nuevo>"` (mueve la carpeta y actualiza los enlaces) |
 | «Terminé el proyecto» | `okt archivar "proyectos/<proyecto>"` (pide confirmación: es una carpeta entera). Antes, ofrece pasar al área lo que sirva más allá del proyecto |
 | Que el agente sepa a qué se dedica | `okt config poner perfil "<una línea>"` |

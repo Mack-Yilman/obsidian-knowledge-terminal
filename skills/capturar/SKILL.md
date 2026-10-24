@@ -23,9 +23,8 @@ description: Guarda conocimiento en el segundo cerebro de Obsidian (OKT), en la 
 | Una idea o nota suelta | Con destino: `okt nota nueva nota "<emoji> <título>" --carpeta "<destino>"`. Sin destino: `okt nota nueva captura "<título corto>"`. Escribe su texto **tal como lo dijo**, solo ordenado (encabezados, listas) |
 | Algo del día («hoy hice…») | `okt nota nueva diario` y agrégalo en `## Notas` o `## Tareas` |
 | Un PDF o archivo local | `okt adjuntar "<ruta>"` (copia el original a `99 │ ⚙️ Sistema/📎 adjuntos/` y avisa si ya estaba). Luego la ficha: `okt nota nueva articulo` si es un paper, `fuente` si no, con `--carpeta` si sabes dónde va. Complétala leyendo el archivo (`references/fuentes.md`) |
-| Un enlace web | Lee la página con tu herramienta web y crea la ficha `okt nota nueva fuente "<título>" --origen web --url "<url>"`. Resume y cita; no copies la página entera |
-| Un video de YouTube | Ficha con `--origen youtube --url`. Para el contenido, ver `references/fuentes.md` |
-| Notion, Google Docs o Drive | Ver **Importar** |
+| Un enlace web, de YouTube o de Drive | `okt importar url "<url>"` (con `--carpeta` si sabes dónde va). Trae la página completa con sus imágenes, o la transcripción del video, **sin que la leas tú**: no uses tu herramienta web ni resumas en el chat. Queda en bruto para ordenarla al procesar la Bandeja (`references/fuentes.md`) |
+| Notion, o una carpeta de Drive | Ver **Importar** |
 | «Guarda lo que hicimos» | `okt nota nueva captura "<proyecto> - <tema>" --origen sesion` con tres secciones: Decisiones, Aprendizajes y «Para el CLAUDE.md del proyecto» (propuestas, sin escribir en ese archivo) |
 | NotebookLM | Skill `notebooklm` |
 
@@ -33,7 +32,7 @@ description: Guarda conocimiento en el segundo cerebro de Obsidian (OKT), en la 
 
 **Enlaza al crear:** una nota nueva lleva en `## Relacionado` al menos 2 notas existentes (su fuente, una vecina del mismo tema, el proyecto donde se usa).
 
-**Una ficha de fuente no es conocimiento compilado.** Después de crearla, pregunta: «¿Lo compilo ahora en tus notas o lo dejo para el próximo lote?». Si lo deja, `okt pendiente agregar "compilar <fuente>" --de capturar --para mantener --nota "<ficha, con su emoji>"`. Si dice ahora, sigue `<raíz>/skills/mantener/SKILL.md` («Compilar una fuente»).
+**Una ficha de fuente (o un enlace importado) no es conocimiento compilado.** Después de crearla, pregunta: «¿Lo compilo ahora en tus notas o lo dejo para el próximo lote?». Si lo deja, `okt pendiente agregar "compilar <fuente>" --de capturar --para mantener --nota "<ficha, con su emoji>"`. Si dice ahora, sigue `<raíz>/skills/mantener/SKILL.md` («Compilar una fuente»).
 
 ## Importar (solo a pedido; el usuario elige qué)
 

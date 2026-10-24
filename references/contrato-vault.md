@@ -44,12 +44,13 @@ siempre; reescribe el texto del usuario solo cuando él lo pide.
 (`🩺 Medicina/🩺 Medicina.md`). Esa nota lleva, entre marcas `okt`, el índice automático de su carpeta, y así la
 jerarquía se navega por enlaces. Un proyecto dice a qué área pertenece con la propiedad `area`, y su área lo lista.
 
-**Temas, hasta 3 niveles** debajo del área o el proyecto: Área → Rama → Grupo → nota. Ejemplos:
+**Temas anidados, tantos niveles como pida el dominio** debajo del área o el proyecto: Área → Rama → Grupo → … →
+nota. Ejemplos:
 
 ```text
 20 │ 🧭 Areas/🩺 Medicina/🫀 Cardiología/💔 Síndrome coronario agudo/🫀 Infarto agudo de miocardio.md
 20 │ 🧭 Areas/💻 Programación/🐍 Python/⚙️ Asincronía/🧵 asyncio vs hilos.md
-10 │ 🎯 Proyectos/✈️ Viaje a Japón/🏯 Kioto/⛩️ Templos imprescindibles.md
+10 │ 🎯 Proyectos/📈 Curso de inversiones/📦 Módulo 2/🎬 Clase 3/💰 Fondos indexados.md
 ```
 
 **Cómo ubicar cada nota:**
@@ -64,9 +65,15 @@ jerarquía se navega por enlaces. Un proyecto dice a qué área pertenece con la
    (`okt tema nuevo` con su mismo nombre la convierte).
 5. **Una confirmación por lote, no por carpeta:** muestra la tabla «qué → dónde» con las carpetas nuevas marcadas 🆕
    y aplica todo con un solo sí.
-6. **Nunca más de 3 niveles de tema.** Si algo pide un cuarto nivel, propón reorganizar la rama.
-7. **Lo que toca dos áreas** vive en la que más le corresponde y se enlaza desde la otra en `## Relacionado`.
-8. **¿Proyecto o área?** Si termina, es un proyecto; si no termina, es un área. Lo que aprendiste en un proyecto
+6. **Cada nivel debe ser una división real** (un módulo, una disciplina, una familia), no una carpeta para una sola
+   nota. Cuando el árbol ya no refleja cómo piensa el usuario, propón reorganizarlo (skill `mantener`,
+   «Reorganizar»).
+7. **Lo que toca dos áreas** vive en la que más le corresponde y se cita desde la otra (sección 3, «Citar entre
+   áreas»).
+8. **No fuerces un destino.** Si una captura no encaja en ningún área ni proyecto, no la metas en el que más se
+   parezca para vaciar la Bandeja: propón un área o un proyecto nuevo (🆕) o déjala en la Bandeja con un pendiente
+   «para ti».
+9. **¿Proyecto o área?** Si termina, es un proyecto; si no termina, es un área. Lo que aprendiste en un proyecto
    puede quedarse en él o, si sirve más allá, pasar a su área.
 
 El separador de las carpetas es `│` (U+2502, «línea fina»), no la barra `|`, que Windows prohíbe en los nombres y
@@ -88,7 +95,16 @@ raíz ni los emojis: `--carpeta "Medicina/Cardiología"`, `--carpeta "Tesis"`, `
 - **Enlaces:** siempre `[[Nombre de la nota]]` o `[[Nombre#Sección]]`, sin rutas y **con el emoji**. Obsidian no
   resuelve un enlace por el alias, así que `[[Infarto agudo de miocardio]]` sin el emoji queda roto (`okt lint`
   sugiere el nombre correcto). «💡 X» y «🫀 X» cuentan como la misma nota: el CLI no deja crear la segunda.
+- **Citar entre áreas:** el conocimiento de otra área se enlaza donde se menciona, en el texto, no solo en
+  `## Relacionado`. Según cuánto se cita:
+  - una nota: `[[🫀 Infarto agudo de miocardio]]`;
+  - una sección: `[[🫀 Infarto agudo de miocardio#Diagnóstico]]`;
+  - un párrafo: se marca con `^id` al final del párrafo en la nota de origen y se enlaza con
+    `[[🫀 Infarto agudo de miocardio#^criterios]]`;
+  - para mostrar el texto citado dentro de la nota (transclusión): `![[🫀 Infarto agudo de miocardio#Diagnóstico]]`.
 - **Adjuntos:** `![[archivo.png]]` para mostrarlos y `[[archivo.pdf]]` para enlazarlos.
+- **Videos:** `![](https://www.youtube.com/watch?v=…)` muestra un video de YouTube en la nota, sin descargarlo. Un
+  video de Drive se muestra con el `<iframe>` que pone `okt importar drive`.
 - **Cuántos enlaces:** cada nota procesada enlaza al menos 2 notas existentes (su fuente, una nota vecina, el
   proyecto donde se usa). El índice automático de su carpeta no cuenta.
 

@@ -10,6 +10,13 @@ Pide confirmación antes de cada instalación o cambio. Si el usuario ya tiene u
 
 Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `99 │ ⚙️ Sistema/📎 adjuntos`, notas nuevas en `00 │ 📥 Bandeja`, plantillas en `99 │ ⚙️ Sistema/🧱 plantillas`, diario en `50 │ 📅 Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
 
+**Folder Notes (recomendado).** Cada área, proyecto y tema es una carpeta con una nota principal del mismo nombre: lleva el índice automático de la carpeta y es a la que apuntan los enlaces y el grafo, porque Obsidian no enlaza carpetas. Para no verla repetida en el explorador, instala el plugin de la comunidad **Folder Notes** (de LostPaul): en Obsidian, Configuración → Plugins de la comunidad → Explorar → «Folder notes» → Instalar y Activar. En sus opciones:
+- **Ubicación de la nota:** dentro de la carpeta (*Inside the folder*);
+- **Nombre:** `{{folder_name}}`;
+- **Ocultar la nota de carpeta** en el explorador: activado.
+
+Así, al hacer clic en la carpeta se abre su nota. Es opcional: sin el plugin, todo funciona igual. OKT no lo instala por su cuenta (es configuración de Obsidian del usuario).
+
 ## Respaldo con Google Drive para escritorio
 
 El vault vive en la PC y Drive guarda la copia. **La copia en la nube no se edita**: es solo respaldo.
@@ -32,6 +39,8 @@ Notas:
 | NotebookLM (`nlm`) | `uv tool install notebooklm-mcp-cli` (si no hay `uv`: https://docs.astral.sh/uv/) | `nlm login` (abre el navegador) | `nlm login --check` |
 | Notion (`ntn`) | `npm install -g ntn` | `ntn login` | `ntn whoami` |
 | Google Docs y Drive (`gws`) | `npm install -g @googleworkspace/cli` | `gws auth login` | `gws auth status` |
+| Páginas web completas (`defuddle`) | `npm install -g defuddle` | (no hace falta) | `okt doctor` |
+| Transcripciones de YouTube (`yt-dlp`) | `uv tool install yt-dlp` (usa Node, que ya está instalado) | (no hace falta) | `okt doctor` |
 
 - **NotebookLM:** el detalle y las skills propias de `nlm` están en `<raíz>/skills/notebooklm/references/instalacion.md`.
 - **Notion:** la integración de `ntn` solo ve las páginas compartidas con ella. Las vistas enlazadas (*linked views*) no son accesibles por la API: hay que abrir la base original.

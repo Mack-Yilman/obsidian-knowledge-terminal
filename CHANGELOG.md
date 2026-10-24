@@ -1,5 +1,25 @@
 # Cambios
 
+## 0.5.0 — 2026-10-24
+
+**Enlaces e ingesta sin tokens, temas sin límite de niveles y reorganización asistida del vault.**
+
+- **Enlaces sin el modelo (sin gastar tokens):** `okt importar url "<enlace>" [--carpeta <destino>]` detecta el tipo:
+  - **Web:** con **Defuddle** (`npm install -g defuddle`, el motor de Obsidian Web Clipper) descarga la página completa en Markdown y sus imágenes (hasta 40) en `99 │ ⚙️ Sistema/📎 adjuntos/🌐 web/`, reescritas como `![[imagen]]`. La nota se titula `🌐 <título>` con `url`, `autor` y `publicado`.
+  - **YouTube:** con **yt-dlp** (`uv tool install yt-dlp`, usa Node para los retos de YouTube) obtiene solo los subtítulos (manuales antes que automáticos y en el idioma original). El video **no se descarga**: la nota `▶️ <título>` incrusta el reproductor arriba (`![](url)`) e incluye la transcripción en bruto por capítulos o en párrafos de un minuto con marcas de tiempo enlazadas. Si no tiene subtítulos, lo avisa y sugiere NotebookLM.
+  - **Drive:** pasa por `okt importar drive`.
+  Sin `--carpeta` va a la Bandeja como captura; con `--carpeta` queda como fuente en esa carpeta. Reimportar el mismo enlace actualiza la misma nota entre las marcas `okt`.
+- **Ingesta en segundo plano:** `okt importar enlaces [--reintentar]` completa en su lugar las capturas de la Bandeja que solo traen un enlace (las que llegan de Telegram). Si una falla, queda con la propiedad `importar_error` y no se reintenta sola; `--reintentar` la vuelve a intentar. Al empezar a trabajar en el vault (hook de Claude Code, hooks de Antigravity y tarea del IDE), los enlaces pendientes se traen en un proceso aparte en segundo plano sin frenar la sesión. `okt doctor` muestra si están instalados `defuddle` y `yt-dlp`.
+- **Videos de Drive sin descarga:** un video de Drive ya no se descarga; la nota lo muestra con el reproductor de Drive (`<iframe>` de `/preview`) y un enlace «▶️ Abrir en Drive» (si es privado, el reproductor puede pedir iniciar sesión dentro de Obsidian; el enlace lo abre en el navegador). Docs, PDF e imágenes siguen igual.
+- **Temas sin límite de niveles:** se elimina el máximo de 3 niveles; un área o un proyecto puede anidar tantas carpetas de tema como requiera el dominio. Desaparecen el hallazgo `muy_profunda` de `okt lint` y el error «… ya tiene 3 niveles de tema».
+- **Citar entre áreas:** el contrato define el enlace entre notas de distintas áreas mediante `[[Nota]]`, `[[Nota#Sección]]`, enlaces de párrafo `[[Nota#^id]]` y transclusiones con `![[Nota#Sección]]`.
+- **La Bandeja no fuerza destinos:** al procesar la bandeja, cada captura tiene uno de tres destinos: claro (su carpeta), dudoso (la mejor opción con «¿?» y una alternativa) o no encaja (propone un área o proyecto nuevo marcado 🆕 o se deja en la Bandeja preguntando al usuario). Nunca se asigna a un área que no corresponde solo por vaciar la Bandeja.
+- **Reorganizar el conocimiento:** con «reorganiza mi cerebro» o «reorganiza mi área de …»:
+  - `okt reorganizar preparar [--carpeta "<área o proyecto>"]` genera un mapa compacto (el árbol y, por nota, su tipo, su resumen y sus enlaces de entrada y salida, sin el texto) para que la IA diseñe una propuesta gastando pocos tokens.
+  - La IA propone una tabla «actual → propuesto» y, con un solo sí, escribe el plan en JSON.
+  - `okt reorganizar aplicar <plan.json>` valida el plan entero antes de tocar nada (si algo no cuadra, no cambia nada), aplica en orden `tema`, `mover`, `renombrar` y `archivar`, hace un solo commit y responde con el comando `git revert` para deshacerlo.
+- **Folder Notes (recomendado):** la guía de configuración recomienda el plugin de la comunidad **Folder Notes** (de LostPaul), configurado con la nota *dentro* de la carpeta, el nombre `{{folder_name}}` y la opción de ocultar la nota de carpeta: al hacer clic en la carpeta se abre su nota principal (que lleva el índice automático y a la que apuntan enlaces y grafo) sin verla repetida en el explorador.
+
 ## 0.4.1 — 2026-10-23
 
 Correcciones de una revisión independiente del código de la 0.4.0:
