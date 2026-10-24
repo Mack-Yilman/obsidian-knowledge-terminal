@@ -70,7 +70,7 @@ test('nota nueva proyecto y área crean su carpeta con su emoji temático; diari
   const v = vaultNuevo();
   v.okt(['nota', 'nueva', 'proyecto', '🐍 Curso de Python', '--area', 'Personal']);
   const curso = leer(v, '10 │ 🎯 Proyectos/🐍 Curso de Python/🐍 Curso de Python.md');
-  assert.match(curso, /area: "\[\[Personal\]\]"/);
+  assert.match(curso, /area: "\[\[🧭 Personal\]\]"/, 'el área se enlaza con su nombre exacto, con emoji');
   assert.match(curso, /## Objetivo\n\n## Próximos pasos\n\n## Decisiones/);
   // Sin emoji temático, el del tipo.
   v.okt(['nota', 'nueva', 'proyecto', 'Tesis']);

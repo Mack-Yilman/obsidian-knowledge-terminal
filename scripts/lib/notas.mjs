@@ -1,6 +1,6 @@
 // okt nota nueva <tipo> "<título>": crea la nota en su carpeta con el frontmatter y las secciones
 // del contrato. El modelo solo rellena el contenido.
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { ahora, fechaISO, semanaISO } from './fechas.mjs';
@@ -38,9 +38,20 @@ export function carpetaDeDestino(vault, pedida, { propia = false } = {}) {
   if (!dentroDeLaEstructura(carpeta)) throw errorUso(`No encontré «${pedida}» en el vault: usa un área, un proyecto o un tema que exista (p. ej. --carpeta "Medicina/Cardiología"). Míralos en 99 │ ⚙️ Sistema/🗂️ indice.md.`);
   if (!existsSync(join(vault, carpeta))) throw errorUso(`La carpeta «${carpeta}» no existe. Créala primero (okt tema nuevo "${pedida}") o elige otra.`);
   const { raiz, base, niveles } = ubicar(`${carpeta}/x.md`);
-  if (raiz && !base) throw errorUso(`«${carpeta}» es la carpeta raíz: elige un área o un proyecto dentro de ella.`);
-  if (raiz && niveles + (propia ? 1 : 0) > MAX_NIVELES_TEMA) throw errorUso(`«${carpeta}» ya tiene ${niveles} niveles de tema: el máximo es ${MAX_NIVELES_TEMA}. Reorganiza la rama en vez de anidar más.`);
+  // Solo dentro de un área o un proyecto: la Bandeja, el Diario, el Archivo y el Sistema no llevan notas ni temas aquí.
+  if (!raiz) throw errorUso(`«${carpeta}» no es un área, un proyecto ni un tema. Sin --carpeta, la nota va a la Bandeja.`);
+  if (!base) throw errorUso(`«${carpeta}» es la carpeta raíz: elige un área o un proyecto dentro de ella.`);
+  if (niveles + (propia ? 1 : 0) > MAX_NIVELES_TEMA) throw errorUso(`«${carpeta}» ya tiene ${niveles} niveles de tema: el máximo es ${MAX_NIVELES_TEMA}. Reorganiza la rama en vez de anidar más.`);
   return carpeta;
+}
+
+// «Medicina» → «🩺 Medicina» si esa área existe (el enlace necesita el nombre exacto, con su emoji).
+export function nombreDeArea(vault, pedida) {
+  const limpia = String(pedida).replace(/^\[\[|\]\]$/g, '');
+  const dir = join(vault, C.areas);
+  if (!existsSync(dir)) return limpia;
+  const igual = readdirSync(dir, { withFileTypes: true }).find((e) => e.isDirectory() && sinEmoji(e.name).toLowerCase() === sinEmoji(limpia).toLowerCase());
+  return igual ? igual.name : limpia;
 }
 
 export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
@@ -90,7 +101,7 @@ export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
     if (op.url) datos.url = op.url;
   }
   if (def.fuentes && lista(op.fuentes).length) datos.fuentes = lista(op.fuentes).map(wiki);
-  if (tipoReal === 'proyecto' && op.area) datos.area = wiki(op.area);
+  if (tipoReal === 'proyecto' && op.area) datos.area = wiki(nombreDeArea(vault, op.area));
   if (op.tags) datos.tags = lista(op.tags);
 
   const cuerpo = `\n# ${titulo}\n\n${def.cuerpo.map((s) => (s ? `## ${s}\n` : '')).join('\n')}`;

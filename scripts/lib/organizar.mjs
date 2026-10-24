@@ -37,13 +37,6 @@ export function encontrarNota(vault, ref, { dentro } = {}) {
   return c[0];
 }
 
-// Archivo libre en una carpeta: «x.md», «x 2.md», …
-function libre(vault, dir, nombre, ext = '.md') {
-  let n = nombre;
-  for (let i = 2; existsSync(join(vault, dir, `${n}${ext}`)); i++) n = `${nombre} ${i}`;
-  return n;
-}
-
 const esPrincipal = (rel) => basename(dirname(rel)) === basename(rel, '.md');
 
 // Profundidad de carpetas debajo de una carpeta (0 si no tiene subcarpetas).
@@ -64,8 +57,9 @@ export function temaNuevo(vault, ruta, op = {}) {
   const dir = `${padre}/${nombre}`;
   if (existsSync(join(vault, dir))) return { texto: `Ya existía: ${dir}`, datos: { ruta: `${dir}/${nombre}.md`, creada: false } };
 
-  // «Nota que crece»: si en la carpeta padre ya hay una nota con ese nombre, pasa a ser la nota principal del tema.
-  const crece = listarNotas(vault).find((r) => dirname(r) === padre && sinEmoji(basename(r, '.md')).toLowerCase() === sinEmoji(nombre).toLowerCase());
+  // «Nota que crece»: si en la carpeta padre ya hay una nota con ese nombre, pasa a ser la nota principal del tema. La
+  // nota principal de la propia carpeta padre no cuenta: «Medicina/Medicina» no convierte el área en tema.
+  const crece = listarNotas(vault).find((r) => dirname(r) === padre && !esPrincipal(r) && sinEmoji(basename(r, '.md')).toLowerCase() === sinEmoji(nombre).toLowerCase());
   const otras = mismasNotas(vault, nombre).filter((r) => r !== crece);
   if (otras.length) throw errorUso(`Ya existe una nota llamada «${sinEmoji(nombre)}»: ${otras[0]}. Elige otro nombre para el tema.`, 3);
   mkdirSync(join(vault, dir), { recursive: true });
@@ -120,7 +114,11 @@ function aBruto(vault, rel, en, { copiar = false } = {}) {
   const hoy = fechaISO();
   const dir = `${R.bruto}/${hoy.slice(0, 7)}`;
   mkdirSync(join(vault, dir), { recursive: true });
-  const nombre = libre(vault, dir, conEmoji('bruto', basename(rel, '.md')));
+  // El nombre es único en todo Bruto, no solo en el mes: la propiedad «bruto» y okt bruto limpiar enlazan por nombre.
+  const base = conEmoji('bruto', basename(rel, '.md'));
+  const usados = new Set(listarNotas(vault).filter((r) => r.startsWith(`${R.bruto}/`)).map((r) => basename(r, '.md').toLowerCase()));
+  let nombre = base;
+  for (let i = 2; usados.has(nombre.toLowerCase()) || existsSync(join(vault, dir, `${nombre}.md`)); i++) nombre = `${base} ${i}`;
   const destino = `${dir}/${nombre}.md`;
   const { datos, cuerpo } = leerFrontmatter(readFileSync(join(vault, rel), 'utf8'));
   const marcado = escribirFrontmatter({ ...datos, tipo: datos.tipo === 'captura' ? 'captura' : datos.tipo || 'captura', procesado: hoy, en: en.map(wiki) }, cuerpo);

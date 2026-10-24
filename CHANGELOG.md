@@ -1,5 +1,19 @@
 # Cambios
 
+## 0.4.1 — 2026-10-23
+
+Correcciones de una revisión independiente del código de la 0.4.0:
+
+- `okt tema nuevo "<área>/<área>"` ya no convierte la nota del área en tema.
+- Las notas y los temas solo se crean o procesan dentro de un área o un proyecto: `--carpeta bandeja`, `diario`,
+  `archivo` o `sistema` se rechaza (sin `--carpeta`, la nota sigue yendo a la Bandeja).
+- Los originales en bruto tienen un nombre único en todo `📥 Bruto`, no solo dentro del mes: así `okt bruto limpiar` no
+  desenlaza otro original con el mismo nombre.
+- `okt nota nueva proyecto --area "Medicina"` enlaza el área con su nombre exacto (`[[🩺 Medicina]]`), y el índice del
+  área lista también los proyectos con el nombre del área escrito sin emoji.
+- `okt migrar` ya no reescribe enlaces cuando renombra un archivo para no pisar otro con el mismo nombre: lo informa en
+  la vista previa (antes, los enlaces del área podían terminar apuntando a la nota renombrada).
+
 ## 0.4.0 — 2026-10-23
 
 **El conocimiento vive en tus áreas y proyectos, y el plugin sirve para cualquier persona.** Cambia la estructura del

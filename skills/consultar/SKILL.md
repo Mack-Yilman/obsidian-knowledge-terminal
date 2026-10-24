@@ -37,4 +37,4 @@ Consultar no modifica nada. Solo escribe si el usuario pide guardar la respuesta
 
 ## Guardar la respuesta (solo si lo pide)
 
-`okt nota nueva nota "<emoji temático> <pregunta en pocas palabras>" --carpeta "<tema donde encaja>" --fuentes "A,B"`, con secciones Pregunta, Respuesta y Evidencia, y lleva `origen: conversacion` si sale del chat. Después, `okt cerrar consultar "guardó la respuesta …" --notas "<nota>"`.
+`okt nota nueva nota "<emoji temático> <pregunta en pocas palabras>" --carpeta "<tema donde encaja>" --fuentes "A,B" --origen conversacion`, con secciones Pregunta, Respuesta y Evidencia. Después, `okt cerrar consultar "guardó la respuesta …" --notas "<nota>"`.

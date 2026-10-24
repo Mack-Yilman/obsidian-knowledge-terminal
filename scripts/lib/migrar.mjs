@@ -303,15 +303,18 @@ const SUBS_BANDEJA = () => [R2.notas, R2.sesiones, R2.importados, R2.telegram];
 function planV3(vault) {
   const movimientos = [];
   const usados = new Set();
+  // Los enlaces no se reescriben: si una nota cambia de nombre por un choque, la otra conserva el suyo, y reescribir
+  // [[X]] → [[X 2]] desviaría también los enlaces que apuntaban a la que se quedó. Se informan en la vista previa.
   const nombres = {};
-  // Un destino ya usado o ya existente lleva « 2», « 3»… (y el enlace se actualiza si es una nota).
+  const renombradas = [];
+  // Un destino ya usado o ya existente lleva « 2», « 3»…
   const reservar = (de, dir, archivo) => {
     const punto = archivo.lastIndexOf('.');
     const [raiz, ext] = punto > 0 ? [archivo.slice(0, punto), archivo.slice(punto)] : [archivo, ''];
     let nombre = archivo;
     for (let i = 2; usados.has(`${dir}/${nombre}`.toLowerCase()) || (existsSync(join(vault, dir, nombre)) && `${dir}/${nombre}` !== de); i++) nombre = `${raiz} ${i}${ext}`;
     usados.add(`${dir}/${nombre}`.toLowerCase());
-    if (nombre !== archivo && ext === '.md') nombres[raiz.toLowerCase()] = basename(nombre, '.md');
+    if (nombre !== archivo) renombradas.push(`${de} → ${dir}/${nombre}`);
     return `${dir}/${nombre}`;
   };
 
@@ -351,7 +354,7 @@ function planV3(vault) {
   for (const sub of SUBS_BANDEJA()) for (const f of archivosBajo(vault, sub)) movimientos.push({ de: f, a: reservar(f, C.bandeja, basename(f)) });
   for (const f of archivosBajo(vault, R2.adjuntos)) movimientos.push({ de: f, a: traducirV3(f) });
 
-  return { paso: 3, movimientos, carpetasArea, sinUbicar, nombres, choques: choquesDe(vault, movimientos) };
+  return { paso: 3, movimientos, carpetasArea, sinUbicar, nombres, renombradas, choques: choquesDe(vault, movimientos) };
 }
 
 function describirV3(plan) {
@@ -365,7 +368,7 @@ function describirV3(plan) {
   }
   lineas.push('Destino de los archivos:', ...Object.entries(grupos).map(([d, n]) => `  - ${d}: ${n}`));
   if (plan.sinUbicar.length) lineas.push(`Notas de Conocimiento o Fuentes sin área ni proyecto, que van a la Bandeja para ubicarlas con la skill mantener (${plan.sinUbicar.length}): ${plan.sinUbicar.slice(0, 12).join(', ')}${plan.sinUbicar.length > 12 ? '…' : ''}`);
-  if (Object.keys(plan.nombres).length) lineas.push(`Nombres que cambian para no chocar (los enlaces se actualizan): ${Object.entries(plan.nombres).map(([a, b]) => `${a} → ${b}`).join(', ')}`);
+  if (plan.renombradas?.length) lineas.push(`Archivos que cambian de nombre para no pisar otro con el mismo nombre (revisa sus enlaces después con okt lint): ${plan.renombradas.join(', ')}`);
   lineas.push(`Archivos que se mueven en total: ${plan.movimientos.length}.`);
   lineas.push('También: tipos concepto/entidad/sintesis → nota y lo de la Bandeja → captura, notas de área con «De qué trata», plantillas nuevas, adjuntos y notas nuevas en Obsidian, registros de .cerebro, el bloque de AGENTS.md y los índices automáticos de cada carpeta.');
   return lineas.join('\n');

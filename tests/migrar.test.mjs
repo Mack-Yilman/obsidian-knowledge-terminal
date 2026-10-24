@@ -198,6 +198,20 @@ test('migrar desde la 0.3: áreas como carpetas, conocimiento a su área, bandej
   v.borrar();
 });
 
+test('migrar desde la 0.3: si una nota choca con la del área, cambia de nombre sin desviar los enlaces del área', () => {
+  const v = vault03();
+  escribir(v.vault, '30 │ 🧠 Conocimiento/💡 conceptos/🩺 Medicina.md', `${fm({ tipo: 'concepto', creado: '2026-10-22', actualizado: '2026-10-22', estado: 'borrador', resumen: 'r', area: '"[[🩺 Medicina]]"' })}\n# 🩺 Medicina\n`);
+  escribir(v.vault, '50 │ 📅 Diario/📅 23∕10∕26.md', `${fm({ tipo: 'diario', creado: '2026-10-23' })}\nHoy estudié [[🩺 Medicina]].\n`);
+  let r = v.okt(['migrar']);
+  assert.match(r.salida, /cambian de nombre para no pisar otro/);
+  r = v.okt(['migrar', '--aplicar']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(v.vault, '20 │ 🧭 Areas/🩺 Medicina/🩺 Medicina 2.md')));
+  assert.match(leer(v.vault, '50 │ 📅 Diario/📅 23∕10∕26.md'), /\[\[🩺 Medicina\]\]/, 'el enlace sigue apuntando al área');
+  assert.deepEqual(JSON.parse(leer(v.vault, '.cerebro/config.json')).areas, ['🩺 Medicina', '🌱 Personal']);
+  v.borrar();
+});
+
 test('migrar: si dos nombres chocarían, no toca nada', () => {
   const v = vaultAntiguo();
   escribir(v.vault, '30-Conocimiento/conceptos/💡 Anemia.md', `${fm({ tipo: 'concepto', creado: '2026-10-01' })}\n# 💡 Anemia\n`);
