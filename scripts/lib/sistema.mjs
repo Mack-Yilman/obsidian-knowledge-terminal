@@ -10,6 +10,7 @@ import { escribirFrontmatter } from './frontmatter.mjs';
 import { commit } from './git.mjs';
 import { sobrescribir } from './rutas.mjs';
 import { C, R, ubicar } from './estructura.mjs';
+import { sinEmoji } from './nombres.mjs';
 
 const MAX_BITACORA = 300;
 const MAX_ACTIVIDAD = 8;
@@ -191,7 +192,8 @@ export function indice(vault) {
   let bloques = 0;
   for (const c of a.carpetas.values()) {
     if (!c.principal || !PRINCIPALES.has(c.principal.datos.tipo)) continue;
-    const delArea = c.principal.datos.tipo === 'area' ? proyectos.filter((p) => String(p.datos.area || '').replace(/^\[\[|\]\]$/g, '').toLowerCase() === c.principal.nombre.toLowerCase()) : null;
+    // Se compara sin el emoji: un proyecto con «area: [[Medicina]]» (escrito a mano) también cuenta.
+    const delArea = c.principal.datos.tipo === 'area' ? proyectos.filter((p) => sinEmoji(String(p.datos.area || '').replace(/^\[\[|\]\]$/g, '')).toLowerCase() === sinEmoji(c.principal.nombre).toLowerCase()) : null;
     const abs = join(vault, c.principal.rel);
     const texto = readFileSync(abs, 'utf8');
     const nuevo = reemplazarBloque(texto, bloqueContenido(a, c, delArea));

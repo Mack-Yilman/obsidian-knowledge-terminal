@@ -78,6 +78,25 @@ test('bruto guardar copia el original antes de reescribir; bruto limpiar borra l
   v.borrar();
 });
 
+test('revisión de Argon: el área no pasa a ser tema, la Bandeja y el Sistema no son destino, y los originales no repiten nombre', () => {
+  const v = conCaptura();
+  // «Medicina/Medicina» no convierte la nota del área en tema.
+  let r = v.okt(['tema', 'nuevo', 'Medicina/Medicina']);
+  assert.equal(r.codigo, 3, r.error);
+  assert.match(leer(v, `${MEDICINA}/🧭 Medicina.md`), /tipo: area/);
+  // Fuera de un área o un proyecto no se crean temas ni se procesan notas.
+  assert.equal(v.okt(['tema', 'nuevo', 'bandeja/🫀 Cardiología']).codigo, 2);
+  assert.equal(v.okt(['procesar', 'troponina sube', '--a', 'sistema', '--titulo', '💡 Idea']).codigo, 2);
+  // Un original guardado otro mes con el mismo nombre lleva « 2»: la propiedad «bruto» enlaza por nombre.
+  v.okt(['procesar', 'troponina sube', '--a', 'Medicina/Cardiología', '--titulo', '🧪 Troponina', '--resumen', 'r']);
+  v.okt(['bruto', 'guardar', '🧪 Troponina']);
+  r = v.okt(['bruto', 'guardar', '🧪 Troponina'], { env: { OKT_FECHA: '2027-02-10T10:00' } });
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(v.vault, '90 │ 🗄️ Archivo/📥 Bruto/2027-02/📥 Troponina 2.md')));
+  assert.match(leer(v, `${MEDICINA}/🫀 Cardiología/🧪 Troponina.md`), /bruto:\n {2}- "\[\[📥 Troponina\]\]"\n {2}- "\[\[📥 Troponina 2\]\]"/);
+  v.borrar();
+});
+
 test('mover: una nota a otro tema y un tema entero con su carpeta, sin pasar de 3 niveles', () => {
   const v = vaultNuevo();
   v.okt(['tema', 'nuevo', 'Medicina/🫀 Cardiología']);
