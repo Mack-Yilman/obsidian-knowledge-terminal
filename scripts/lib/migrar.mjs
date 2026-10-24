@@ -388,10 +388,14 @@ function ajustarTipos(vault) {
       extra.origen = datos.tipo === 'sesion' ? 'sesion' : datos.origen || 'nota';
     }
     let cuerpoNuevo = cuerpo;
-    // Las notas de área de la 0.3 traían secciones vacías («Proyectos», «Conocimiento», «Notas»): las llena el índice.
+    // Las notas de área de la 0.3 traían secciones vacías («Proyectos», «Conocimiento», «Notas»), que ahora llena el
+    // índice, y un resumen de relleno («Área continua: X.»). Solo se quitan si están vacías o son el relleno.
     if (tipo === 'area') {
-      cuerpoNuevo = cuerpo.replace(/^## (Proyectos|Conocimiento)[ \t]*\n(?=\s*(## |<!-- okt:inicio -->|$))/gm, '').replace(/\n{3,}/g, '\n\n');
+      // Vacía = solo líneas en blanco hasta el siguiente encabezado, las marcas o el final (no \s*$ con la bandera m:
+      // $ coincidiría antes de la primera línea en blanco y se llevaría secciones con texto).
+      cuerpoNuevo = cuerpo.replace(/^## (Proyectos|Conocimiento|Notas)[ \t]*\n(?=(?:[ \t]*\n)*(?:## |<!-- okt:inicio -->|(?![\s\S])))/gm, '').replace(/\n{3,}/g, '\n\n');
       if (!/^## De qué trata/m.test(cuerpoNuevo)) cuerpoNuevo = cuerpoNuevo.replace(/^(# .+\n)/m, '$1\n## De qué trata\n');
+      if (/^Área continua: .*\.$/.test(datos.resumen || '')) extra.resumen = '';
     }
     if (tipo !== datos.tipo || cuerpoNuevo !== cuerpo || Object.keys(extra).length) {
       sobrescribir(abs, escribirFrontmatter({ ...datos, tipo, ...extra }, cuerpoNuevo));
