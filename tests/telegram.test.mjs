@@ -174,7 +174,7 @@ test('dos bajadas a la vez no duplican: la segunda espera su turno', async () =>
     const textos = [a, b].map((x) => (x.status === 'fulfilled' ? x.value.texto : x.reason.message));
     assert.ok(textos.some((x) => /otra bajada/i.test(x)), textos.join(' | '));
     assert.equal(t.bandeja().length, 1);
-    assert.ok(!existsSync(join(t.vault, '.cerebro', 'telegram.lock')));
+    assert.ok(!existsSync(join(t.vault, '.cerebro', 'cache', 'telegram.lock')));
   } finally {
     await t.fin();
   }

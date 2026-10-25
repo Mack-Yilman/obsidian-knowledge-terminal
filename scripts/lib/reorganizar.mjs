@@ -4,7 +4,8 @@
 // aprobó: primero lo valida entero (si algo no cuadra, no toca nada) y luego lo aplica en un solo commit.
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname, basename, resolve } from 'node:path';
-import { listarNotas, leerNota, extraerEnlaces, esArchivado } from './vault.mjs';
+import { listarNotas, leerNota, extraerEnlaces, esArchivado, mismasNotas } from './vault.mjs';
+import { carpetaDeDestino } from './notas.mjs';
 import { C, R, resolverCarpeta } from './estructura.mjs';
 import { fechaISO } from './fechas.mjs';
 import { sobrescribir } from './rutas.mjs';
@@ -70,8 +71,12 @@ export function validarPlan(vault, plan) {
   if (!Array.isArray(ops) || !ops.length) throw errorUso(`El plan está vacío.\n${FORMATO}`);
   const creadas = new Set();
   const errores = [];
+  const notas = new Set(); // nombres que crea el plan (renombrar), sin emoji
+  const viejos = new Set(); // nombres que el plan deja de usar (renombrar)
+  // Una nota que existe o que crea el plan. Devuelve el error, o null.
   const nota = (ref) => {
-    if (creadas.has(ultimo(ref))) return null;
+    if (viejos.has(ultimo(ref))) return `«${ref}» se renombra antes en el plan: usa su nombre nuevo.`;
+    if (notas.has(ultimo(ref)) || creadas.has(ultimo(ref))) return null;
     try {
       encontrarNota(vault, ref);
       return null;
@@ -79,7 +84,16 @@ export function validarPlan(vault, plan) {
       return e.message.split('\n')[0];
     }
   };
-  const carpeta = (ref) => creadas.has(ultimo(ref)) || existsSync(join(vault, resolverCarpeta(vault, ref)));
+  // Una carpeta donde pueden ir notas y temas (dentro de un área o un proyecto), que existe o que crea el plan.
+  const carpeta = (ref) => {
+    if (creadas.has(ultimo(ref))) return true;
+    try {
+      carpetaDeDestino(vault, ref);
+      return true;
+    } catch {
+      return false;
+    }
+  };
   ops.forEach((o, i) => {
     const n = i + 1;
     const claves = Object.keys(o || {}).filter((k) => OPERACIONES.includes(k));
@@ -93,14 +107,21 @@ export function validarPlan(vault, plan) {
       return;
     }
     if (k === 'archivar') {
-      if (!carpeta(o.archivar)) errores.push(`${n}: no encontré «${o.archivar}» para archivarlo (usa su ruta, p. ej. "Medicina/Tema vacío").`);
+      if (!existsSync(join(vault, resolverCarpeta(vault, o.archivar)))) errores.push(`${n}: no encontré «${o.archivar}» para archivarlo (usa su ruta, p. ej. "Medicina/Tema vacío").`);
       return;
     }
     if (!String(o.a || '').trim()) return errores.push(`${n}: «${k}» necesita «a».`);
     const falta = nota(o[k]);
     if (falta) errores.push(`${n}: ${falta}`);
-    if (k === 'mover' && !carpeta(o.a)) errores.push(`${n}: no existe la carpeta de destino «${o.a}».`);
-    if (k === 'renombrar') creadas.add(ultimo(o.a));
+    if (k === 'mover' && !carpeta(o.a)) errores.push(`${n}: «${o.a}» no es una carpeta de un área o un proyecto (ni la crea el plan).`);
+    if (k !== 'renombrar' || falta) return;
+    const rel = creadas.has(ultimo(o.renombrar)) || notas.has(ultimo(o.renombrar)) ? null : encontrarNota(vault, o.renombrar);
+    const mismoNombre = ultimo(o.a) === ultimo(o.renombrar); // solo cambia el emoji
+    if (!mismoNombre && (mismasNotas(vault, o.a).length || notas.has(ultimo(o.a)) || creadas.has(ultimo(o.a)))) return errores.push(`${n}: ya existe una nota llamada «${o.a}».`);
+    if (!mismoNombre) viejos.add(ultimo(o.renombrar));
+    notas.add(ultimo(o.a));
+    // Renombrar la nota principal de un tema renombra también su carpeta: la nueva sirve de destino.
+    if (!rel || basename(dirname(rel)) === basename(rel, '.md')) creadas.add(ultimo(o.a));
   });
   if (errores.length) throw errorUso(`El plan no se aplicó (no se tocó nada):\n${errores.map((e) => `- ${e}`).join('\n')}`);
   return ops;

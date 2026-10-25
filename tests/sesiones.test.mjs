@@ -100,6 +100,16 @@ test('memoria de agentes: vincular crea el espejo en su carpeta; cada sesión de
   assert.match(ficha, /## Avances \(commits\)\n\n- importa enlaces sin el modelo/);
   assert.doesNotMatch(ficha, /Archivos tocados/);
   assert.match(readFileSync(join(v.vault, espejo), 'utf8'), /yt-dlp necesita Node/, 'el espejo se actualiza');
+  // Otra sesión enseguida (aunque sea en el mismo segundo) no repite el commit.
+  fin(v, proyecto);
+  assert.equal(capturas(v, '💻').length, 1);
+  // Volver a vincular a otro destino mueve el espejo y conserva lo ya visto.
+  r = v.okt(['agentes', 'vincular', proyecto, 'Medicina']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(v.vault, '20 │ 🧭 Areas/🧭 Medicina/🛠️ mi-plugin - memoria del agente.md')));
+  assert.ok(!existsSync(join(v.vault, espejo)));
+  fin(v, proyecto);
+  assert.equal(capturas(v, '💻').length, 1);
   v.borrar();
 });
 

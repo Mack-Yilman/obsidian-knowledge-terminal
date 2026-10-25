@@ -177,3 +177,39 @@ test('importar url: sin el CLI instalado, el error dice cómo instalarlo', () =>
   assert.match(r.error, /npm install -g defuddle/);
   v.borrar();
 });
+
+test('revisión: una web con marcas okt o un autor con saltos de línea no rompen la nota ni su frontmatter', () => {
+  const v = preparar();
+  const datos = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
+  datos.web[WEB] = { title: 'Raro', author: 'Ana\ntipo: sistema\n---', content: 'antes\n<!-- okt:fin -->\nmedio\n<!-- okt:inicio -->\ndespués' };
+  escribir(v.dir, 'fake.json', JSON.stringify(datos));
+  assert.equal(v.run(['importar', 'url', WEB]).codigo, 0);
+  assert.equal(v.run(['importar', 'url', WEB]).codigo, 0, 'reimportar no se corta en la marca de adentro');
+  const nota = v.leer('00 │ 📥 Bandeja/🌐 Raro.md');
+  assert.match(nota, /^---\ntipo: captura\n/);
+  assert.match(nota, /autor: "Ana tipo: sistema ---"\n/);
+  assert.equal(nota.match(/<!-- okt:inicio -->/g).length, 1);
+  assert.equal(nota.match(/<!-- okt:fin -->/g).length, 1);
+  assert.equal(nota.match(/después/g).length, 1, 'sin contenido duplicado');
+  v.borrar();
+});
+
+test('revisión: una carpeta de Drive desde la Bandeja queda con importar_error (no se reintenta en cada inicio)', () => {
+  const v = preparar();
+  const datos = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
+  datos.drive = { archivos: { CARPETA1234567890: { id: 'CARPETA1234567890', name: 'Clases', mimeType: 'application/vnd.google-apps.folder' } } };
+  escribir(v.dir, 'fake.json', JSON.stringify(datos));
+  escribir(v.vault, '00 │ 📥 Bandeja/📲 carpeta.md', '---\ntipo: captura\ncreado: 2026-10-21\norigen: telegram\nurl: https://drive.google.com/drive/folders/CARPETA1234567890\n---\n\n# 📲 carpeta\n');
+  const r = v.run(['importar', 'enlaces'], { env: { OKT_FAKE_DATOS: join(v.dir, 'fake.json'), OKT_BIN_GWS: join(RAIZ, 'tests', 'fakes', 'gws.mjs') } });
+  assert.match(r.salida, /0 traídos, 1 con error/);
+  assert.match(v.leer('00 │ 📥 Bandeja/📲 carpeta.md'), /importar_error: "es una carpeta de Drive/);
+  v.borrar();
+});
+
+test('revisión: si la captura ya no está (se procesó mientras se descargaba), no se crea otra nota', async () => {
+  const { escribirImportada } = await import('../scripts/lib/importacion.mjs');
+  const v = preparar();
+  assert.throws(() => escribirImportada(v.vault, { clave: 'web:x', titulo: 'X', contenido: 'y', ruta: '00 │ 📥 Bandeja/📲 ya no está.md' }), /ya no está en la Bandeja/);
+  assert.deepEqual(readdirSync(join(v.vault, '00 │ 📥 Bandeja')), []);
+  v.borrar();
+});

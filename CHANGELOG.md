@@ -17,6 +17,20 @@ agente aprendió: el `CLAUDE.md`, `AGENTS.md` o `GEMINI.md` de cada carpeta de t
 - La skill `mantener` propone el destino de cada carpeta nueva y pasa lo aprendido a las notas de su área, citando el
   espejo.
 
+Correcciones de una revisión independiente del código de la 0.5.0 y la 0.6.0:
+
+- Una página, una transcripción o un `CLAUDE.md` que contengan las marcas `<!-- okt:inicio -->` o `<!-- okt:fin -->`
+  ya no cortan el bloque al reimportar; un salto de línea en un autor o un error ya no rompe el frontmatter.
+- Si una captura con enlace se procesa o se archiva mientras su contenido se descarga, no se crea otra nota en su
+  lugar. Al traerla bien, se borra un `importar_error` anterior.
+- Un enlace a una **carpeta** de Drive en la Bandeja queda con `importar_error` (antes se reintentaba en cada inicio).
+- Los candados viven en `.cerebro/cache/`: antes el commit del vault se llevaba el candado (pasaba también con el de
+  Telegram).
+- `okt reorganizar aplicar` rechaza antes de tocar nada un destino fuera de las áreas y proyectos, un nombre ya
+  renombrado antes en el plan y un choque de nombres.
+- Los commits nuevos de una carpeta de agente se cuentan desde el último visto (por hash): uno hecho en el mismo
+  segundo ya no sale dos veces. Volver a vincular a otro destino mueve el espejo y conserva lo ya visto.
+
 ## 0.5.0 — 2026-10-24
 
 **Enlaces e ingesta sin tokens, temas sin límite de niveles y reorganización asistida del vault.**

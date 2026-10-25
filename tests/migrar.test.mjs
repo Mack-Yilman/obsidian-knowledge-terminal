@@ -10,7 +10,6 @@ import { conEmoji, traducir, resolverCarpeta } from '../scripts/lib/estructura.m
 import { sinEmoji, empiezaConEmoji, recortar, limpiarNombre } from '../scripts/lib/nombres.mjs';
 import { leerCsv } from '../scripts/lib/notebooklm.mjs';
 import { reescribirEnlaces } from '../scripts/lib/migrar.mjs';
-import { cambiosDesde } from '../scripts/lib/git.mjs';
 
 const leer = (vault, rel) => readFileSync(join(vault, rel), 'utf8');
 const fm = (datos, extra = '') => `---\n${Object.entries(datos).map(([k, v]) => `${k}: ${v}`).join('\n')}\n${extra}---\n`;
@@ -265,25 +264,6 @@ test('notebooklm: el CSV respeta comas, saltos de línea y comillas dentro de un
     ['Hierro, sulfato', '3 mg/kg\npor día'],
     ['Dice "ok"', 'x'],
   ]);
-});
-
-test('git: los nombres con tildes o emojis no salen escapados en las fichas', () => {
-  const t = temporal();
-  const dir = join(t.dir, 'repo');
-  mkdirSync(dir);
-  const git = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
-  git('init', '-q');
-  git('config', 'user.name', 'Prueba');
-  git('config', 'user.email', 'prueba@localhost');
-  escribir(dir, 'a.md', 'uno');
-  git('add', '-A');
-  git('commit', '-q', '-m', 'inicio');
-  // « M a.md» va primero: antes se perdía el espacio inicial y el nombre salía como «.md».
-  escribir(dir, 'a.md', 'dos');
-  escribir(dir, '🩺 Guía de anemia.md', 'x');
-  const c = cambiosDesde(dir, new Date(Date.now() - 60000).toISOString());
-  assert.deepEqual(c.cambiados.sort(), ['a.md', '🩺 Guía de anemia.md']);
-  t.borrar();
 });
 
 test('la bitácora se puede escribir aunque el archivo esté oculto (Windows)', { skip: process.platform !== 'win32' }, () => {

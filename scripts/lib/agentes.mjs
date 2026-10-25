@@ -13,13 +13,13 @@ import { leerConfigVault, dentroDe, posix, sobrescribir, tomarCandado } from './
 import { C, conEmoji } from './estructura.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { ahora, fechaISO, horaCorta } from './fechas.mjs';
-import { cambiosDesde } from './git.mjs';
+import { commitsDesde } from './git.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { escribirImportada, leerRegistro } from './importacion.mjs';
 import { carpetaDeDestino } from './notas.mjs';
 import { archivar } from './archivos.mjs';
+import { mover } from './organizar.mjs';
 import { cerrar } from './sistema.mjs';
-import { INICIO, FIN } from './bloques.mjs';
 
 export const ARCHIVOS_AGENTE = ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md'];
 const MAX_LINEAS_DIFF = 80; // shortcut: un cambio más grande se resume con «… y N más»; la memoria completa está en el espejo
@@ -127,11 +127,8 @@ const citar = (lineas) => {
   return [...lineas.slice(0, MAX_LINEAS_DIFF).map((l) => `> ${l}`), ...(extra > 0 ? [`> … y ${extra} líneas más (ver el espejo)`] : [])].join('\n');
 };
 
-// El texto de un CLAUDE.md no puede cerrar el bloque okt del espejo.
-const sinMarcas = (t) => t.replaceAll(INICIO, '<!-- okt-inicio -->').replaceAll(FIN, '<!-- okt-fin -->');
-
 function escribirEspejo(vault, c, archivos) {
-  const partes = Object.entries(archivos).map(([a, t]) => `**📄 ${a}** · \`${c.ruta}/${a}\`\n\n${sinMarcas(t).trim()}`);
+  const partes = Object.entries(archivos).map(([a, t]) => `**📄 ${a}** · \`${c.ruta}/${a}\`\n\n${t.trim()}`);
   const contenido = `Copia de la memoria del agente en \`${c.ruta}\`. Se actualiza sola en cada sesión: escribe tus notas fuera de las marcas.\n\n${partes.join('\n\n---\n\n')}`;
   return escribirImportada(vault, {
     clave: `agente:${clave(c.ruta)}`,
@@ -146,7 +143,9 @@ function escribirEspejo(vault, c, archivos) {
 function sincronizarUna(vault, c) {
   const archivos = memoria(c.ruta);
   const h = huella(archivos);
-  const commits = existsSync(c.ruta) && c.sincronizado ? cambiosDesde(c.ruta, c.sincronizado)?.commits || [] : [];
+  // La primera vez solo se anota el último commit: la historia anterior no es avance de esta sesión.
+  const git = commitsDesde(c.ruta, c.commit);
+  const commits = git?.commits || [];
   const cambio = h !== c.huella;
   const salida = { espejo: null, ficha: null };
   if (cambio && Object.keys(archivos).length) salida.espejo = escribirEspejo(vault, c, archivos).ruta;
@@ -167,10 +166,12 @@ function sincronizarUna(vault, c) {
     const titulo = conEmoji('sesion', limpiarNombre(`${fechaISO(d)} ${horaCorta(d).replace(':', '')} ${nombre}`));
     const enlace = nombreEspejo ? `[[${nombreEspejo}]]` : 'su espejo';
     const datos = { tipo: 'captura', creado: fechaISO(d), origen: 'sesion', proyecto: nombre, carpeta_agente: c.ruta, ...(nombreEspejo ? { memoria: enlace } : {}) };
-    const cuerpo = `\n# Avance · ${nombre}\n\n${secciones.join('\n')}\n## Para procesar\n\nLo que sirve más allá de esta carpeta (trampas de herramientas, reglas del dominio, decisiones) va a una nota de su área, citando ${enlace}. El avance va a la nota principal de «${c.destino}». Memoria completa: ${enlace}.\n`;
+    // El espejo pudo moverse con okt mover o reorganizar: el avance va donde está él, no donde se vinculó.
+    const donde = espejo ? dirname(espejo) : c.destino;
+    const cuerpo = `\n# Avance · ${nombre}\n\n${secciones.join('\n')}\n## Para procesar\n\nLo que sirve más allá de esta carpeta (trampas de herramientas, reglas del dominio, decisiones) va a una nota de su área, citando ${enlace}. El avance va a la nota principal de «${donde}». Memoria completa: ${enlace}.\n`;
     salida.ficha = escribirEnBandeja(vault, titulo, datos, cuerpo);
   }
-  Object.assign(c, { huella: h, previo: archivos, sincronizado: new Date().toISOString() });
+  Object.assign(c, { huella: h, previo: archivos, sincronizado: new Date().toISOString(), ...(git ? { commit: git.head } : {}) });
   return salida;
 }
 
@@ -235,9 +236,13 @@ export function vincular(vault, ruta, destinoPedido) {
   return conCandado(vault, () => {
     const registro = leer(vault);
     const previa = registro.carpetas[clave(dir)];
-    const c = { ruta: posix(dir), estado: 'vinculada', destino, vinculada: fechaISO() };
+    // Volver a vincular a otro destino conserva lo ya visto (no repite el diff ni los commits) y mueve el espejo.
+    const ya = previa?.estado === 'vinculada';
+    const c = { ...(ya ? previa : {}), ruta: posix(dir), estado: 'vinculada', destino, vinculada: fechaISO() };
     registro.carpetas[clave(dir)] = c;
-    const espejo = sincronizarUna(vault, c).espejo;
+    const anterior = leerRegistro(vault)[`agente:${clave(dir)}`]?.ruta;
+    if (ya && anterior && existsSync(join(vault, anterior)) && dirname(anterior) !== destino) mover(vault, anterior, destino);
+    const espejo = sincronizarUna(vault, c).espejo || leerRegistro(vault)[`agente:${clave(dir)}`]?.ruta;
     if (previa?.captura && existsSync(join(vault, previa.captura))) archivar(vault, [previa.captura]);
     guardar(vault, registro);
     cerrar(vault, 'agentes', `vinculó ${basename(dir)} a ${destino}`, { notas: espejo ? basename(espejo, '.md') : undefined });

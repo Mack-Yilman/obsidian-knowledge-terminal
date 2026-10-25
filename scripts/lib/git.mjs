@@ -38,23 +38,14 @@ export function commit(vault, mensaje) {
   return r.ok ? { hecho: true, hash: git(vault, ['rev-parse', '--short', 'HEAD']).salida } : { error: r.error };
 }
 
-export function cambiosDesde(dir, desdeISO) {
-  // Para la ficha de sesión: commits y archivos cambiados en un repo ajeno (solo lectura).
+// Para la memoria de los agentes: los asuntos de los commits nuevos desde el último visto, por hash y no por fecha (con
+// --since, un commit hecho en el mismo segundo que la sincronización salía dos veces). Solo lectura.
+export function commitsDesde(dir, desde) {
   if (!existsSync(join(dir, '.git'))) return null;
-  const commits = git(dir, ['log', `--since=${desdeISO}`, '--pretty=%s', '-n', '20']);
-  // -z: separado por NUL y sin comillas, aunque el nombre lleve espacios, tildes o emojis.
-  const estado = git(dir, ['status', '--porcelain', '-z']);
-  const rama = git(dir, ['rev-parse', '--abbrev-ref', 'HEAD']);
-  const cambiados = [];
-  const partes = estado.ok ? estado.salida.split('\0') : [];
-  for (let i = 0; i < partes.length; i++) {
-    if (partes[i].length < 4) continue;
-    cambiados.push(partes[i].slice(3));
-    if (/^[RC]/.test(partes[i])) i++; // en un renombre, el siguiente es el nombre anterior
-  }
-  return {
-    rama: rama.ok ? rama.salida : '',
-    commits: commits.ok && commits.salida ? commits.salida.split('\n') : [],
-    cambiados,
-  };
+  const head = git(dir, ['rev-parse', 'HEAD']);
+  if (!head.ok) return null;
+  if (!desde || desde === head.salida) return { head: head.salida, commits: [] };
+  // Si el hash ya no existe (un rebase), no hay forma segura de saber qué es nuevo: no se lista nada.
+  const log = git(dir, ['log', `${desde}..HEAD`, '--pretty=%s', '-n', '30']);
+  return { head: head.salida, commits: log.ok && log.salida ? log.salida.split('\n') : [] };
 }

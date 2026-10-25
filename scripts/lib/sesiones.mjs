@@ -130,7 +130,7 @@ export async function hookInicioAntigravity(entradaTexto) {
     if (e.invocationNum > 0) return '{}';
     const vault = vaultGlobal();
     if (!vault) return '{}';
-    const carpetas = [...[].concat(e.workspacePaths || []), e.cwd].filter(Boolean);
+    const carpetas = [...new Set([...[].concat(e.workspacePaths || []), e.cwd].filter(Boolean).map((c) => posix(resolve(c))))];
     for (const c of carpetas) if (!dentroDe(vault, c)) enOtraCarpeta(vault, c);
     if (!carpetas.some((c) => dentroDe(vault, c))) return '{}';
     if (!primeraVez(vault, e.conversationId)) return '{}';
