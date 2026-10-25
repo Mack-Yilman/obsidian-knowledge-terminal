@@ -135,7 +135,7 @@ test('instalar antigravity agrega el hook SessionStart al vault sin pisar otros 
     assert.ok(hooks['mi-hook'], 'conserva los hooks del usuario');
     const h = hooks.okt.SessionStart[0];
     assert.equal(h.type, 'command');
-    assert.match(h.command, /^node \S+\/okt\/plugin\/scripts\/okt\.mjs hook inicio --formato antigravity$/);
+    assert.match(h.command, /^node \S+\/plugins\/obsidian-knowledge-terminal\/scripts\/okt\.mjs hook inicio --formato antigravity$/);
     assert.doesNotMatch(h.command, /"/);
     // Repetirlo no duplica.
     instalar(v);
@@ -163,7 +163,7 @@ test('instalar no pone el hook si la ruta del plugin tiene espacios (agy no admi
   const v = vaultNuevo();
   try {
     escribir(v.configDir, 'config.json', JSON.stringify({ vault: v.vault }));
-    const r = instalar(v, { OKT_HOME: join(v.dir, 'con espacio') });
+    const r = instalar(v, { OKT_AGY_CONFIG_DIR: join(v.dir, 'con espacio') });
     assert.equal(r.codigo, 0, r.error);
     assert.equal(existsSync(join(v.vault, '.agents', 'hooks.json')), false);
     assert.match(r.salida, /espacio/i);

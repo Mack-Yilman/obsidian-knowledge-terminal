@@ -1,5 +1,13 @@
 # Cambios
 
+## 0.6.1 — 2026-10-24
+
+- **OKT se instala en Antigravity como plugin**, no como skills sueltas: `okt instalar antigravity --aplicar` lo deja en
+  `~/.gemini/config/plugins/obsidian-knowledge-terminal/` con un `plugin.json` en la raíz (el formato de agy), así que
+  `agy plugin list` lo muestra con su versión y sus 6 skills. Quita las skills `okt-*` y la copia en `~/.okt/plugin` de
+  la instalación anterior. Los hooks de inicio y la tarea del IDE apuntan al CLI del plugin.
+- `okt doctor` revisa el plugin de Antigravity y avisa si quedaron skills `okt-*` viejas.
+
 ## 0.6.0 — 2026-10-24
 
 **La memoria de tus agentes entra al vault.** Reemplaza las fichas de sesión (commits y archivos tocados) por lo que el
