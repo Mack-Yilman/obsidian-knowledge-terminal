@@ -66,7 +66,7 @@ async function web(vault, url) {
   }
   const md = j.content.replace(IMAGEN_MD, (todo) => imagenes.get(todo) ?? todo);
   const publicado = j.published ? String(j.published).slice(0, 10) : '';
-  const datos = { url, ...(j.author ? { autor: String(j.author) } : {}), ...(publicado ? { publicado } : {}) };
+  const datos = { url, ...(j.author ? { autor: String(j.author) } : {}), ...(publicado ? { publicado } : {}), ...idiomaAjeno(j.language) };
   const cabecera = [`**${titulo}**`, [...new Set([j.site, j.author, publicado].filter(Boolean))].join(' · '), url].filter(Boolean).join('\n');
   return { clave: `web:${url}`, titulo, datos, contenido: `${cabecera}\n\n${md.trim()}` };
 }
@@ -75,18 +75,44 @@ async function web(vault, url) {
 
 const json3 = (formatos) => (formatos || []).find((f) => f.ext === 'json3');
 
-// Subtítulos manuales antes que automáticos; el idioma del video, luego español, luego inglés. En los automáticos,
-// «<idioma>-orig» es el reconocimiento de voz original (los demás son traducciones automáticas).
+// Primero lo que ya está en español: subtítulos manuales en español y luego la voz en español (es-orig). Después, en
+// el idioma del video: manuales y luego automáticos. En los automáticos, «<idioma>-orig» es el reconocimiento de voz de
+// cada audio, el original y los doblajes automáticos de YouTube (un video en español doblado al inglés trae es-orig y
+// en-orig). Las demás claves son traducciones, y YouTube las responde con 429: no sirven para traducir.
+// language puede traer región («es-US», «es_ES»), así que se compara la base. Sin ninguna clave -orig (versiones viejas
+// de yt-dlp), la clave del idioma es el reconocimiento de voz.
+const baseIdioma = (s) => String(s || '').trim().split(/[-_]/)[0].toLowerCase();
+
 export function elegirPista(info) {
   const lang = info.language;
+  const base = baseIdioma(lang);
   const manual = info.subtitles || {};
-  const claves = Object.keys(manual).filter((k) => k !== 'live_chat');
-  const m = [lang, claves.find((k) => k.startsWith('es')), claves.find((k) => k.startsWith('en')), claves[0]].find((k) => k && claves.includes(k) && json3(manual[k]));
-  if (m) return { url: json3(manual[m]).url, idioma: m, automatica: false };
   const auto = info.automatic_captions || {};
-  const a = [lang && `${lang}-orig`, Object.keys(auto).find((k) => k.endsWith('-orig')), lang, 'es', 'en'].find((k) => k && json3(auto[k]));
-  return a ? { url: json3(auto[a]).url, idioma: a.replace(/-orig$/, ''), automatica: true } : null;
+  const claves = Object.keys(manual).filter((k) => k !== 'live_chat' && json3(manual[k]));
+  const voces = Object.keys(auto).filter((k) => k.endsWith('-orig') && json3(auto[k]));
+  const deManual = (k) => ({ url: json3(manual[k]).url, idioma: k, automatica: false });
+  const deAuto = (k) => {
+    const idioma = k.replace(/-orig$/, '');
+    // Un video en otro idioma con doblaje automático al español: se toma la voz doblada, y se avisa.
+    const doblaje = k.endsWith('-orig') && base && base !== baseIdioma(idioma);
+    return { url: json3(auto[k]).url, idioma, automatica: true, ...(doblaje ? { doblajeDe: base } : {}) };
+  };
+  const de = (k) => baseIdioma(k) === base;
+  const m1 = claves.find((k) => baseIdioma(k) === 'es') || (base && (claves.find((k) => k === lang) || claves.find(de)));
+  if (m1) return deManual(m1);
+  const a1 = voces.find((k) => baseIdioma(k) === 'es') || (base && (voces.find((k) => k === `${lang}-orig`) || voces.find(de)));
+  if (a1) return deAuto(a1);
+  const m2 = claves.find((k) => baseIdioma(k) === 'en') || claves[0];
+  if (m2) return deManual(m2);
+  const a2 = voces[0] || (!voces.length && [lang, base, 'es', 'en'].find((k) => k && json3(auto[k])));
+  return a2 ? deAuto(a2) : null;
 }
+
+// Las propiedades solo dicen el idioma cuando no es español: es la señal para traducir al procesar la bandeja.
+const idiomaAjeno = (idioma) => {
+  const base = baseIdioma(idioma);
+  return base && base !== 'es' ? { idioma: base } : {};
+};
 
 export function reloj(ms) {
   const s = Math.floor(ms / 1000);
@@ -141,10 +167,11 @@ async function youtube(vault, url) {
   const titulo = String(info.title || id).trim();
   const u = String(info.upload_date || '');
   const publicado = /^\d{8}$/.test(u) ? `${u.slice(0, 4)}-${u.slice(4, 6)}-${u.slice(6, 8)}` : '';
-  const datos = { url: video, ...(info.channel ? { autor: String(info.channel) } : {}), ...(publicado ? { publicado } : {}) };
+  const datos = { url: video, ...(info.channel ? { autor: String(info.channel) } : {}), ...(publicado ? { publicado } : {}), ...(texto ? idiomaAjeno(pista.idioma) : {}) };
   const meta = [info.channel, publicado, info.duration ? reloj(info.duration * 1000) : ''].filter(Boolean).join(' · ');
+  const doblaje = pista?.doblajeDe ? `, del doblaje automático; el video es en ${pista.doblajeDe}` : '';
   const cuerpo = texto
-    ? `## Transcripción${pista.automatica ? ' automática' : ''} (${pista.idioma}, en bruto)\n\n${pista.automatica ? '> Subtítulos automáticos de YouTube: revisa nombres y cifras.\n\n' : ''}${texto}`
+    ? `## Transcripción${pista.automatica ? ' automática' : ''} (${pista.idioma}${doblaje}, en bruto)\n\n${pista.automatica ? '> Subtítulos automáticos de YouTube: revisa nombres y cifras.\n\n' : ''}${texto}`
     : '## Transcripción\n\nEl video no tiene subtítulos. Para su contenido, agrégalo como fuente de un cuaderno de NotebookLM (skill notebooklm).';
   return { clave: `youtube:${id}`, titulo, datos, contenido: `![](${video})\n\n**${titulo}**\n${meta}\n\n${cuerpo}`, sinSubtitulos: !texto };
 }

@@ -296,6 +296,10 @@ En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
   se traen en un proceso aparte en segundo plano sin demorar la sesión: páginas web con Defuddle (Markdown e imágenes),
   subtítulos de YouTube con yt-dlp y enlaces de Drive con `gws` (los videos, sin descargarlos). Al decir «procesa mi bandeja», el contenido ya
   está listo y la IA solo lo ordena (y lo pasa a limpio si el usuario lo pide).
+- **Idioma:** de un video se toma primero la pista en español (también la del doblaje automático de YouTube, si lo
+  tiene). Lo que llega en otro idioma lleva la propiedad `idioma` y, al procesar la Bandeja, la IA escribe la nota en
+  español y deja el original en `📥 Bruto`. En Claude Code, con `okt config poner delegar agy`, esa traducción la hace
+  Gemini Flash (Antigravity) y no gasta tu cuota de Claude; sin agy, o en Antigravity, la hace el mismo agente.
 - **Al iniciar y al cerrar** una sesión en otra carpeta, sincroniza la **memoria de su agente** (ver abajo).
 
 En **Antigravity**, los hooks de inicio (App y CLI) y la tarea del IDE hacen lo mismo (sección «Antigravity»).
@@ -307,7 +311,10 @@ El `CLAUDE.md` (o `AGENTS.md`, `GEMINI.md`) de cada carpeta donde trabajas con u
 decisiones, lo que descubriste, lo que corregiste y lo que falta. OKT lo trae a tu vault, sin usar el modelo:
 
 1. **La primera vez** que un agente trabaja en una carpeta con esa memoria (o en una subcarpeta de ella), deja en la
-   Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla. Nada se copia hasta que respondes.
+   Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla. Nada se copia hasta que respondes. Cada
+   proyecto (un plugin, una skill, un programa, una web) entra por separado: cuenta la carpeta con memoria más cercana
+   y, si abres el agente en una carpeta que agrupa proyectos, cada subcarpeta inmediata que tenga su propia memoria.
+   Las carpetas de más arriba (reglas generales) no se detectan solas; si quieres seguir una, vincúlala a mano.
 2. **Al procesar la Bandeja**, la IA propone el destino: un proyecto si el trabajo termina, un área si es continuo o
    temporal, o una subcarpeta de otra ya vinculada. Con tu sí: `okt agentes vincular "<carpeta>" "<destino>"`.
 3. **Desde entonces**, la nota `🛠️ <carpeta> - memoria del agente` refleja ese archivo en su carpeta del vault, y

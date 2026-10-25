@@ -113,14 +113,34 @@ test('memoria de agentes: vincular crea el espejo en su carpeta; cada sesión de
   v.borrar();
 });
 
-test('memoria de agentes: las carpetas superiores con memoria también cuentan; ignorar no vuelve a preguntar', () => {
+test('memoria de agentes: cuenta el proyecto más cercano y las subcarpetas con memoria, no las reglas de más arriba; ignorar no vuelve a preguntar', async () => {
   const v = vaultNuevo();
+  memoriaDe(v.dir, '# Reglas de todos los proyectos\n');
   const padre = join(v.dir, 'Plugins');
   memoriaDe(padre, '# Reglas de todos los plugins\n');
   const hijo = proyectoGit(padre, 'okt-telegram');
   writeFileSync(join(hijo, 'AGENTS.md'), '# Bot\n\nAGENTS sin CLAUDE.\n');
-  fin(v, hijo);
-  assert.deepEqual(capturas(v, '🛠️').sort(), ['🛠️ Carpeta nueva - Plugins.md', '🛠️ Carpeta nueva - okt-telegram.md']);
+  memoriaDe(join(padre, '.oculta'), '# no\n');
+  memoriaDe(join(padre, 'node_modules', 'x'), '# no\n');
+  // Desde una subcarpeta del proyecto: solo el proyecto.
+  const src = join(hijo, 'src');
+  mkdirSync(src);
+  fin(v, src);
+  assert.deepEqual(capturas(v, '🛠️'), ['🛠️ Carpeta nueva - okt-telegram.md']);
+  // Desde la carpeta que agrupa proyectos: ella y sus hijas con memoria, sin la de más arriba ni las ocultas.
+  const skill = join(padre, 'mi-skill');
+  memoriaDe(skill, '# Una skill\n');
+  fin(v, padre);
+  assert.deepEqual(capturas(v, '🛠️').sort(), ['🛠️ Carpeta nueva - Plugins.md', '🛠️ Carpeta nueva - mi-skill.md', '🛠️ Carpeta nueva - okt-telegram.md']);
+  v.okt(['agentes', 'ignorar', skill]);
+  // Revisión de Argon: una carpeta que agrupa proyectos sin memoria propia no sube a las reglas de arriba, y un
+  // proyecto excluido tampoco.
+  const { carpetasConMemoria } = await import('../scripts/lib/agentes.mjs');
+  const grupo = join(v.dir, 'Grupo');
+  memoriaDe(join(grupo, 'app1'), '# App 1\n');
+  assert.deepEqual(carpetasConMemoria(v.vault, grupo), [join(grupo, 'app1')]);
+  v.okt(['config', 'excluir', 'app1']);
+  assert.deepEqual(carpetasConMemoria(v.vault, join(grupo, 'app1')), []);
   v.okt(['tema', 'nuevo', 'Medicina/💻 Desarrollo']);
   assert.equal(v.okt(['agentes', 'vincular', padre, 'Medicina/Desarrollo']).codigo, 0);
   let r = v.okt(['agentes', 'ignorar', hijo]);
@@ -128,6 +148,10 @@ test('memoria de agentes: las carpetas superiores con memoria también cuentan; 
   assert.equal(capturas(v, '🛠️').length, 0);
   fin(v, hijo);
   assert.equal(capturas(v, '🛠️').length, 0, 'una carpeta ignorada no vuelve a preguntar');
+  // La carpeta de arriba vinculada a mano se sigue sincronizando en las sesiones del proyecto de abajo.
+  memoriaDe(padre, '# Reglas de todos los plugins\n\n- No apilar PR.\n');
+  fin(v, hijo);
+  assert.equal(capturas(v, '💻').length, 1, 'el cambio de la carpeta vinculada de arriba deja su ficha');
   assert.match(v.okt(['agentes']).salida, /okt-telegram: ignorada[\s\S]*Plugins: vinculada → 20 │ 🧭 Areas\/🧭 Medicina\/💻 Desarrollo/);
   r = v.okt(['agentes', 'vincular', join(v.dir, 'no-existe'), 'Medicina']);
   assert.equal(r.codigo, 2);
