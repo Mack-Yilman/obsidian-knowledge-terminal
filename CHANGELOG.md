@@ -1,5 +1,19 @@
 # Cambios
 
+## 0.6.2 — 2026-10-24
+
+- **Videos de YouTube en español, transcritos en español.** Un video con idioma `es-US` y doblaje automático al inglés
+  salía con la transcripción del doblaje (`en-orig`). Ahora se elige primero la pista en español (subtítulos manuales o
+  la voz en español, también la de un doblaje automático, que el encabezado señala) y luego la del idioma del video.
+- **Todo en español al procesar:** las webs y los videos en otro idioma llevan la propiedad `idioma` (Defuddle y
+  yt-dlp lo dicen), y al procesar la Bandeja la nota se escribe en español, con el original en `📥 Bruto`. En Claude
+  Code con `delegar: agy` la traduce Gemini Flash; en Antigravity o sin agy, el mismo agente. `redactar` también
+  traduce («tradúcela», «pásala al español»).
+- **Memoria de los agentes por proyecto:** cuenta la carpeta con memoria más cercana y las subcarpetas inmediatas con
+  memoria propia (una carpeta que agrupa proyectos), ya no todas las carpetas de arriba, que suelen ser reglas
+  generales y dejaban capturas que confundían. Una carpeta de arriba que vinculas a mano se sigue sincronizando en las
+  sesiones de los proyectos de abajo.
+
 ## 0.6.1 — 2026-10-24
 
 - **OKT se instala en Antigravity como plugin**, no como skills sueltas: `okt instalar antigravity --aplicar` lo deja en

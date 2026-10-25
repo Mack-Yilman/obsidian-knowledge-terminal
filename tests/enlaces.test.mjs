@@ -38,6 +38,7 @@ const DATOS = {
       automatic_captions: { 'es-orig': [{ ext: 'vtt', url: 'x' }, { ext: 'json3', url: json3(EVENTOS) }], en: [{ ext: 'json3', url: 'data:,no' }] },
     },
     sinsubtitul: { title: 'Sin subtítulos', channel: 'X', subtitles: {}, automatic_captions: {} },
+    eningles123: { title: 'Anemia lecture', channel: 'X', language: 'en-US', subtitles: {}, automatic_captions: { 'en-orig': [{ ext: 'json3', url: json3(EVENTOS) }] } },
   },
 };
 
@@ -70,6 +71,22 @@ test('youtube: prefiere los subtítulos manuales; en los automáticos, el origin
   const manual = elegirPista({ language: 'en', subtitles: { de: [{ ext: 'json3', url: 'd' }], en: [{ ext: 'json3', url: 'e' }], live_chat: [{ ext: 'json3', url: 'c' }] }, automatic_captions: { 'en-orig': [{ ext: 'json3', url: 'a' }] } });
   assert.deepEqual(manual, { url: 'e', idioma: 'en', automatica: false });
   assert.equal(elegirPista({ subtitles: {}, automatic_captions: {} }), null);
+  // Caso real (2026-10-24): video en español («es-US») con doblaje automático al inglés; antes salía en-orig.
+  const pista3 = (k) => [{ ext: 'json3', url: k }];
+  const doblado = { language: 'es-US', subtitles: {}, automatic_captions: { 'en-orig': pista3('en'), 'es-orig': pista3('es'), en: pista3('t'), es: pista3('t') } };
+  assert.deepEqual(elegirPista(doblado), { url: 'es', idioma: 'es', automatica: true });
+  // Video en inglés doblado al español: la voz en español, avisando del doblaje; sin doblaje, el original.
+  assert.deepEqual(elegirPista({ ...doblado, language: 'en' }), { url: 'es', idioma: 'es', automatica: true, doblajeDe: 'en' });
+  assert.deepEqual(elegirPista({ language: 'en', subtitles: {}, automatic_captions: { 'en-orig': pista3('en'), es: pista3('t') } }), { url: 'en', idioma: 'en', automatica: true });
+  // Subtítulos manuales en español antes que los del idioma del video.
+  assert.equal(elegirPista({ language: 'en', subtitles: { en: pista3('e'), 'es-419': pista3('s') }, automatic_captions: {} }).url, 's');
+  // Revisión de Argon: el idioma del video gana a un manual en otro idioma; claves regionales; sin -orig; mayúsculas.
+  assert.equal(elegirPista({ language: 'fr', subtitles: { de: pista3('d') }, automatic_captions: { 'fr-orig': pista3('f') } }).url, 'f');
+  assert.equal(elegirPista({ language: 'pt', subtitles: { 'pt-BR': pista3('p'), en: pista3('e') }, automatic_captions: {} }).url, 'p');
+  assert.equal(elegirPista({ language: 'pt-BR', subtitles: {}, automatic_captions: { 'en-orig': pista3('en'), 'pt-BR-orig': pista3('pt') } }).url, 'pt');
+  assert.equal(elegirPista({ subtitles: {}, automatic_captions: { es: pista3('es') } }).url, 'es');
+  assert.deepEqual(elegirPista({ language: 'ES-MX', subtitles: {}, automatic_captions: { 'es-orig': pista3('u') } }), { url: 'u', idioma: 'es', automatica: true });
+  assert.deepEqual(elegirPista({ language: 'fr', subtitles: {}, automatic_captions: { en: pista3('u') } }), { url: 'u', idioma: 'en', automatica: true }, 'una pista sin -orig no es un doblaje');
 });
 
 test('youtube: la transcripción va por capítulos y en párrafos de un minuto, con la marca de tiempo enlazada', () => {
@@ -113,6 +130,24 @@ test('importar url: YouTube incrusta el video y trae la transcripción; con --ca
   assert.equal(r.codigo, 0, r.error);
   assert.match(r.salida, /sin subtítulos/);
   assert.match(v.leer('00 │ 📥 Bandeja/▶️ Sin subtítulos.md'), /NotebookLM/);
+  assert.doesNotMatch(nota, /^idioma:/m, 'en español no se marca el idioma');
+  // En otro idioma, la propiedad idioma avisa que hay que traducir al procesar.
+  assert.equal(v.run(['importar', 'url', 'https://youtu.be/eningles123']).codigo, 0);
+  assert.match(v.leer('00 │ 📥 Bandeja/▶️ Anemia lecture.md'), /^idioma: en$/m);
+  v.borrar();
+});
+
+test('importar url: una web en otro idioma lleva la propiedad idioma', () => {
+  const v = preparar();
+  const datos = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
+  datos.web['https://ejemplo.org/en'] = { title: 'Anemia guide', language: 'en-GB', content: '## What\n\nLow hemoglobin.' };
+  escribir(v.dir, 'fake.json', JSON.stringify(datos));
+  assert.equal(v.run(['importar', 'url', 'https://ejemplo.org/en']).codigo, 0);
+  assert.match(v.leer('00 │ 📥 Bandeja/🌐 Anemia guide.md'), /^idioma: en$/m);
+  datos.web['https://ejemplo.org/es'] = { title: 'Guía de anemia', language: 'es_ES', content: '## Qué\n\nHemoglobina baja.' };
+  escribir(v.dir, 'fake.json', JSON.stringify(datos));
+  assert.equal(v.run(['importar', 'url', 'https://ejemplo.org/es']).codigo, 0);
+  assert.doesNotMatch(v.leer('00 │ 📥 Bandeja/🌐 Guía de anemia.md'), /^idioma:/m, 'es_ES es español');
   v.borrar();
 });
 

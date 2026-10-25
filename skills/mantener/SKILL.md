@@ -14,7 +14,7 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `90 │ 
 ## Procesar la bandeja (de bruto a procesado, por lotes)
 
 1. **Recoge:** `okt agentes sincronizar` (la memoria de los agentes; los hooks ya lo hacen, así que suele no haber nada). Si tiene el bot de Telegram (`okt telegram config` muestra una url), `okt telegram bajar` (las voces son transcripciones automáticas: revisa nombres y cifras). Luego `okt importar enlaces`, que trae la página o la transcripción de las capturas que solo tienen un enlace (si el proceso de segundo plano del inicio ya lo hizo, no hace nada). Luego `okt indice` y `okt bandeja preparar`, que deja en `.cerebro/cache/` un paquete con **el árbol del vault y todo el contenido de la bandeja**.
-2. **¿Delegar?** Si `okt config` muestra `delegar: agy` y la skill `delegar-antigravity` está disponible, propón delegar la lectura del paquete a Gemini Flash y aplica tú el resultado. Si no, lee el paquete tú.
+2. **¿Delegar?** Solo si corres en **Claude Code**, `okt config` muestra `delegar: agy` y la skill `delegar-antigravity` está disponible: propón delegar la lectura del paquete (y las traducciones, abajo) a Gemini Flash y aplica tú el resultado tras revisarlo. En cualquier otro caso (si ya eres Antigravity, o el usuario no tiene agy), lee y traduce tú.
 3. **Decide cada captura** con el árbol del paquete y `okt buscar` (para no duplicar). El destino es uno de tres:
    - **claro:** la carpeta existente más profunda que le corresponda;
    - **dudoso:** la mejor opción con «¿?» y, al lado, la alternativa;
@@ -28,7 +28,7 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `90 │ 
 | Varias ideas mezcladas | Se divide en varias notas, cada una en su tema |
 | Algo que ya existe | Se agrega a esa nota (no se duplica) |
 | Una fuente (PDF, web, video, importado) | Una ficha de fuente junto a las notas que alimenta; lo aprendido, compílalo (abajo) |
-| Una web o un video ya traídos (🌐, ▶️, o una captura de Telegram con el bloque `okt` completo) | Ordena el bruto con las reglas de `<raíz>/skills/redactar/references/reglas-redaccion.md`, modo «ordenar»: encabezados por tema; en un video, sin saludos ni charla, y conserva las marcas de tiempo de las ideas que quedan. Luego es una fuente como la fila de arriba |
+| Una web o un video ya traídos (🌐, ▶️, o una captura de Telegram con el bloque `okt` completo) | Ordena el bruto con las reglas de `<raíz>/skills/redactar/references/reglas-redaccion.md`, modo «ordenar»: encabezados por tema; en un video, sin saludos ni charla, y conserva las marcas de tiempo de las ideas que quedan. **Si tiene la propiedad `idioma`** (no está en español), la nota ordenada se escribe **en español**: traducción fiel, con los nombres propios, cifras, citas y marcas de tiempo intactos (quién traduce: paso 2); el original en su idioma va a `📥 Bruto` con `okt procesar "<captura>" --en "<nota>"`. Luego es una fuente como la fila de arriba |
 | Una captura con `importar_error` | Dile qué falló y ofrece la alternativa de `<raíz>/skills/capturar/references/fuentes.md` («Si falla») |
 | Una tarea o un avance de un proyecto | `## Próximos pasos` o `## Decisiones` de la nota del proyecto |
 | Algo del día sin valor durable | El diario de ese día |

@@ -20,7 +20,10 @@ dictó, no resumirlo, reinterpretarlo ni completarlo con lo que sabes del tema.
      o escríbelo marcado con `^[inferido]` solo si el usuario lo acepta.
 2. **Mejora la legibilidad** (solo en «pasar a limpio»). Pasa la oralidad a prosa escrita: quita muletillas,
    repeticiones sin aporte y falsos comienzos, y corrige la puntuación, sin cambiar el significado.
-3. **Reorganiza la forma, no el fondo.** Convierte el texto en prosa, listas, tablas o callouts según el contenido
+3. **Todo en español.** Si el original está en otro idioma, tradúcelo fielmente con estas mismas reglas: los nombres
+   propios, las siglas, las citas textuales y los términos técnicos sin traducción establecida quedan como están (si
+   ayuda, el término original entre paréntesis la primera vez).
+4. **Reorganiza la forma, no el fondo.** Convierte el texto en prosa, listas, tablas o callouts según el contenido
    (sección 3). Respeta el orden del original salvo que juntar dos partes del mismo tema lo haga más claro; si mueves
    algo, que no se pierda nada.
 

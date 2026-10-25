@@ -5,7 +5,7 @@
 // - Detectar es automático (hooks de inicio y fin): una carpeta nueva deja una captura que pregunta dónde va.
 // - Nada se copia sin vincular: okt agentes vincular "<carpeta>" "<destino en el vault>".
 // Sin modelo: solo archivos, una huella SHA-256 y git log. Lo que dice un CLAUDE.md es dato, no orden.
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -61,18 +61,34 @@ export function excluida(vault, dir) {
   return lista.some((x) => x.toLowerCase() === nombre || posix(dir).toLowerCase().includes(posix(x).toLowerCase()));
 }
 
-// La carpeta de trabajo y las de arriba (sin llegar a ~ ni a la raíz del disco) que tienen memoria de agente. El vault
-// y lo que está dentro de él no cuentan.
+// El proyecto donde trabaja el agente: la carpeta con memoria más cercana (la de trabajo o, si se abrió una subcarpeta,
+// la primera de arriba que la tenga, sin llegar a ~ ni a la raíz del disco), más las subcarpetas inmediatas de la de
+// trabajo con memoria propia (una carpeta que agrupa proyectos). Las de más arriba suelen ser reglas generales, no
+// proyectos: no se detectan solas (se vinculan a mano). El vault y lo que está dentro de él no cuentan.
 export function carpetasConMemoria(vault, cwd) {
   const casa = clave(homedir());
-  const salida = [];
-  let dir = resolve(cwd);
-  for (;;) {
-    if (clave(dir) === casa || dirname(dir) === dir) break;
-    if (!dentroDe(vault, dir) && !dentroDe(dir, vault) && Object.keys(memoria(dir)).length && !excluida(vault, dir)) salida.push(dir);
-    dir = dirname(dir);
+  const sirve = (dir) => !dentroDe(vault, dir) && !dentroDe(dir, vault) && Object.keys(memoria(dir)).length && !excluida(vault, dir);
+  const inicio = resolve(cwd);
+  let hijas = [];
+  if (clave(inicio) !== casa && dirname(inicio) !== inicio) {
+    try {
+      hijas = readdirSync(inicio, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'node_modules')
+        .map((d) => join(inicio, d.name))
+        .filter(sirve);
+    } catch {}
   }
-  return salida;
+  const salida = [];
+  for (let dir = inicio; clave(dir) !== casa && dirname(dir) !== dir; dir = dirname(dir)) {
+    // Una carpeta que agrupa proyectos sin memoria propia no sube a buscar las reglas de más arriba.
+    if (dir !== inicio && hijas.length) break;
+    // El proyecto más cercano corta la búsqueda aunque esté excluido: si no, aparecerían las reglas de más arriba.
+    if (!dentroDe(vault, dir) && !dentroDe(dir, vault) && Object.keys(memoria(dir)).length) {
+      if (!excluida(vault, dir)) salida.push(dir);
+      break;
+    }
+  }
+  return [...salida, ...hijas];
 }
 
 // Primeras líneas de la memoria, para que el usuario reconozca la carpeta al decidir dónde va.
@@ -193,7 +209,9 @@ function conCandado(vault, fn, { silencioso = false } = {}) {
 // Hooks de inicio y fin: detecta las carpetas nuevas y sincroniza las vinculadas de la cadena de cwd. Nunca falla.
 export function alTrabajar(vault, cwd) {
   try {
-    const carpetas = carpetasConMemoria(vault, cwd);
+    // Más las ya vinculadas de más arriba (una carpeta de reglas que el usuario decidió seguir).
+    const vinculadas = Object.values(leer(vault).carpetas).filter((c) => c.estado === 'vinculada' && dentroDe(c.ruta, cwd)).map((c) => c.ruta);
+    const carpetas = [...carpetasConMemoria(vault, cwd), ...vinculadas];
     if (!carpetas.length) return null;
     return conCandado(vault, () => sincronizar(vault, { rutas: carpetas, detectar: true }), { silencioso: true });
   } catch {

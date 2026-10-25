@@ -1,6 +1,6 @@
 ---
 name: redactar
-description: Mejora la redacción de una nota del segundo cerebro de Obsidian (OKT) cuando el usuario lo pide, sin cambiar su contenido. Dos modos - «ordenar» (solo estructura - encabezados, listas, tablas y separar ideas, sin tocar sus frases) y «pasar a limpio» (edita sus frases - quita muletillas, une fragmentos y corrige la gramática, sin agregar datos ni resumir). Guarda el original en bruto antes de reescribir. Sirve para apuntes de clase, voces transcritas de Telegram, ideas sueltas o notas importadas de cualquier tema. Úsala cuando el usuario diga «pasa a limpio esta nota», «mejora la redacción», «ordena esta nota para que se entienda», «hazla más clara», «corrige la redacción», «dale formato a mis apuntes», «convierte esto en apuntes» o «arregla lo que transcribió la voz».
+description: Mejora la redacción de una nota del segundo cerebro de Obsidian (OKT) cuando el usuario lo pide, sin cambiar su contenido. Dos modos - «ordenar» (solo estructura - encabezados, listas, tablas y separar ideas, sin tocar sus frases) y «pasar a limpio» (edita sus frases - quita muletillas, une fragmentos y corrige la gramática, sin agregar datos ni resumir). Si la nota está en otro idioma, la versión nueva va en español (traducción fiel). Guarda el original en bruto antes de reescribir. Sirve para apuntes de clase, voces transcritas de Telegram, ideas sueltas o notas importadas de cualquier tema. Úsala cuando el usuario diga «pasa a limpio esta nota», «mejora la redacción», «ordena esta nota para que se entienda», «hazla más clara», «corrige la redacción», «dale formato a mis apuntes», «convierte esto en apuntes», «arregla lo que transcribió la voz», «tradúcela» o «pásala al español».
 ---
 
 # Redactar: de bruto a texto que se entiende
@@ -22,6 +22,8 @@ Esta skill **solo actúa a pedido**. Al procesar la bandeja, la skill `mantener`
 | «pásala a limpio», «mejora la redacción», «corrígela», «arregla lo que transcribió la voz» | **Pasar a limpio** | También sus frases: quita muletillas, une fragmentos, corrige la gramática y la puntuación. Nada nuevo |
 
 Las reglas de los dos modos están en `references/reglas-redaccion.md`. **Léelo entero antes de escribir.**
+
+**En otro idioma** (la propiedad `idioma`, o un texto que no está en español): en cualquiera de los dos modos, la versión nueva va **en español**, con las mismas reglas de fidelidad (traducir no es resumir), y el original se guarda en bruto (paso 3). Si corres en Claude Code con `delegar: agy` y la skill `delegar-antigravity`, puedes delegar la traducción de una nota larga a Gemini Flash y revisarla; si no (Antigravity, o sin agy), tradúcela tú.
 
 ## 2. Propón antes de escribir
 
