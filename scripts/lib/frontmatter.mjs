@@ -37,7 +37,8 @@ export function leerFrontmatter(texto) {
 }
 
 function escalar(v) {
-  const s = String(v);
+  // Un salto de línea (un autor o un error que llega de afuera) cerraría el frontmatter o inyectaría otra clave.
+  const s = String(v).replace(/[\r\n]+/g, ' ');
   if (s === '') return '';
   if (/^[\[{>|*&!%@`'"]|: | #|^-\s|^\s|\s$|^(true|false|null|yes|no)$/i.test(s) || s.includes('[[')) {
     return `"${s.replace(/"/g, '\\"')}"`;

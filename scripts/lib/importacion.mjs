@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { C, carpetaAdjuntos, conEmoji, resolverCarpeta } from './estructura.mjs';
 import { join, dirname, extname } from 'node:path';
 import { escribirFrontmatter, leerFrontmatter } from './frontmatter.mjs';
-import { reemplazarBloque } from './bloques.mjs';
+import { reemplazarBloque, INICIO, FIN } from './bloques.mjs';
 import { fechaISO } from './fechas.mjs';
 import { limpiarNombre, sinEmoji, recortar } from './nombres.mjs';
 import { mapaDeNombres } from './vault.mjs';
@@ -48,7 +48,11 @@ export function parsearSeleccion(sel, n) {
 
 // Escribe o actualiza la nota importada. clave = "notion:<id>", "drive:<id>", "notebooklm:<id>", "web:<url>"…
 // ruta: una captura que ya existe (un enlace que llegó de Telegram) y se completa en su lugar.
-export function escribirImportada(vault, { clave, titulo, contenido, datos = {}, carpeta, ruta, op = {} }) {
+export function escribirImportada(vault, { clave, titulo, contenido: crudo, datos = {}, carpeta, ruta, op = {} }) {
+  // Lo importado no puede cerrar el bloque: una marca okt dentro del texto cortaría la próxima reimportación.
+  const contenido = String(crudo).replaceAll(INICIO, '<!-- okt-inicio -->').replaceAll(FIN, '<!-- okt-fin -->');
+  // La captura pudo procesarse o archivarse mientras se descargaba: no se crea otra nota en su lugar.
+  if (ruta && !existsSync(join(vault, ruta))) throw new Error(`la captura ${ruta} ya no está en la Bandeja`);
   const registro = leerRegistro(vault);
   const previa = ruta ? { ...registro[clave], ruta } : registro[clave];
   const hoy = fechaISO();
@@ -59,7 +63,7 @@ export function escribirImportada(vault, { clave, titulo, contenido, datos = {},
     const texto = readFileSync(abs, 'utf8');
     const { datos: fm, cuerpo } = leerFrontmatter(texto);
     // Una captura no lleva «actualizado» (contrato: propiedades sin relleno).
-    const nuevo = escribirFrontmatter({ ...fm, ...datos, importado: hoy, ...(fm.tipo === 'captura' ? {} : { actualizado: hoy }) }, reemplazarBloque(cuerpo, contenido.trim()));
+    const nuevo = escribirFrontmatter({ ...fm, ...datos, importado: hoy, importar_error: undefined, ...(fm.tipo === 'captura' ? {} : { actualizado: hoy }) }, reemplazarBloque(cuerpo, contenido.trim()));
     sobrescribir(abs, nuevo);
     registro[clave] = { ...previa, importado: hoy, ...(adjunto ? { adjunto } : {}) };
     guardarRegistro(vault, registro);

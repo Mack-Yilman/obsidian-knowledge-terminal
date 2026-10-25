@@ -61,3 +61,23 @@ test('reorganizar aplicar: crea el tema, mueve y renombra en orden; un plan con 
   assert.match(readFileSync(join(v.vault, `${MEDICINA}/🫀 Cardiología/🫀 Cardiología.md`), 'utf8'), /\[\[💔 Síndrome coronario agudo\]\] \(2 notas\)/);
   v.borrar();
 });
+
+test('reorganizar: el plan detecta un destino fuera de las áreas, un nombre viejo ya renombrado y un choque de nombres', () => {
+  const v = conNotas();
+  const plan = escribir(v.dir, 'plan.json', JSON.stringify({ operaciones: [
+    { mover: '🫀 Infarto', a: 'bandeja' },
+    { renombrar: '🩸 Anemia', a: '🧪 Laboratorio' },
+    { mover: '🩸 Anemia', a: 'Medicina' },
+    { mover: '💔 Angina inestable', a: 'Medicina/Laboratorio' },
+    { renombrar: '🧪 Troponina', a: '🫀 Infarto' },
+    { renombrar: '🫀 Cardiología', a: '❤️ Cardiología' },
+  ] }));
+  const r = v.okt(['reorganizar', 'aplicar', plan]);
+  assert.equal(r.codigo, 2);
+  assert.match(r.error, /1: «bandeja» no es una carpeta de un área o un proyecto/);
+  assert.match(r.error, /3: «🩸 Anemia» se renombra antes en el plan/);
+  assert.match(r.error, /4: «Medicina\/Laboratorio» no es una carpeta/, 'una nota renombrada no es una carpeta');
+  assert.match(r.error, /5: ya existe una nota llamada «🫀 Infarto»/);
+  assert.doesNotMatch(r.error, /6:/, 'cambiar solo el emoji no choca consigo misma');
+  v.borrar();
+});

@@ -14,7 +14,7 @@ import { C } from './estructura.mjs';
 import { listarArchivos, leerNota } from './vault.mjs';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { spawn } from 'node:child_process';
-import { CLI, sobrescribir, tomarCandado } from './rutas.mjs';
+import { CLI, sobrescribir, tomarCandado, rutaCandado } from './rutas.mjs';
 import { cerrar } from './sistema.mjs';
 
 const MAX_IMAGENES = 40; // shortcut: las imágenes que pasan de aquí quedan enlazadas a la web; subirlo si hace falta
@@ -159,6 +159,8 @@ export async function importarUrl(vault, url, op = {}) {
   if (tipo === 'drive') {
     const r = await importarDrive(vault, enlace, { ...op, aplicar: true });
     const nota = r.datos.importadas?.[0];
+    // Una carpeta de Drive se lista y espera una selección: desde la Bandeja no hay a quién preguntarle.
+    if (op.ruta && !nota) throw new Error('es una carpeta de Drive: impórtala a mano con okt importar drive "<enlace>" --seleccion 1,3');
     if (op.ruta && nota) escribirImportada(vault, { clave: `enlace:${enlace}`, contenido: `Importado de Drive: [[${nota.ruta.split('/').pop().replace(/\.md$/, '')}]]`, ruta: op.ruta });
     return { ...r, datos: { ...r.datos, tipo } };
   }
@@ -178,6 +180,7 @@ export function enlacesPendientes(vault, { reintentar = false } = {}) {
 
 function anotarError(vault, rel, mensaje) {
   const abs = join(vault, rel);
+  if (!existsSync(abs)) return; // se procesó o se archivó mientras tanto
   const { datos, cuerpo } = leerFrontmatter(readFileSync(abs, 'utf8'));
   sobrescribir(abs, escribirFrontmatter({ ...datos, importar_error: String(mensaje).slice(0, 200) }, cuerpo));
 }
@@ -214,7 +217,7 @@ export async function importarEnlaces(vault, op = {}) {
         fallidos.push({ ruta: n.rel, error: e.message });
       }
       // Un candado sin tocar por 5 min se da por muerto: se renueva en cada enlace.
-      const candado = join(vault, '.cerebro', 'enlaces.lock');
+      const candado = rutaCandado(vault, 'enlaces');
       if (existsSync(candado)) utimesSync(candado, new Date(), new Date());
     }
     if (listos.length) cerrar(vault, 'importar', `${listos.length} enlaces traídos a la bandeja`);

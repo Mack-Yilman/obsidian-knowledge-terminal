@@ -1,6 +1,6 @@
 ---
 name: mantener
-description: Mantiene y organiza el segundo cerebro de Obsidian (OKT). Procesa la bandeja por lotes (notas rápidas, Telegram, importados y fichas de sesión) pasándola de bruto a notas ordenadas y enlazadas dentro de su área, proyecto o tema; organiza o reorganiza el conocimiento en temas; compila fuentes, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces rotos, notas sueltas o sin enlaces, datos vencidos, contradicciones), renombra, mueve y archiva. Úsala cuando el usuario diga «procesa mi bandeja», «ordena mi cerebro», «organiza mi área de…», «reorganiza mi cerebro», «vuelve a jerarquizar», «agrupa estas notas», «mueve esta nota a…», «baja lo de Telegram», «qué llegó de Telegram», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «renombra esta nota», «cambia el emoji de…», «archiva este proyecto», «borra los originales viejos» o «recoge mis sesiones de Antigravity».
+description: Mantiene y organiza el segundo cerebro de Obsidian (OKT). Procesa la bandeja por lotes (notas rápidas, Telegram, enlaces, importados y avances de los agentes) pasándola de bruto a notas ordenadas y enlazadas dentro de su área, proyecto o tema; organiza o reorganiza el conocimiento en temas; compila fuentes, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces rotos, notas sueltas o sin enlaces, datos vencidos, contradicciones), renombra, mueve y archiva. Úsala cuando el usuario diga «procesa mi bandeja», «ordena mi cerebro», «organiza mi área de…», «reorganiza mi cerebro», «vuelve a jerarquizar», «agrupa estas notas», «mueve esta nota a…», «baja lo de Telegram», «qué llegó de Telegram», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «renombra esta nota», «cambia el emoji de…», «archiva este proyecto», «borra los originales viejos» o «qué aprendieron mis agentes».
 ---
 
 # Mantener
@@ -13,7 +13,7 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `90 │ 
 
 ## Procesar la bandeja (de bruto a procesado, por lotes)
 
-1. **Recoge:** si el usuario usa Antigravity, `okt sesiones agy`. Si tiene el bot de Telegram (`okt telegram config` muestra una url), `okt telegram bajar` (las voces son transcripciones automáticas: revisa nombres y cifras). Luego `okt importar enlaces`, que trae la página o la transcripción de las capturas que solo tienen un enlace (si el proceso de segundo plano del inicio ya lo hizo, no hace nada). Luego `okt indice` y `okt bandeja preparar`, que deja en `.cerebro/cache/` un paquete con **el árbol del vault y todo el contenido de la bandeja**.
+1. **Recoge:** `okt agentes sincronizar` (la memoria de los agentes; los hooks ya lo hacen, así que suele no haber nada). Si tiene el bot de Telegram (`okt telegram config` muestra una url), `okt telegram bajar` (las voces son transcripciones automáticas: revisa nombres y cifras). Luego `okt importar enlaces`, que trae la página o la transcripción de las capturas que solo tienen un enlace (si el proceso de segundo plano del inicio ya lo hizo, no hace nada). Luego `okt indice` y `okt bandeja preparar`, que deja en `.cerebro/cache/` un paquete con **el árbol del vault y todo el contenido de la bandeja**.
 2. **¿Delegar?** Si `okt config` muestra `delegar: agy` y la skill `delegar-antigravity` está disponible, propón delegar la lectura del paquete a Gemini Flash y aplica tú el resultado. Si no, lee el paquete tú.
 3. **Decide cada captura** con el árbol del paquete y `okt buscar` (para no duplicar). El destino es uno de tres:
    - **claro:** la carpeta existente más profunda que le corresponda;
@@ -32,7 +32,8 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `90 │ 
 | Una captura con `importar_error` | Dile qué falló y ofrece la alternativa de `<raíz>/skills/capturar/references/fuentes.md` («Si falla») |
 | Una tarea o un avance de un proyecto | `## Próximos pasos` o `## Decisiones` de la nota del proyecto |
 | Algo del día sin valor durable | El diario de ese día |
-| Una ficha de sesión | Lo que sirve más allá del proyecto va a su área; lo propio del proyecto, como **propuesta** de Insight (abajo) |
+| 🛠️ Carpeta nueva (un agente trabajó en una carpeta con `CLAUDE.md` o `AGENTS.md`) | Propón dónde seguir su memoria: un **proyecto** si el trabajo termina, un **área** si es continuo o temporal, o una **subcarpeta** de otra ya vinculada (la captura lo sugiere). Con su sí, `okt agentes vincular "<carpeta>" "<destino>"`, que crea el espejo y archiva la captura. Si no la quiere seguir, `okt agentes ignorar "<carpeta>"` |
+| 💻 Avance de un agente (lo que cambió en su memoria y sus commits) | Lo que sirve más allá de esa carpeta (trampas de herramientas, reglas del dominio, decisiones) va a una nota de su tema en el área que corresponda, citando el espejo (`memoria:`). El avance (commits, pendientes resueltos) va a `## Decisiones` o `## Próximos pasos` de la nota principal donde vive el espejo. Luego `okt procesar "<ficha>" --en "<notas>"` |
 | Nada que conservar | `okt archivar` |
 
 4. **Muestra el plan como una tabla y espera un solo sí para todo el lote:**
@@ -54,7 +55,7 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `90 │ 
    - si una rama junta 3 o más notas de la misma familia, propón agruparlas (sección siguiente).
 6. **Cierra:** `okt cerrar mantener "procesó N capturas de la bandeja" --notas "…"` y un resumen de 3 líneas.
 
-**Insights para el CLAUDE.md de un proyecto:** muéstralos agrupados por proyecto, una viñeta con fecha por insight, y pregunta cuáles agregar. Solo con su sí, escríbelos en la sección `## Insights` del `CLAUDE.md` de ese proyecto (la ruta está en la ficha: `ruta:`), sin duplicar lo que ya diga ese archivo.
+**Insights para el CLAUDE.md de un proyecto:** muéstralos agrupados por proyecto, una viñeta con fecha por insight, y pregunta cuáles agregar. Solo con su sí, escríbelos en la sección `## Insights` del `CLAUDE.md` de ese proyecto (la ruta está en la ficha: `carpeta_agente:`), sin duplicar lo que ya diga ese archivo.
 
 ## Organizar un área en temas
 

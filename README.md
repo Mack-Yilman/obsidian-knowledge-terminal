@@ -295,14 +295,27 @@ En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
   se traen en un proceso aparte en segundo plano sin demorar la sesión: páginas web con Defuddle (Markdown e imágenes),
   subtítulos de YouTube con yt-dlp y enlaces de Drive con `gws` (los videos, sin descargarlos). Al decir «procesa mi bandeja», el contenido ya
   está listo y la IA solo lo ordena (y lo pasa a limpio si el usuario lo pide).
-- **Al cerrar** una sesión en otro proyecto, anota una ficha en la Bandeja con el proyecto, los commits y los
-  archivos tocados. Nunca copia el contenido de los archivos.
+- **Al iniciar y al cerrar** una sesión en otra carpeta, sincroniza la **memoria de su agente** (ver abajo).
 
 En **Antigravity**, los hooks de inicio (App y CLI) y la tarea del IDE hacen lo mismo (sección «Antigravity»).
-Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen al procesar la bandeja (`okt sesiones agy`),
-sin copiar el texto de tus pedidos.
+Antigravity no tiene un hook de cierre: lo de una sesión se recoge al empezar la siguiente o al abrir el vault.
 
-Para excluir un proyecto de las fichas: `okt config excluir <proyecto>`.
+### Memoria de los agentes
+
+El `CLAUDE.md` (o `AGENTS.md`, `GEMINI.md`) de cada carpeta donde trabajas con un agente ya guarda lo importante:
+decisiones, lo que descubriste, lo que corregiste y lo que falta. OKT lo trae a tu vault, sin usar el modelo:
+
+1. **La primera vez** que un agente trabaja en una carpeta con esa memoria (o en una subcarpeta de ella), deja en la
+   Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla. Nada se copia hasta que respondes.
+2. **Al procesar la Bandeja**, la IA propone el destino: un proyecto si el trabajo termina, un área si es continuo o
+   temporal, o una subcarpeta de otra ya vinculada. Con tu sí: `okt agentes vincular "<carpeta>" "<destino>"`.
+3. **Desde entonces**, la nota `🛠️ <carpeta> - memoria del agente` refleja ese archivo en su carpeta del vault, y
+   cada sesión con cambios deja en la Bandeja `💻 <fecha> <carpeta>` con **solo lo nuevo**: las líneas que se
+   agregaron o se quitaron de la memoria y los commits nuevos. Al procesarla, lo que sirve más allá de esa carpeta
+   pasa a una nota de su área, citando el espejo.
+
+`okt agentes` lista las carpetas que sigue; `okt agentes ignorar "<carpeta>"` deja de preguntar por una, y
+`okt config excluir <carpeta>` excluye las que se llamen así.
 
 **Un solo vault para los dos agentes:** todo está en Markdown dentro del vault. Las reglas viven en `AGENTS.md`, que
 el `CLAUDE.md` del vault importa; la memoria compartida, en la carpeta del sistema (`🔥 hot.md`, `📜 bitacora.md`,
@@ -316,7 +329,8 @@ Lo que guarda Claude lo encuentra Antigravity, y al revés.
 - Lo que proceses con una IA sale a sus servidores: lo que delegues a Antigravity, a los de Google; lo que proceses
   con Claude, a los de Anthropic.
 - Lo que mandas por Telegram pasa por Telegram y Cloudflare (KV y Workers AI) antes de llegar a tu PC.
-- Si un proyecto no debe dejar fichas de sesión en el vault: `okt config excluir <proyecto>`.
+- La memoria de un agente solo entra al vault si vinculas su carpeta; para que no pregunte por una:
+  `okt agentes ignorar "<carpeta>"`.
 
 ## Problemas frecuentes
 

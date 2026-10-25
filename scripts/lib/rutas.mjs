@@ -47,12 +47,14 @@ export function sobrescribir(ruta, texto) {
 }
 
 const CANDADO_VIEJO_MS = 5 * 60000; // un candado más viejo es de un proceso que murió
+export const rutaCandado = (vault, nombre) => join(vault, '.cerebro', 'cache', `${nombre}.lock`);
 
-// Un solo proceso a la vez sobre lo mismo (.cerebro/<nombre>.lock): el hook de dos sesiones, o el hook y un comando
-// a mano. Con esperarMs, espera a que el otro termine en vez de fallar. Devuelve la función que lo suelta.
+// Un solo proceso a la vez sobre lo mismo (.cerebro/cache/<nombre>.lock): el hook de dos sesiones, o el hook y un
+// comando a mano. Con esperarMs, espera a que el otro termine en vez de fallar. Devuelve la función que lo suelta.
+// En la caché porque git la ignora: si no, el commit de cerrar() se llevaba el candado.
 export function tomarCandado(vault, nombre, mensaje, { esperarMs = 0 } = {}) {
-  const ruta = join(vault, '.cerebro', `${nombre}.lock`);
-  mkdirSync(join(vault, '.cerebro'), { recursive: true });
+  const ruta = rutaCandado(vault, nombre);
+  mkdirSync(dirname(ruta), { recursive: true });
   const limite = Date.now() + esperarMs;
   for (;;) {
     try {
@@ -60,7 +62,8 @@ export function tomarCandado(vault, nombre, mensaje, { esperarMs = 0 } = {}) {
       return () => rmSync(ruta, { force: true });
     } catch (e) {
       if (e.code !== 'EEXIST') throw e;
-      if (Date.now() - statSync(ruta).mtimeMs > CANDADO_VIEJO_MS) rmSync(ruta, { force: true });
+      // El otro pudo soltarlo entre openSync y statSync: sin archivo, se vuelve a intentar.
+      if (Date.now() - (statSync(ruta, { throwIfNoEntry: false })?.mtimeMs ?? 0) > CANDADO_VIEJO_MS) rmSync(ruta, { force: true });
       else if (Date.now() < limite) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
       else throw Object.assign(new Error(mensaje), { codigo: 1 });
     }
