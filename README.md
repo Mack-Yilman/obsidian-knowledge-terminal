@@ -306,11 +306,11 @@ El `CLAUDE.md` (o `AGENTS.md`, `GEMINI.md`) de cada carpeta donde trabajas con u
 decisiones, lo que descubriste, lo que corregiste y lo que falta. OKT lo trae a tu vault, sin usar el modelo:
 
 1. **La primera vez** que un agente trabaja en una carpeta con esa memoria (o en una subcarpeta de ella), deja en la
-   Bandeja «🛠️ Carpeta nueva - <nombre>», que pregunta dónde seguirla. Nada se copia hasta que respondes.
+   Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla. Nada se copia hasta que respondes.
 2. **Al procesar la Bandeja**, la IA propone el destino: un proyecto si el trabajo termina, un área si es continuo o
    temporal, o una subcarpeta de otra ya vinculada. Con tu sí: `okt agentes vincular "<carpeta>" "<destino>"`.
 3. **Desde entonces**, la nota `🛠️ <carpeta> - memoria del agente` refleja ese archivo en su carpeta del vault, y
-   cada sesión con cambios deja en la Bandeja «💻 <fecha> <carpeta>» con **solo lo nuevo**: las líneas que se
+   cada sesión con cambios deja en la Bandeja `💻 <fecha> <carpeta>` con **solo lo nuevo**: las líneas que se
    agregaron o se quitaron de la memoria y los commits nuevos. Al procesarla, lo que sirve más allá de esa carpeta
    pasa a una nota de su área, citando el espejo.
 
