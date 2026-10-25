@@ -154,14 +154,15 @@ En Antigravity: `okt instalar obsidian-skills --aplicar`.
 
 ### 8. Antigravity (opcional)
 
-Si también usas Antigravity, con el plugin ya instalado en Claude Code pide: **«instala las skills en
-Antigravity»**. Sin Claude Code, clona el repositorio y ejecútalo a mano:
+Si también usas Antigravity, con el plugin ya instalado en Claude Code pide: **«instala OKT en Antigravity»**. Se
+instala como **plugin de Antigravity** (aparece en `agy plugin list` con sus 6 skills), no como skills sueltas. Sin
+Claude Code, clona el repositorio y ejecútalo a mano:
 
 ```bash
 git clone https://github.com/Mack-Yilman/obsidian-knowledge-terminal.git
 cd obsidian-knowledge-terminal
 node scripts/okt.mjs instalar antigravity            # vista previa
-node scripts/okt.mjs instalar antigravity --aplicar  # plugin en ~/.okt, skills en ~/.gemini/config/skills, hooks y tarea del IDE
+node scripts/okt.mjs instalar antigravity --aplicar  # plugin en ~/.gemini/config/plugins/obsidian-knowledge-terminal, hooks y tarea del IDE
 ```
 
 Con un vault ya creado, `instalar` deja lo necesario para que Antigravity baje Telegram y cargue el resumen

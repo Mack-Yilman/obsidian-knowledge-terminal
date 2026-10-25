@@ -50,7 +50,7 @@ Al final: `okt doctor --completo` verifica las sesiones.
 
 ## Antigravity
 
-`okt instalar antigravity` muestra qué hará: copiar el plugin a `~/.okt/plugin` y las 6 skills a `~/.gemini/config/skills/okt-*`. Con el sí del usuario, `okt instalar antigravity --aplicar`. Después de actualizar el plugin, se repite el comando.
+`okt instalar antigravity` muestra qué hará: instalar OKT como **plugin de Antigravity** en `~/.gemini/config/plugins/obsidian-knowledge-terminal/` (con su `plugin.json` y sus 6 skills; `agy plugin list` lo muestra) y quitar las skills sueltas `okt-*` y la copia en `~/.okt/plugin` de las versiones anteriores. Con el sí del usuario, `okt instalar antigravity --aplicar`. Después de actualizar el plugin, se repite el comando.
 
 Con el vault ya creado, `--aplicar` deja también lo que baja Telegram y carga `🔥 hot.md` al empezar, igual que en Claude Code:
 

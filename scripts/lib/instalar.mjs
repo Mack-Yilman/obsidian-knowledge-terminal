@@ -1,7 +1,8 @@
-// okt instalar antigravity [--aplicar]: copia el plugin a ~/.okt/plugin (ruta estable) y las skills a
-// ~/.gemini/config/skills/okt-<skill>/, con la ruta de <raíz> ya escrita (Antigravity no conoce la
-// estructura de un plugin de Claude). Repetirlo después de actualizar el plugin.
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, cpSync, existsSync } from 'node:fs';
+// okt instalar antigravity [--aplicar]: instala OKT como plugin de Antigravity en ~/.gemini/config/plugins/
+// obsidian-knowledge-terminal/ (plugin.json en la raíz, que es el formato de agy, y sus skills dentro: así «dos niveles
+// arriba» de cada skill ya es la raíz del plugin). Quita lo de la instalación anterior (skills sueltas okt-* y la copia
+// en ~/.okt/plugin). Repetirlo después de actualizar el plugin.
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, cpSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -105,17 +106,23 @@ export function skillsDelPlugin() {
   return readdirSync(join(RAIZ_PLUGIN, 'skills'), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
 }
 
-export function adaptarSkill(texto, nombre, raiz) {
-  return texto.replace(/^name:\s*.+$/m, `name: okt-${nombre}`).split(FRASE_RAIZ).join(`\`${posix(raiz)}\``);
+export const NOMBRE_PLUGIN = 'obsidian-knowledge-terminal';
+export const dirPluginAgy = () => join(dirAgyConfig(), 'plugins', NOMBRE_PLUGIN);
+
+// Manifiesto de agy (plugin.json en la raíz). Con version, «agy plugin list» la muestra (validado con --strict).
+function manifiestoAgy() {
+  const { description, version } = JSON.parse(readFileSync(join(RAIZ_PLUGIN, '.claude-plugin', 'plugin.json'), 'utf8'));
+  return { $schema: 'https://antigravity.google/schemas/v1/plugin.json', name: NOMBRE_PLUGIN, version, description };
 }
 
 export function instalarAntigravity(op = {}) {
-  const destPlugin = join(dirOkt(), 'plugin');
-  const destSkills = dirSkillsAgy();
+  const destPlugin = dirPluginAgy();
   const skills = skillsDelPlugin();
+  const viejas = [join(dirOkt(), 'plugin'), ...skills.map((s) => join(dirSkillsAgy(), `okt-${s}`))].filter((d) => existsSync(d));
   const { vault } = leerConfigGlobal();
   const conVault = Boolean(vault && esVault(vault));
-  const plan = [`Copiar el plugin a ${posix(destPlugin)} (${PARTES_PLUGIN.join(', ')})`, ...skills.map((s) => `Instalar la skill okt-${s} en ${posix(join(destSkills, `okt-${s}`))}`)];
+  const plan = [`Instalar el plugin de Antigravity en ${posix(destPlugin)} (plugin.json y ${PARTES_PLUGIN.join(', ')}), con las skills ${skills.join(', ')}`];
+  if (viejas.length) plan.push(`Quitar la instalación anterior: ${viejas.map(posix).join(', ')}`);
   if (conVault) {
     plan.push(`Hook de inicio (SessionStart) en ${posix(join(vault, '.agents', 'hooks.json'))} y en ${posix(join(dirAgyConfig(), 'hooks.json'))}: al abrir una conversación en el vault (App o CLI de Antigravity) baja Telegram y carga hot.md`);
     plan.push(`Tarea «${ETIQUETA_TAREA}» en ${posix(join(vault, '.vscode', 'tasks.json'))}: el Antigravity IDE baja Telegram al abrir la carpeta del vault`);
@@ -123,18 +130,16 @@ export function instalarAntigravity(op = {}) {
   if (!op.aplicar) {
     return { texto: `Vista previa de la instalación en Antigravity:\n${plan.map((p) => `  - ${p}`).join('\n')}\nPara instalar: okt instalar antigravity --aplicar`, datos: { plan } };
   }
+  // Copia limpia: una skill o un archivo que ya no está en el plugin no debe quedar en la copia de agy.
+  rmSync(destPlugin, { recursive: true, force: true });
   mkdirSync(destPlugin, { recursive: true });
   for (const p of PARTES_PLUGIN) cpSync(join(RAIZ_PLUGIN, p), join(destPlugin, p), { recursive: true, force: true });
-  for (const s of skills) {
-    const origen = join(RAIZ_PLUGIN, 'skills', s);
-    const dest = join(destSkills, `okt-${s}`);
-    mkdirSync(dest, { recursive: true });
-    cpSync(origen, dest, { recursive: true, force: true });
-    writeFileSync(join(dest, 'SKILL.md'), adaptarSkill(readFileSync(join(origen, 'SKILL.md'), 'utf8'), s, destPlugin));
-  }
+  writeFileSync(join(destPlugin, 'plugin.json'), `${JSON.stringify(manifiestoAgy(), null, 2)}\n`);
+  for (const d of viejas) rmSync(d, { recursive: true, force: true });
   const cli = posix(join(destPlugin, 'scripts', 'okt.mjs'));
-  if (!leerConfigGlobal().cli || !existsSync(leerConfigGlobal().cli)) guardarConfigGlobal({ cli });
-  const lineas = [`Instalado en Antigravity: ${skills.map((s) => `okt-${s}`).join(', ')}.`, `Plugin en ${posix(destPlugin)}.`];
+  const previo = leerConfigGlobal().cli;
+  if (!previo || !existsSync(previo)) guardarConfigGlobal({ cli });
+  const lineas = [`Plugin de Antigravity instalado en ${posix(destPlugin)}, con las skills ${skills.join(', ')}.`, ...(viejas.length ? ['Quité la instalación anterior (skills okt-* sueltas y ~/.okt/plugin).'] : [])];
   let hooks = [];
   let tarea = null;
   if (conVault) {

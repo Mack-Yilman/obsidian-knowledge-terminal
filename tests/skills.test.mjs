@@ -90,21 +90,32 @@ test('archivar mueve a 90 │ 🗄️ Archivo con la misma ruta y marca estado a
   v.borrar();
 });
 
-test('instalar antigravity: vista previa, y con --aplicar copia el plugin y adapta las skills', () => {
+test('instalar antigravity: vista previa, y con --aplicar instala OKT como plugin de agy y quita las skills sueltas', () => {
   const t = temporal();
-  const env = { OKT_HOME: join(t.dir, 'okt'), OKT_AGY_SKILLS: join(t.dir, 'skills') };
+  const agy = join(t.dir, 'agy-config');
+  const env = { OKT_HOME: join(t.dir, 'okt'), OKT_AGY_SKILLS: join(t.dir, 'skills'), OKT_AGY_CONFIG_DIR: agy };
+  // Lo que dejaba la instalación anterior (0.6.0 y antes).
+  escribir(t.dir, 'skills/okt-cerebro/SKILL.md', 'vieja');
+  escribir(t.dir, 'skills/otra-skill/SKILL.md', 'del usuario');
+  escribir(t.dir, 'okt/plugin/package.json', '{}');
   let r = okt(['instalar', 'antigravity'], { cwd: t.dir, configDir: join(t.dir, 'cfg'), env });
   assert.match(r.salida, /Vista previa/);
-  assert.equal(existsSync(join(t.dir, 'skills')), false);
+  assert.match(r.salida, /Quitar la instalación anterior/);
+  assert.equal(existsSync(join(agy, 'plugins')), false);
   r = okt(['instalar', 'antigravity', '--aplicar'], { cwd: t.dir, configDir: join(t.dir, 'cfg'), env });
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(t.dir, 'okt', 'plugin', 'scripts', 'okt.mjs')));
+  const plugin = join(agy, 'plugins', 'obsidian-knowledge-terminal');
+  const manifiesto = JSON.parse(readFileSync(join(plugin, 'plugin.json'), 'utf8'));
+  assert.equal(manifiesto.name, 'obsidian-knowledge-terminal');
+  assert.equal(manifiesto.version, JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf8')).version);
+  assert.ok(existsSync(join(plugin, 'scripts', 'okt.mjs')));
   for (const s of SKILLS) {
-    const texto = readFileSync(join(t.dir, 'skills', `okt-${s}`, 'SKILL.md'), 'utf8');
-    assert.match(texto, new RegExp(`^name: okt-${s}$`, 'm'));
-    assert.ok(!texto.includes(FRASE_RAIZ));
-    assert.ok(texto.includes(`${join(t.dir, 'okt', 'plugin').replace(/\\/g, '/')}`));
+    // Dentro del plugin, «dos niveles arriba» de la skill es la raíz: el SKILL.md va tal cual.
+    assert.equal(readFileSync(join(plugin, 'skills', s, 'SKILL.md'), 'utf8'), readFileSync(join(RAIZ, 'skills', s, 'SKILL.md'), 'utf8'));
   }
-  assert.ok(existsSync(join(t.dir, 'skills', 'okt-notebooklm', 'references', 'instalacion.md')));
+  assert.ok(readFileSync(join(plugin, 'skills', 'cerebro', 'SKILL.md'), 'utf8').includes(FRASE_RAIZ));
+  assert.ok(!existsSync(join(t.dir, 'skills', 'okt-cerebro')), 'quita las skills sueltas de antes');
+  assert.ok(existsSync(join(t.dir, 'skills', 'otra-skill')), 'no toca las skills del usuario');
+  assert.ok(!existsSync(join(t.dir, 'okt', 'plugin')), 'quita la copia vieja');
   t.borrar();
 });

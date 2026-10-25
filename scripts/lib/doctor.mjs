@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { ejecutar, resolverBinario, jsonDe } from './binarios.mjs';
 import { leerConfigVault, posix, RAIZ_PLUGIN } from './rutas.mjs';
-import { dirSkillsAgy, dirOkt, dirAgyConfig, deConfianza, SKILL_OBSIDIAN, ETIQUETA_TAREA } from './instalar.mjs';
+import { dirSkillsAgy, dirPluginAgy, dirAgyConfig, deConfianza, SKILL_OBSIDIAN, ETIQUETA_TAREA } from './instalar.mjs';
 
 // Plugins de Claude Code instalados (~/.claude/plugins/installed_plugins.json; OKT_CLAUDE_PLUGINS para las pruebas).
 function pluginClaude(id) {
@@ -93,7 +93,7 @@ export function doctor(vault, op = {}) {
       add('Conectores', `${k.nombre}: sesión`, ok, ok ? 'válida' : 'sin sesión o vencida', k.como.split('&&').pop().trim(), true);
     }
   }
-  const agySkills = existsSync(join(dirSkillsAgy(), 'okt-cerebro', 'SKILL.md'));
+  const agySkills = existsSync(join(dirPluginAgy(), 'plugin.json'));
   // La copia de Antigravity se queda en la versión con la que se instaló: hay que repetir el comando tras actualizar.
   const versionDe = (dir) => {
     try {
@@ -103,8 +103,9 @@ export function doctor(vault, op = {}) {
     }
   };
   const esta = versionDe(RAIZ_PLUGIN);
-  const enAgy = agySkills ? versionDe(join(dirOkt(), 'plugin')) : null;
-  add('Conectores', 'Skills de OKT en Antigravity', agySkills && enAgy === esta, agySkills ? `instaladas (${enAgy || '?'}${enAgy === esta ? '' : `; este plugin es la ${esta}`})` : 'no instaladas', 'okt instalar antigravity --aplicar', true);
+  const enAgy = agySkills ? versionDe(dirPluginAgy()) : null;
+  const viejas = existsSync(join(dirSkillsAgy(), 'okt-cerebro')) ? '; quedan las skills okt-* de la instalación anterior' : '';
+  add('Conectores', 'Plugin de OKT en Antigravity', agySkills && enAgy === esta && !viejas, agySkills ? `instalado (${enAgy || '?'}${enAgy === esta ? '' : `; este plugin es la ${esta}`}${viejas})` : 'no instalado', 'okt instalar antigravity --aplicar', true);
   if (agySkills && vault) {
     let global = false;
     try {
