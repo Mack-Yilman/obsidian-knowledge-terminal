@@ -62,7 +62,7 @@ Con el vault ya creado, `--aplicar` deja también lo que baja Telegram y carga `
 
 No hay evento al abrir la aplicación: lo más temprano es la primera conversación (o, en el IDE, abrir la carpeta).
 
-Antigravity no tiene un hook de cierre: sus fichas de sesión se recogen en el lote con `okt sesiones agy`, que cuenta los pedidos y lee los cambios de git de cada carpeta sin copiar el texto de los pedidos.
+Antigravity no tiene un hook de cierre: lo que cambió en la memoria de una carpeta de trabajo (su `CLAUDE.md` o `AGENTS.md`) se recoge al empezar la siguiente conversación, o al abrir el vault (`okt agentes sincronizar`). Nunca se copia el texto de los pedidos.
 
 ## Capa de formato (opcional)
 

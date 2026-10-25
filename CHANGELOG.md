@@ -1,5 +1,22 @@
 # Cambios
 
+## 0.6.0 — 2026-10-24
+
+**La memoria de tus agentes entra al vault.** Reemplaza las fichas de sesión (commits y archivos tocados) por lo que el
+agente aprendió: el `CLAUDE.md`, `AGENTS.md` o `GEMINI.md` de cada carpeta de trabajo.
+
+- **Detectar:** los hooks de inicio y fin de Claude Code y el de inicio de Antigravity ven la carpeta de trabajo y sus
+  carpetas superiores. La primera vez que una tiene memoria de agente, deja en la Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla. Nada se copia hasta que el usuario responde.
+- **Vincular:** `okt agentes vincular "<carpeta>" "<destino>"` crea en esa carpeta del vault (un proyecto, un área o
+  un tema) la nota `🛠️ <carpeta> - memoria del agente`, con el archivo completo entre marcas `okt`, y archiva la
+  captura que preguntaba. `okt agentes ignorar "<carpeta>"` deja de preguntar; `okt agentes` lista las que sigue.
+- **Cada sesión:** si la memoria cambió (huella SHA-256) o hay commits nuevos, el espejo se actualiza y la Bandeja
+  recibe `💻 <fecha> <carpeta>` con solo lo nuevo: las líneas agregadas y quitadas, y los asuntos de los commits. Al
+  abrir el vault se sincronizan todas (`okt agentes sincronizar`).
+- **Se quitan** `okt sesiones agy` (contaba los pedidos de agy) y la lista de archivos tocados.
+- La skill `mantener` propone el destino de cada carpeta nueva y pasa lo aprendido a las notas de su área, citando el
+  espejo.
+
 ## 0.5.0 — 2026-10-24
 
 **Enlaces e ingesta sin tokens, temas sin límite de niveles y reorganización asistida del vault.**

@@ -1,6 +1,6 @@
 {
   "name": "obsidian-knowledge-terminal",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Segundo cerebro en Obsidian para cualquier LLM y cualquier persona: ordena lo que escribes en bruto dentro de tus áreas y proyectos, lo enlaza y lo pasa a limpio. Skills y un CLI sin dependencias.",
   "private": true,
   "type": "module",
