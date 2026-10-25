@@ -6,7 +6,8 @@ import { bitacora, pendiente, indice, hot, cerrar } from './sistema.mjs';
 import { commit } from './git.mjs';
 import { buscar } from './buscar.mjs';
 import { lint } from './lint.mjs';
-import { hookInicio, hookInicioAntigravity, hookFin, sesionesAgy } from './sesiones.mjs';
+import { hookInicio, hookInicioAntigravity, hookFin } from './sesiones.mjs';
+import { listar as agentesListar, sincronizarTodas, vincular, ignorar } from './agentes.mjs';
 import { preparar } from './bandeja.mjs';
 import { adjuntar, archivar } from './archivos.mjs';
 import { existsSync, readFileSync } from 'node:fs';
@@ -81,7 +82,10 @@ Sistema (las skills se comunican por aquí)
 
 Bandeja y sesiones
   bandeja preparar | bandeja archivar <rutas>
-  sesiones agy                           Fichas de las sesiones de Antigravity (sin el texto de los pedidos)
+  agentes [listar]                       Carpetas de trabajo de los agentes (CLAUDE.md, AGENTS.md) que sigue el vault
+  agentes vincular "<carpeta>" "<destino>"   Refleja su memoria en esa carpeta del vault; cada sesión deja lo que cambió
+  agentes ignorar "<carpeta>"            No volver a preguntar por ella
+  agentes sincronizar                    Actualiza las vinculadas (también lo hacen los hooks)
   hook inicio|fin                        Hooks de Claude Code (leen JSON por stdin)
   hook inicio --formato antigravity      SessionStart de Antigravity (responde injectSteps en JSON)
 
@@ -155,10 +159,14 @@ export const COMANDOS = {
       return 0;
     },
   },
-  sesiones: {
-    correr({ pos, vault }) {
-      if (pos[0] !== 'agy') throw Object.assign(new Error('Uso: okt sesiones agy'), { codigo: 2 });
-      return sesionesAgy(vault);
+  agentes: {
+    correr({ pos, op, vault }) {
+      const accion = pos.shift();
+      if (!accion || accion === 'listar') return agentesListar(vault);
+      if (accion === 'sincronizar') return sincronizarTodas(vault, op);
+      if (accion === 'vincular') return vincular(vault, pos[0], pos.slice(1).join(' '));
+      if (accion === 'ignorar') return ignorar(vault, pos.join(' '));
+      throw Object.assign(new Error('Uso: okt agentes [listar] | sincronizar | vincular "<carpeta>" "<destino>" | ignorar "<carpeta>"'), { codigo: 2 });
     },
   },
   bandeja: {
@@ -177,7 +185,7 @@ export const COMANDOS = {
         const lista = new Set(cfg.excluir_proyectos || []);
         for (const p of resto) accion === 'excluir' ? lista.add(p) : lista.delete(p);
         guardarConfigVault(vault, { excluir_proyectos: [...lista] });
-        return { texto: `Proyectos excluidos de las fichas de sesión: ${[...lista].join(', ') || '(ninguno)'}`, datos: [...lista] };
+        return { texto: `Carpetas excluidas de la memoria de los agentes: ${[...lista].join(', ') || '(ninguno)'}`, datos: [...lista] };
       }
       if (accion === 'poner') {
         const [clave, ...valor] = resto;

@@ -69,6 +69,7 @@ export const EMOJI = {
   notebooklm: '🤖',
   web: '🌐',
   youtube: '▶️',
+  agente: '🛠️',
   bruto: '📥',
   sistema: '⚙️',
   concepto: '💡',

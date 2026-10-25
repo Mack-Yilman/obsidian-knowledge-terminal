@@ -1,6 +1,6 @@
 ---
 name: cerebro
-description: Guía y gestor del segundo cerebro en Obsidian (OKT). Configura el vault la primera vez con una entrevista breve (a qué se dedica el usuario, sus áreas, sus proyectos y sus temas) y crea las carpetas a partir de sus respuestas; además crea, renombra y archiva áreas, proyectos y temas, conecta Obsidian, Google Drive, NotebookLM, Notion, Google, Antigravity y Telegram, muestra el estado y dice el siguiente paso. Úsala SIEMPRE que el usuario diga «configura mi segundo cerebro», «crea mi vault», «instala OKT», «crea un proyecto», «agrega un área», «crea el tema X en Y», «organiza mis áreas», «conecta Notion/Drive/NotebookLM/Telegram», «configura el bot de Telegram», «instala las skills en Antigravity», «qué puedo hacer con mi cerebro», «por dónde empiezo», «cómo va mi cerebro», «qué tengo pendiente», «revisa la configuración», «migra mi vault», o pregunte cómo usar OKT u Obsidian con IA.
+description: Guía y gestor del segundo cerebro en Obsidian (OKT). Configura el vault la primera vez con una entrevista breve (a qué se dedica el usuario, sus áreas, sus proyectos y sus temas) y crea las carpetas a partir de sus respuestas; además crea, renombra y archiva áreas, proyectos y temas, conecta Obsidian, Google Drive, NotebookLM, Notion, Google, Antigravity y Telegram, muestra el estado y dice el siguiente paso. Úsala SIEMPRE que el usuario diga «configura mi segundo cerebro», «crea mi vault», «instala OKT», «crea un proyecto», «agrega un área», «crea el tema X en Y», «organiza mis áreas», «conecta Notion/Drive/NotebookLM/Telegram», «vincula esta carpeta», «qué carpetas de agentes sigo», «configura el bot de Telegram», «instala las skills en Antigravity», «qué puedo hacer con mi cerebro», «por dónde empiezo», «cómo va mi cerebro», «qué tengo pendiente», «revisa la configuración», «migra mi vault», o pregunte cómo usar OKT u Obsidian con IA.
 ---
 
 # Cerebro: guía y gestor de OKT
@@ -74,6 +74,7 @@ Cada uno es una carpeta con su nota principal. Muestra siempre qué se creará o
 | Renombrar o cambiar el emoji | `okt renombrar "<nombre>" "<nombre nuevo>"` (mueve la carpeta y actualiza los enlaces) |
 | «Terminé el proyecto» | `okt archivar "proyectos/<proyecto>"` (pide confirmación: es una carpeta entera). Antes, ofrece pasar al área lo que sirva más allá del proyecto |
 | Que el agente sepa a qué se dedica | `okt config poner perfil "<una línea>"` |
+| «Qué carpetas de agentes sigo» / «vincula esta carpeta a X» | `okt agentes` las lista; `okt agentes vincular "<carpeta>" "<destino>"` refleja su `CLAUDE.md` o `AGENTS.md` en esa carpeta del vault; `okt agentes ignorar "<carpeta>"` deja de preguntar |
 
 ## Migrar (vault de una versión anterior)
 
@@ -106,6 +107,6 @@ Si el pedido es de otra skill, aplica esa skill (en Claude se activa sola; si no
 | Mejorar la redacción de una nota | `redactar` | «pasa a limpio esta nota», «ordénala para que se entienda» |
 | Usar un cuaderno de NotebookLM | `notebooklm` | «crea una infografía del cuaderno Tesis» |
 
-**Ajustes:** `okt config` muestra la configuración. Con `okt config excluir <proyecto>` las fichas de sesión ignoran ese proyecto. Con `okt config poner frescura_dias <n>` cambias la ventana de frescura, y con `okt config poner delegar agy` el procesamiento de la bandeja se puede delegar a Antigravity.
+**Ajustes:** `okt config` muestra la configuración. Con `okt config excluir <carpeta>` la memoria de los agentes ignora esa carpeta (o, para una sola, `okt agentes ignorar "<ruta>"`). Con `okt config poner frescura_dias <n>` cambias la ventana de frescura, y con `okt config poner delegar agy` el procesamiento de la bandeja se puede delegar a Antigravity.
 
 **Recordatorio:** nada se importa ni se procesa solo, nada se borra sin su sí, y el vault guarda lo que el usuario quiera.
