@@ -1,6 +1,6 @@
 {
   "name": "obsidian-knowledge-terminal",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Segundo cerebro en Obsidian para cualquier LLM (Claude Code y Antigravity) y cualquier persona: te entrevista para crear tus áreas, proyectos y temas; ordena lo que escribes en bruto (ideas, notas de voz de Telegram, apuntes de Notion o Drive, PDFs, web, NotebookLM) dentro de esa jerarquía, lo enlaza y, si se lo pides, lo pasa a limpio sin agregar nada; responde con citas a tus notas y mantiene el vault. Seis skills y un CLI sin dependencias que hace lo mecánico sin gastar tokens.",
   "author": {
     "name": "Mack Chirinos"
