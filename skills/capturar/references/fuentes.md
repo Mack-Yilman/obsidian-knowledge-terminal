@@ -9,18 +9,17 @@
 - **Resultados:** se copian las cifras exactas, sin redondear.
 - Lo que interpretes tú va con `^[inferido]`.
 
-## Web
+## Web y YouTube: `okt importar url`
 
-- Lee la página con la herramienta web de tu agente: WebFetch en Claude, la lectura de URL en Antigravity.
-- La ficha lleva `url`, la fecha de consulta en `## Notas` y lo esencial en `## Puntos clave`. No pegues la página completa.
-- Si la página tiene muro de pago o no carga, crea la ficha igual, con la URL, y anota «sin acceso al contenido».
+Lo trae un script, sin pasar por ti: no gastes tokens leyendo la página ni el video.
 
-## YouTube
-
-Elige según lo que haya, en este orden:
-1. **Si el usuario usa NotebookLM:** agrega el video como fuente de un cuaderno y pregúntale ahí (skill `notebooklm`). Es lo más barato en tokens.
-2. **Si `yt-dlp` está instalado:** `yt-dlp --skip-download --write-auto-subs --sub-langs "es.*,en.*" --convert-subs srt -o "<carpeta temporal>/%(id)s" "<url>"` y resume los subtítulos. Ignora los saludos y la charla.
-3. **Si no hay ninguna de las dos:** crea la ficha con la URL y lo que el usuario cuente, y deja un pendiente para completarla.
+- **Web:** `okt importar url "<url>"` usa Defuddle (el motor de Obsidian Web Clipper; `npm install -g defuddle`). Trae la página completa en Markdown y descarga sus imágenes a `99 │ ⚙️ Sistema/📎 adjuntos/🌐 web/`. La nota es `🌐 <título>`, con `url`, `autor` y `publicado`.
+- **YouTube:** usa yt-dlp (`uv tool install yt-dlp`) y trae solo los subtítulos, sin descargar el video. La nota `▶️ <título>` muestra el video arriba y la transcripción en bruto, por capítulos y en párrafos de un minuto, con la marca de tiempo enlazada a ese momento del video.
+- **Sin `--carpeta`** va a la Bandeja; con `--carpeta`, es una fuente en esa carpeta. Volver a importar el mismo enlace actualiza la misma nota.
+- **Lo que llega de Telegram:** las capturas que solo traen un enlace se completan solas al abrir el vault (un proceso en segundo plano), o con `okt importar enlaces`.
+- **Si falla** (muro de pago, una página que se arma con JavaScript, un video sin subtítulos): la nota lo dice o queda con `importar_error`. Ofrece la alternativa: para una web, tu herramienta web (WebFetch en Claude, la lectura de URL en Antigravity), con la ficha `okt nota nueva fuente "<título>" --origen web --url "<url>"`; para un video sin subtítulos, agregarlo como fuente de un cuaderno de NotebookLM (skill `notebooklm`), que lo transcribe.
+- **Al procesarlo** (skill `mantener`), ese bruto se ordena con las reglas de `redactar` en modo «ordenar»: encabezados por tema, sin la charla ni los saludos del video. Pasarlo a limpio, solo si el usuario lo pide.
+- **Si falta la herramienta:** el error dice cómo instalarla; `okt doctor` muestra cuáles están.
 
 ## Notion
 
@@ -33,5 +32,6 @@ Elige según lo que haya, en este orden:
 ## Google Docs y Drive
 
 - **El enlace:** «Compartir → Copiar enlace». Un Doc se exporta a Markdown. Un PDF, una imagen o un Word se guarda en `99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive/` con una nota que lo enlaza.
+- **Un video no se descarga:** la nota lo muestra con el reproductor de Drive y un enlace «▶️ Abrir en Drive». Si el video es privado, el reproductor puede pedir iniciar sesión dentro de Obsidian: el enlace lo abre en el navegador.
 - **Una carpeta:** se lista y el usuario elige qué importar.
 - **Hojas de cálculo:** no se importan, porque Drive solo exporta la primera pestaña como texto. Que el usuario la descargue como PDF o la pase a un Doc.

@@ -13,6 +13,7 @@ import { cambiosDesde, commit } from './git.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { actualizarAgents } from './init.mjs';
 import { bajar as bajarTelegram, leerConfigTelegram } from './telegram.mjs';
+import { lanzarSegundoPlano } from './importar-url.mjs';
 
 const TOPE_TELEGRAM_MS = 10000; // el hook tiene 15 s: la sesión nunca espera más que esto
 const TOPE_CONTEXTO = 9500; // Claude Code recorta en silencio lo que pase de 10 000 caracteres.
@@ -62,7 +63,12 @@ async function lineaTelegram(vault) {
 async function contextoInicio(vault) {
   // Con la estructura anterior no se baja Telegram: escribiría en carpetas nuevas junto a las viejas.
   const migrar = necesitaMigrar(vault);
-  const telegram = migrar ? `${AVISO_MIGRAR} Propónselo al usuario antes de cualquier otra operación.\n\n` : await lineaTelegram(vault);
+  let telegram = migrar ? `${AVISO_MIGRAR} Propónselo al usuario antes de cualquier otra operación.\n\n` : await lineaTelegram(vault);
+  if (!migrar) {
+    try {
+      if (lanzarSegundoPlano(vault)) telegram += 'Hay enlaces en la Bandeja: su contenido (página o transcripción) se está trayendo en segundo plano.\n\n';
+    } catch {}
+  }
   const rutaHot = existsSync(join(vault, R.hot)) ? join(vault, R.hot) : join(vault, '99-Sistema', 'hot.md');
   const hot = existsSync(rutaHot) ? leerBloque(readFileSync(rutaHot, 'utf8')) || '' : '';
   const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${telegram}## Contexto reciente (${posix(rutaHot.slice(vault.length + 1))})\n\n`;

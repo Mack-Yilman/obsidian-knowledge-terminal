@@ -6,7 +6,7 @@ import { listarNotas, leerNota, extraerEnlaces, mapaDeNombres, esSistema } from 
 import { leerConfigVault } from './rutas.mjs';
 import { leerBloque } from './bloques.mjs';
 import { nombreValido, empiezaConEmoji, sinEmoji } from './nombres.mjs';
-import { C, R, MAX_NIVELES_TEMA, ubicar } from './estructura.mjs';
+import { C, R, ubicar } from './estructura.mjs';
 import { diasEntre, fechaISO } from './fechas.mjs';
 
 const ANTIGUOS = new Set(['concepto', 'entidad', 'sintesis', 'sesion']);
@@ -57,11 +57,10 @@ export function lint(vault) {
     }
     if ((n.datos.resumen || '').length > 200) agregar('aviso', 'resumen_largo', n.rel, `El resumen tiene ${n.datos.resumen.length} caracteres (máximo 200).`);
 
-    // Ubicación: dentro de un área o un proyecto, nunca suelta en la carpeta raíz, y sin pasar de los niveles de tema.
+    // Ubicación: dentro de un área o un proyecto, nunca suelta en la carpeta raíz.
     const u = ubicar(n.rel);
     const dir = dirname(n.rel);
     if ([C.areas, C.proyectos].includes(dir)) agregar('aviso', 'fuera_de_lugar', n.rel, `Está suelta en ${dir}: cada ${dir === C.areas ? 'área' : 'proyecto'} es una carpeta con su nota principal. Muévela con okt mover o conviértela en ${dir === C.areas ? 'área' : 'proyecto'}.`);
-    if (u.niveles > MAX_NIVELES_TEMA) agregar('aviso', 'muy_profunda', n.rel, `Está a ${u.niveles} niveles de tema (máximo ${MAX_NIVELES_TEMA}): reorganiza la rama.`);
     if (['nota', 'fuente'].includes(tipo) && !u.raiz && !n.rel.startsWith(`${C.diario}/`)) agregar('aviso', 'fuera_de_lugar', n.rel, 'Las notas y las fuentes van dentro de un área o un proyecto.');
     if (PRINCIPALES.has(tipo) && basename(dir) === n.nombre) principales.set(dir, n);
     // Una nota procesada se enlaza con otras (las del bloque automático no cuentan: son de okt indice).

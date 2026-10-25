@@ -35,7 +35,7 @@ export function commit(vault, mensaje) {
   git(vault, ['add', '-A']);
   if (!git(vault, ['status', '--porcelain']).salida) return { sinCambios: true };
   const r = git(vault, ['commit', '-q', '-m', mensaje]);
-  return r.ok ? { hecho: true } : { error: r.error };
+  return r.ok ? { hecho: true, hash: git(vault, ['rev-parse', '--short', 'HEAD']).salida } : { error: r.error };
 }
 
 export function cambiosDesde(dir, desdeISO) {

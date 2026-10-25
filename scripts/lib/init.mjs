@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, copyFi
 import { join, dirname } from 'node:path';
 import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { CARPETAS, mismasNotas } from './vault.mjs';
-import { C, VERSION_ESTRUCTURA, MAX_NIVELES_TEMA, conEmoji, traducir, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
+import { C, VERSION_ESTRUCTURA, conEmoji, traducir, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
 import { reemplazarBloque, leerBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO } from './fechas.mjs';
@@ -83,7 +83,6 @@ function temasPedidos(texto, areas, proyectos) {
     const area = areas.find(igual);
     const proyecto = !area && proyectos.find((p) => igual(p.nombre));
     if (!base || (!area && !proyecto) || !temas.length) throw Object.assign(new Error(`Tema «${t}»: empieza por un área o un proyecto de los que se crean (p. ej. "Medicina/🫀 Cardiología").`), { codigo: 2 });
-    if (temas.length > MAX_NIVELES_TEMA) throw Object.assign(new Error(`Tema «${t}»: como máximo ${MAX_NIVELES_TEMA} niveles debajo del área o el proyecto.`), { codigo: 2 });
     return { raiz: area ? `${C.areas}/${area}` : `${C.proyectos}/${proyecto.nombre}`, temas: temas.map((x) => conEmoji('tema', x)) };
   });
 }

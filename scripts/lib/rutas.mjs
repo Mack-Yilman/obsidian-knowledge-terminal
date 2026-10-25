@@ -1,5 +1,5 @@
 // Dónde está cada cosa: el plugin, la configuración global y el vault.
-import { existsSync, readFileSync, writeFileSync, mkdirSync, openSync, ftruncateSync, writeSync, closeSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, openSync, ftruncateSync, writeSync, closeSync, statSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,6 +43,27 @@ export function sobrescribir(ruta, texto) {
     writeSync(fd, texto, 0, 'utf8');
   } finally {
     closeSync(fd);
+  }
+}
+
+const CANDADO_VIEJO_MS = 5 * 60000; // un candado más viejo es de un proceso que murió
+
+// Un solo proceso a la vez sobre lo mismo (.cerebro/<nombre>.lock): el hook de dos sesiones, o el hook y un comando
+// a mano. Con esperarMs, espera a que el otro termine en vez de fallar. Devuelve la función que lo suelta.
+export function tomarCandado(vault, nombre, mensaje, { esperarMs = 0 } = {}) {
+  const ruta = join(vault, '.cerebro', `${nombre}.lock`);
+  mkdirSync(join(vault, '.cerebro'), { recursive: true });
+  const limite = Date.now() + esperarMs;
+  for (;;) {
+    try {
+      closeSync(openSync(ruta, 'wx'));
+      return () => rmSync(ruta, { force: true });
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      if (Date.now() - statSync(ruta).mtimeMs > CANDADO_VIEJO_MS) rmSync(ruta, { force: true });
+      else if (Date.now() < limite) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+      else throw Object.assign(new Error(mensaje), { codigo: 1 });
+    }
   }
 }
 

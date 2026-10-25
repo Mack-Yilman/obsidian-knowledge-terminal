@@ -40,7 +40,7 @@ contenido.
 |---|---|
 | `00 │ 📥 Bandeja/` | Lo que entra sin procesar (notas rápidas, Telegram, importados, fichas de sesión) |
 | `10 │ 🎯 Proyectos/<proyecto>/` | Notas, fuentes y temas de un proyecto |
-| `20 │ 🧭 Areas/<área>/` | Notas, fuentes y temas de un área, en hasta 3 niveles: Área → Rama → Grupo → nota |
+| `20 │ 🧭 Areas/<área>/` | Notas, fuentes y temas de un área, anidados tantos niveles como pida el dominio: Área → Rama → Grupo → … → nota |
 | `50 │ 📅 Diario/` | La nota diaria y la revisión semanal |
 | `90 │ 🗄️ Archivo/` | Lo terminado u obsoleto, y los originales en bruto ya procesados |
 | `99 │ ⚙️ Sistema/` | `🔥 hot`, `✅ pendientes`, `📜 bitacora`, `🗂️ indice` (el árbol), `📎 adjuntos/`, `🧱 plantillas/` |
@@ -48,7 +48,8 @@ contenido.
 **Cómo ubicar una nota:** mira el árbol de `99 │ ⚙️ Sistema/🗂️ indice.md` y ponla en la carpeta **más profunda**
 que le corresponda (`--carpeta "Medicina/Cardiología"`). Si falta una rama natural del dominio, propónla; si 3 o
 más notas de una rama comparten familia, propón agruparlas en un tema (`okt tema nuevo`). Lo que toca dos áreas
-vive en la que más le corresponde y se enlaza desde la otra.
+vive en la que más le corresponde y se enlaza desde la otra. Si algo no encaja en ningún área ni proyecto, no lo
+fuerces: propón uno nuevo o pregunta.
 
 ## Cómo trabajar
 
@@ -56,7 +57,9 @@ vive en la que más le corresponde y se enlaza desde la otra.
   y después lee como máximo 3 notas completas.
 - **Telegram:** un hook de inicio (Claude Code y Antigravity) o la tarea del IDE baja la cola del bot. Si no ves el
   aviso «Telegram: …» y `okt telegram config` muestra una url, ejecuta `okt telegram bajar`. Lo que llega queda en
-  `00 │ 📥 Bandeja/`; las tareas, en la nota diaria.
+  `00 │ 📥 Bandeja/`; las tareas, en la nota diaria. Los enlaces (web o YouTube) se completan solos en segundo
+  plano con la página o la transcripción; a mano: `okt importar enlaces`.
+- **Un enlace que pide guardar el usuario:** `okt importar url "<url>"`, que lo trae sin que lo leas tú.
 - **Formato de las notas** (propiedades, nombres, enlaces): `contrato-vault.md` del plugin OKT. Lo mínimo:
   `tipo`, `creado`, `actualizado`, `resumen` (≤200 caracteres) y `estado`; títulos legibles con emoji y sin
   `: / \ ? * " < > | # ^ [ ]`; enlaces `[[Nota]]`. Para cambiar un nombre: `okt renombrar`; para cambiar de

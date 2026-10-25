@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { instalarAntigravity, instalarObsidianSkills } from './instalar.mjs';
 import { leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { temaNuevo, mover, procesar, brutoGuardar, brutoLimpiar } from './organizar.mjs';
+import { preparar as reorganizarPreparar, aplicar as reorganizarAplicar } from './reorganizar.mjs';
 import { sinEmoji } from './nombres.mjs';
 import { basename } from 'node:path';
 import { FORMATOS_DIARIO } from './estructura.mjs';
@@ -21,6 +22,7 @@ import { doctor } from './doctor.mjs';
 import { migrar, renombrar } from './migrar.mjs';
 import { importarNotion } from './importar-notion.mjs';
 import { importarDrive } from './importar-drive.mjs';
+import { importarUrl, importarEnlaces, lanzarSegundoPlano } from './importar-url.mjs';
 import { configurar as tgConfigurar, bajar as tgBajar, descartar as tgDescartar } from './telegram.mjs';
 import {
   cuadernos as nlmCuadernos,
@@ -47,12 +49,14 @@ Configuración
   instalar obsidian-skills [--aplicar]   Skills de formato de Obsidian (kepano) para Antigravity
   migrar [--aplicar]                     Pasa un vault de una versión anterior a la estructura actual (sin --aplicar: vista previa)
 
-Áreas, proyectos y temas (todo es carpeta con su nota principal; hasta 3 niveles de tema)
+Áreas, proyectos y temas (todo es carpeta con su nota principal; temas anidados sin límite)
   nota nueva area "<emoji> <nombre>"     Área (lo continuo)
   nota nueva proyecto "<emoji> <nombre>" [--area "<área>"]   Proyecto (lo que termina)
   tema nuevo "<área o proyecto>/<tema>[/<tema>]"   Carpeta de tema con su nota principal
   mover "<nota o tema>" "<carpeta>"      Mueve una nota o un tema entero (los enlaces no cambian)
   archivar "<ruta>" […]                  Mueve a la carpeta Archivo (nada se borra)
+  reorganizar preparar [--carpeta "<área o proyecto>"]   Mapa compacto (árbol, resúmenes y enlaces) para rejerarquizar
+  reorganizar aplicar <plan.json>        Aplica el plan aprobado (temas, mover, renombrar, archivar) en un solo commit
 
 Notas
   nota nueva <tipo> "<título>" [--carpeta "<área o proyecto>/<tema>"]
@@ -84,6 +88,8 @@ Bandeja y sesiones
 Importar (solo a pedido; va a la Bandeja salvo --carpeta)
   importar notion "<enlace>" [--seleccion 1,3|todo] [--aplicar] [--carpeta]
   importar drive "<enlace>"  [--seleccion 1,3|todo] [--aplicar] [--carpeta]
+  importar url "<enlace>" [--carpeta]   Página web completa (con imágenes) o transcripción de YouTube, sin el modelo
+  importar enlaces [--reintentar]        Completa las capturas de la Bandeja que solo traen un enlace (p. ej. de Telegram)
   notebooklm cuadernos | vincular <carpeta> "<cuaderno>" | notas [--seleccion]
   notebooklm preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo> [--id]
              (--cuaderno "<título>"; tipos: infografia presentacion audio video mapa informe tabla)
@@ -209,6 +215,14 @@ export const COMANDOS = {
     },
   },
   archivar: { correr: ({ pos, vault }) => archivar(vault, pos) },
+  reorganizar: {
+    correr({ pos, op, vault }) {
+      const accion = pos.shift();
+      if (accion === 'preparar') return reorganizarPreparar(vault, op);
+      if (accion === 'aplicar') return reorganizarAplicar(vault, pos.join(' '));
+      throw Object.assign(new Error('Uso: okt reorganizar preparar [--carpeta "<área o proyecto>"] | reorganizar aplicar <plan.json>'), { codigo: 2 });
+    },
+  },
   instalar: {
     vault: false,
     correr({ pos, op }) {
@@ -223,7 +237,9 @@ export const COMANDOS = {
       const [fuente, ...ref] = pos;
       if (fuente === 'notion') return importarNotion(vault, ref.join(' '), op);
       if (fuente === 'drive') return importarDrive(vault, ref.join(' '), op);
-      throw Object.assign(new Error('Uso: okt importar notion|drive <enlace> [--seleccion …] [--aplicar]. Para NotebookLM: okt notebooklm …'), { codigo: 2 });
+      if (fuente === 'url') return importarUrl(vault, ref.join(' '), op);
+      if (fuente === 'enlaces') return importarEnlaces(vault, op);
+      throw Object.assign(new Error('Uso: okt importar notion|drive|url <enlace> [--seleccion …] [--aplicar] | importar enlaces. Para NotebookLM: okt notebooklm …'), { codigo: 2 });
     },
   },
   notebooklm: {
@@ -249,7 +265,11 @@ export const COMANDOS = {
         if (op.silencioso) return 0;
         throw Object.assign(new Error('No encontré un vault de OKT aquí ni en la configuración.'), { codigo: 1 });
       }
-      return accion === 'bajar' ? tgBajar(vault, op) : tgDescartar(vault, pos);
+      if (accion === 'descartar') return tgDescartar(vault, pos);
+      const r = await tgBajar(vault, op);
+      // --silencioso es la tarea del IDE al abrir el vault: como los hooks, deja trayendo los enlaces en segundo plano.
+      if (op.silencioso) lanzarSegundoPlano(vault);
+      return r;
     },
   },
   migrar: { correr: ({ op, vault }) => migrar(vault, op) },

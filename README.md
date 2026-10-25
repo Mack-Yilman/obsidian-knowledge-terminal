@@ -19,9 +19,10 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 |---|---|
 | «Configura mi segundo cerebro» | Te pregunta a qué te dedicas, propone tus áreas, proyectos y temas, y crea las carpetas con tu sí |
 | «Guarda esta idea: …» / «guárdalo en Cardiología» | Lo guarda en la Bandeja o directo en el área, el proyecto o el tema que digas |
-| «Procesa mi bandeja» | Ubica cada cosa en su carpeta (propone las nuevas), la ordena sin cambiar tus frases y la enlaza con tus otras notas |
+| «Procesa mi bandeja» | Ubica cada cosa en su carpeta con destino claro, marca dudas y propone áreas o proyectos nuevos (🆕) sin forzar destinos; la ordena y enlaza |
 | «Pasa a limpio esta nota» | Quita muletillas y corrige la redacción sin agregar ni resumir nada; guarda el original por si acaso |
 | «Organiza mi área de Medicina» | Agrupa sus notas en temas: Medicina → Cardiología → Síndrome coronario agudo → Infarto |
+| «Reorganiza mi cerebro» / «reorganiza mi área de …» | Prepara un mapa compacto, propone la nueva jerarquía en una tabla y la aplica con tu sí (crea temas, mueve, renombra o archiva en un solo commit) |
 | «Guarda este PDF» / «guarda este enlace» | Copia el original, crea su ficha y te ofrece compilarlo en tus notas |
 | «Importa esta base de Notion» / «trae este documento de Drive» | Lista lo que hay, tú eliges qué, y lo trae sin tocar el original |
 | «Pregúntale a mi cuaderno de la tesis…» / «crea una infografía del cuaderno X» | Usa NotebookLM y guarda el resultado en una nota |
@@ -37,7 +38,7 @@ Nada se importa ni se procesa solo, y nada se borra sin tu sí: lo terminado va 
 10 │ 🎯 Proyectos/          lo que termina: una carpeta por proyecto
    🎓 Tesis/
       🎓 Tesis.md          nota principal: objetivo, próximos pasos y el índice de su contenido
-20 │ 🧭 Areas/              lo continuo: una carpeta por área, con temas de hasta 3 niveles
+20 │ 🧭 Areas/              lo continuo: una carpeta por área, con temas anidados sin límite
    🩺 Medicina/
       🩺 Medicina.md       nota principal: sus proyectos y el índice de su contenido
       🫀 Cardiología/
@@ -52,9 +53,14 @@ AGENTS.md                 reglas del vault para cualquier agente
 
 - **Todo es carpeta:** cada área, proyecto y tema tiene una nota principal del mismo nombre con el índice
   automático de lo que contiene. Así la jerarquía se navega por enlaces, y el grafo de Obsidian la muestra.
-- **De bruto a procesado:** lo que entra se queda en la Bandeja hasta que pides procesarlo. Si una captura pasa a
-  ser la nota tal cual, se mueve; si se reescribe o se reparte en varias notas, el original queda en
-  `90 │ 🗄️ Archivo/📥 Bruto/`, enlazado desde la nota (`okt bruto limpiar` borra los viejos con tu sí).
+  Los temas se anidan sin límite de niveles. Para citar o enlazar entre áreas puedes usar `[[Nota]]` en el texto,
+  `[[Nota#Sección]]`, enlaces a párrafos con `[[Nota#^id]]` y transclusiones con `![[Nota#Sección]]`. Para no ver
+  la nota principal repetida en el explorador de Obsidian, se recomienda el plugin **Folder Notes** (ver instalación).
+- **De bruto a procesado:** lo que entra se queda en la Bandeja hasta que pides procesarlo. La Bandeja nunca fuerza
+  un destino para vaciarse: cada captura tiene destino claro (su carpeta), dudoso (con «¿?» y alternativa) o propone
+  un área o proyecto nuevo (marcado 🆕). Si una captura pasa a ser la nota tal cual, se mueve; si se reescribe o se
+  reparte en varias notas, el original queda en `90 │ 🗄️ Archivo/📥 Bruto/`, enlazado desde la nota (`okt bruto limpiar`
+  borra los viejos con tu sí).
 - **Emojis:** en notas, temas, proyectos y áreas, la IA elige uno según el tema (🫀, 🐍, 💰); en lo demás, el CLI
   pone el del tipo (📄 fuente, 🔬 artículo, 📅 diario, 📲 Telegram…). Cada nota guarda su nombre sin emoji como alias,
   así que en Obsidian puedes buscar «Infarto» y la encuentra.
@@ -75,6 +81,10 @@ AGENTS.md                 reglas del vault para cualquier agente
 
 Comprueba con `node --version` (debe decir v20 o más) y `git --version`. Si acabas de instalarlos, cierra y vuelve
 a abrir la terminal.
+
+**Herramientas opcionales (para importar enlaces sin gastar tokens):**
+- **Defuddle** (páginas web completas en Markdown con imágenes): `npm install -g defuddle`
+- **yt-dlp** (subtítulos de YouTube sin descargar el video; usa Node): `uv tool install yt-dlp`
 
 ### 2. Instalar el plugin en Claude Code
 
@@ -105,6 +115,12 @@ los conectores; puedes saltarte lo que no quieras. Más adelante puedes pedir «
 En Obsidian: **«Abrir carpeta como bóveda»** y elige la carpeta del vault. OKT ya deja configurado dónde van los
 adjuntos, las notas nuevas, el diario y las plantillas.
 
+**Folder Notes (recomendado):** la nota principal de cada área, proyecto o tema se mantiene (lleva el índice
+automático y es a la que apuntan los enlaces y el grafo, ya que Obsidian no enlaza carpetas). Para no verla
+duplicada en el explorador, se recomienda el plugin de la comunidad **Folder Notes** (de LostPaul), configurado con
+la nota *dentro* de la carpeta, el nombre `{{folder_name}}` y la opción de ocultar la nota de carpeta activada: al
+hacer clic en la carpeta se abre directamente su nota.
+
 ### 5. Respaldo (recomendado)
 
 Agrega la carpeta del vault a **Google Drive para escritorio** (Preferencias → Mi PC → Agregar carpeta → «Hacer copia
@@ -118,6 +134,8 @@ no lo edites desde la web de Drive ni desde otra PC a la vez. El vault **no** se
 | NotebookLM | Primero `uv` ([docs.astral.sh/uv](https://docs.astral.sh/uv/)), luego `uv tool install notebooklm-mcp-cli` | `nlm login` |
 | Notion | `npm install -g ntn` | `ntn login` |
 | Google Docs y Drive | `npm install -g @googleworkspace/cli` | `gws auth login` |
+| Páginas web (Defuddle) | `npm install -g defuddle` | — |
+| YouTube (yt-dlp) | `uv tool install yt-dlp` | — |
 
 La guía de NotebookLM está en [skills/notebooklm/references/instalacion.md](skills/notebooklm/references/instalacion.md).
 
@@ -204,6 +222,16 @@ node "<ruta>/scripts/okt.mjs" estado                                 # áreas, p
 node "<ruta>/scripts/okt.mjs" tema nuevo "Medicina/🫀 Cardiología"    # una carpeta de tema
 ```
 
+Comandos principales de importación y reorganización:
+- `okt importar url "<enlace>" [--carpeta <destino>]`: detecta el tipo e importa sin gastar tokens:
+  - **Web:** con **Defuddle** descarga la página completa en Markdown y sus imágenes (hasta 40) en `99 │ ⚙️ Sistema/📎 adjuntos/🌐 web/` (como `![[imagen]]`). Crea la nota `🌐 <título>` con `url`, `autor` y `publicado`.
+  - **YouTube:** con **yt-dlp** (usa Node) extrae solo los subtítulos (manuales antes que automáticos y en idioma original). El video **no se descarga**: la nota `▶️ <título>` incrusta el reproductor arriba (`![](url)`, nativo en Obsidian) y contiene la transcripción en bruto por capítulos o en párrafos de un minuto con marcas de tiempo enlazadas. Si no tiene subtítulos, avisa y sugiere NotebookLM.
+  - **Drive:** pasa por `okt importar drive`. Los videos de Drive **no se descargan**: se muestran con el reproductor de Drive (`<iframe>` de `/preview`) y un enlace «▶️ Abrir en Drive» (si es privado, el reproductor puede pedir iniciar sesión dentro de Obsidian; el enlace lo abre en el navegador). Docs, PDF e imágenes siguen igual.
+  Sin `--carpeta`, la nota va a la Bandeja como captura; con `--carpeta`, queda como fuente en esa carpeta. Reimportar el mismo enlace actualiza la nota entre las marcas `okt`.
+- `okt importar enlaces [--reintentar]`: completa en su lugar las capturas de la Bandeja que solo traen un enlace (las que llegan de Telegram). Si una falla, queda con la propiedad `importar_error` y no se reintenta sola; `--reintentar` la vuelve a intentar.
+- `okt reorganizar preparar [--carpeta "<área o proyecto>"]`: genera un mapa compacto (el árbol y, por nota, su tipo, su resumen y sus enlaces de entrada y salida, sin el texto) para que la IA proponga la jerarquía nueva gastando pocos tokens.
+- `okt reorganizar aplicar <plan.json>`: valida el plan entero antes de tocar nada (si algo no cuadra, no cambia nada), aplica en orden las operaciones `tema`, `mover`, `renombrar` y `archivar`, hace un solo commit y responde con el comando `git revert` para deshacerlo.
+
 `--carpeta` acepta la ruta desde un área o un proyecto, sin la carpeta raíz ni los emojis (`"Medicina/Cardiología"`,
 `"Tesis"`), así no tienes que escribir `│` ni emojis.
 
@@ -230,7 +258,7 @@ vault permanece siempre en la PC y baja el contenido a pedido o al empezar a tra
 |---|---|---|
 | Texto o `/nota <texto>` | encola `tipo: nota` | `00 │ 📥 Bandeja/📲 AAAA-MM-DD HHmm <primeras palabras>.md` |
 | Nota de voz o audio (≤ 10 min) | transcribe con Whisper de Workers AI (`@cf/openai/whisper-large-v3-turbo`, en español) y encola `tipo: voz` con el texto. El audio no se guarda. Si la transcripción falla, no encola y pide reenviar | captura con la transcripción, marcada como automática (pide «pásala a limpio» para corregirla) |
-| Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | captura «pendiente de ingerir» con la url, para la skill `capturar` |
+| Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | captura en la Bandeja con la url; se completa en segundo plano al abrir el vault |
 | Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/` y una captura con `![[archivo]]` y la leyenda |
 | `/tarea <texto>` (o `/tarea` sola: el bot pregunta y toma el siguiente mensaje) | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`50 │ 📅 Diario/📅 AAAA-MM-DD.md`) |
 | `/estado`, `/start`, `/ayuda` | responde en Telegram (cuántos elementos esperan o ayuda) | — |
@@ -263,7 +291,10 @@ Agregar carpeta → «Hacer copia de seguridad»), o usa otro servicio. El vault
 En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
 - **Al iniciar** dentro del vault, carga el resumen `99 │ ⚙️ Sistema/🔥 hot.md` (proyectos en foco, actividad,
   pendientes y aprendizajes) y, si Telegram está configurado, baja la cola del bot (tope de 10 s; nunca frena la
-  sesión).
+  sesión). Si hay capturas con enlaces pendientes en la Bandeja (las que llegan de Telegram),
+  se traen en un proceso aparte en segundo plano sin demorar la sesión: páginas web con Defuddle (Markdown e imágenes),
+  subtítulos de YouTube con yt-dlp y enlaces de Drive con `gws` (los videos, sin descargarlos). Al decir «procesa mi bandeja», el contenido ya
+  está listo y la IA solo lo ordena (y lo pasa a limpio si el usuario lo pide).
 - **Al cerrar** una sesión en otro proyecto, anota una ficha en la Bandeja con el proyecto, los commits y los
   archivos tocados. Nunca copia el contenido de los archivos.
 
@@ -298,7 +329,6 @@ Lo que guarda Claude lo encuentra Antigravity, y al revés.
 | En Antigravity no aparece el aviso de Telegram ni el resumen | Repite `okt instalar antigravity --aplicar`; en el IDE, permite las tareas automáticas; `okt doctor` lo comprueba |
 | Telegram: «El Worker rechazó el token» | Repite `okt telegram config --url … --token …` con el `OKT_TOKEN` del Worker |
 | Un enlace `[[Anemia]]` sale roto | La nota se llama con su emoji (`[[🩸 Anemia]]`); `okt lint` sugiere el nombre correcto |
-| «… ya tiene 3 niveles de tema» | Reorganiza esa rama en vez de anidar más: pide «organiza mi área de …» |
 | EPERM al escribir en Windows | Ya está resuelto desde la 0.1.1 (archivos ocultos de Obsidian); si vuelve a pasar, abre un issue |
 
 ## Proyectos relacionados

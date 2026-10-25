@@ -88,7 +88,7 @@ test('nota nueva proyecto y área crean su carpeta con su emoji temático; diari
   v.borrar();
 });
 
-test('tema nuevo: carpetas de hasta 3 niveles con su nota principal; una nota que crece pasa a ser tema', () => {
+test('tema nuevo: carpetas anidadas sin límite, con su nota principal; una nota que crece pasa a ser tema', () => {
   const v = vaultNuevo();
   let r = v.okt(['tema', 'nuevo', 'Medicina/🫀 Cardiología']);
   assert.equal(r.codigo, 0, r.error);
@@ -104,10 +104,14 @@ test('tema nuevo: carpetas de hasta 3 niveles con su nota principal; una nota qu
   const ima = leer(v, `${sca}/🫀 Infarto agudo de miocardio/🫀 Infarto agudo de miocardio.md`);
   assert.match(ima, /tipo: tema/);
   assert.match(ima, /Mi texto\./, 'conserva su contenido');
-  // Un cuarto nivel se rechaza: se reorganiza la rama en vez de anidar.
-  r = v.okt(['tema', 'nuevo', 'Medicina/Cardiología/Síndrome coronario agudo/Infarto agudo de miocardio/Diagnóstico']);
-  assert.equal(r.codigo, 2);
-  assert.match(r.error, /máximo es 3/);
+  // Sin límite de niveles (0.5.0): un cuarto y un quinto nivel, como Curso → Módulo → Clase → …
+  r = v.okt(['tema', 'nuevo', 'Medicina/Cardiología/Síndrome coronario agudo/Infarto agudo de miocardio/🔎 Diagnóstico']);
+  assert.equal(r.codigo, 0, r.error);
+  r = v.okt(['tema', 'nuevo', 'Medicina/Cardiología/Síndrome coronario agudo/Infarto agudo de miocardio/Diagnóstico/🧪 Troponina']);
+  assert.equal(r.codigo, 0, r.error);
+  r = v.okt(['nota', 'nueva', 'nota', '📈 Curva de troponina', '--carpeta', 'Medicina/Cardiología/Síndrome coronario agudo/Infarto agudo de miocardio/Diagnóstico/Troponina']);
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(v.vault, `${sca}/🫀 Infarto agudo de miocardio/🔎 Diagnóstico/🧪 Troponina/📈 Curva de troponina.md`)));
   v.borrar();
 });
 

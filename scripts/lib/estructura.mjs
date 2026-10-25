@@ -2,8 +2,8 @@
 // las rutas; ningún otro módulo escribe «00 │ 📥 Bandeja» a mano. El separador es U+2502 («│»): la barra «|»
 // está prohibida en los nombres de Windows y en Obsidian separa el alias de un enlace.
 //
-// Versión 3 (OKT 0.4.0): el conocimiento vive dentro de cada área y cada proyecto, en carpetas de tema de hasta
-// 3 niveles (Área → Rama → Grupo → nota). Cada área, proyecto y tema es una carpeta con una nota principal del
+// Versión 3 (OKT 0.4.0): el conocimiento vive dentro de cada área y cada proyecto, en carpetas de tema anidadas
+// tantas veces como pida el dominio (Área → Rama → Grupo → … → nota; sin límite desde la 0.5.0). Cada área, proyecto y tema es una carpeta con una nota principal del
 // mismo nombre, que lleva el índice automático de lo que contiene.
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -31,9 +31,6 @@ export const R = {
   indice: `${C.sistema}/🗂️ indice.md`,
 };
 
-// Niveles de tema que se permiten debajo de un área o un proyecto (Rama → Grupo → nota que creció).
-export const MAX_NIVELES_TEMA = 3;
-
 // Subcarpetas de adjuntos por origen.
 export const ADJUNTOS = {
   pdf: '📕 pdf',
@@ -45,6 +42,7 @@ export const ADJUNTOS = {
   drive: '☁️ drive',
   telegram: '📲 telegram',
   notebooklm: '🤖 notebooklm',
+  web: '🌐 web',
   otros: '📁 otros',
 };
 
@@ -69,6 +67,8 @@ export const EMOJI = {
   notion: '🗒️',
   drive: '☁️',
   notebooklm: '🤖',
+  web: '🌐',
+  youtube: '▶️',
   bruto: '📥',
   sistema: '⚙️',
   concepto: '💡',

@@ -6,12 +6,12 @@
 //   okt bruto guardar "<nota>"                           copia el original a Bruto antes de reescribirla
 //   okt bruto limpiar [--dias 90] [--aplicar]            borra los originales viejos (solo con --aplicar)
 // Nada se borra sin --aplicar, y los originales en bruto quedan enlazados desde la propiedad «bruto».
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, readdirSync, statSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, statSync, rmSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { listarNotas, leerNota, mismasNotas, esSistema } from './vault.mjs';
 import { sobrescribir, posix } from './rutas.mjs';
-import { C, R, MAX_NIVELES_TEMA, conEmoji, ubicar } from './estructura.mjs';
+import { C, R, conEmoji, ubicar } from './estructura.mjs';
 import { limpiarNombre, sinEmoji, nombreValido } from './nombres.mjs';
 import { fechaISO, diasEntre } from './fechas.mjs';
 import { carpetaDeDestino, wiki } from './notas.mjs';
@@ -38,13 +38,6 @@ export function encontrarNota(vault, ref, { dentro } = {}) {
 }
 
 const esPrincipal = (rel) => basename(dirname(rel)) === basename(rel, '.md');
-
-// Profundidad de carpetas debajo de una carpeta (0 si no tiene subcarpetas).
-function profundidad(abs) {
-  let max = 0;
-  for (const e of readdirSync(abs, { withFileTypes: true })) if (e.isDirectory() && !e.name.startsWith('.')) max = Math.max(max, 1 + profundidad(join(abs, e.name)));
-  return max;
-}
 
 // ---------- okt tema nuevo ----------
 
@@ -94,8 +87,6 @@ export function mover(vault, ref, destinoPedido) {
   const origen = conCarpeta ? dirname(rel) : rel;
   const carpeta = carpetaDeDestino(vault, destinoPedido, { propia: conCarpeta });
   if (conCarpeta) {
-    const extra = profundidad(join(vault, origen));
-    if (ubicar(`${carpeta}/x.md`).niveles + 1 + extra > MAX_NIVELES_TEMA) throw errorUso(`El tema tiene ${extra} niveles dentro: en «${carpeta}» pasaría de ${MAX_NIVELES_TEMA}. Elige una carpeta más arriba.`);
     if (carpeta === origen || carpeta.startsWith(`${origen}/`)) throw errorUso('Un tema no se mueve dentro de sí mismo.');
   }
   const destino = `${carpeta}/${basename(origen)}`;
