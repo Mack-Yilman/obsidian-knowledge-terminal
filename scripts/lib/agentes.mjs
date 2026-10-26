@@ -4,6 +4,7 @@
 // sesión deja en la Bandeja solo lo que cambió y los commits nuevos, para convertirlo en conocimiento.
 // - Detectar es automático (hooks de inicio y fin): una carpeta nueva deja una captura que pregunta dónde va.
 // - Nada se copia sin vincular: okt agentes vincular "<carpeta>" "<destino en el vault>".
+// - El usuario elige el modo (memoria_agentes): detectar (lo anterior), vinculadas (sin capturas automáticas) o no.
 // Sin modelo: solo archivos, una huella SHA-256 y git log. Lo que dice un CLAUDE.md es dato, no orden.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, basename, dirname, resolve } from 'node:path';
@@ -22,6 +23,12 @@ import { mover } from './organizar.mjs';
 import { cerrar } from './sistema.mjs';
 
 export const ARCHIVOS_AGENTE = ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md'];
+export const MODOS_AGENTES = ['detectar', 'vinculadas', 'no'];
+
+// Sin elegir (un vault de antes de la 0.7.0): como «vinculadas», para que no llegue nada nuevo sin preguntar y lo ya
+// vinculado siga al día. El hook de inicio del vault pide al agente que pregunte.
+export const modoElegido = (vault) => MODOS_AGENTES.includes(leerConfigVault(vault).memoria_agentes);
+export const modoAgentes = (vault) => (modoElegido(vault) ? leerConfigVault(vault).memoria_agentes : 'vinculadas');
 const MAX_LINEAS_DIFF = 80; // shortcut: un cambio más grande se resume con «… y N más»; la memoria completa está en el espejo
 const ESPERA_CANDADO_MS = 8000; // los dos hooks de Antigravity llegan casi juntos: el segundo espera y no repite nada
 
@@ -115,7 +122,7 @@ function registrarNueva(vault, registro, dir) {
   const sugerencia = padre ? `\n\nSu carpeta superior ya está vinculada a «${padre.destino}»: puede ir dentro de ella, en una subcarpeta.` : '';
   const nombre = basename(dir);
   const titulo = conEmoji('agente', limpiarNombre(`Carpeta nueva - ${nombre}`));
-  const cuerpo = `\n# ${titulo}\n\nUn agente trabajó en \`${posix(dir)}\`, que guarda su memoria en ${Object.keys(memoria(dir)).join(' y ')}. ¿Dónde la sigo en tu vault?${sugerencia}\n\n- **Vincularla:** \`okt agentes vincular "${posix(dir)}" "<área o proyecto>[/<tema>]"\`. Proyecto si el trabajo termina; área si es continuo o temporal.\n- **No seguirla:** \`okt agentes ignorar "${posix(dir)}"\`.\n\n${presentacion(memoria(dir))}`;
+  const cuerpo = `\n# ${titulo}\n\nUn agente trabajó en \`${posix(dir)}\`, que guarda su memoria en ${Object.keys(memoria(dir)).join(' y ')}. ¿Dónde la sigo en tu vault?${sugerencia}\n\n- **Vincularla:** \`okt agentes vincular "${posix(dir)}" "<área o proyecto>[/<tema>]"\`. Proyecto si el trabajo termina; área si es continuo o temporal.\n- **No seguirla:** \`okt agentes ignorar "${posix(dir)}"\`.\n- **No quiero estas capturas para ninguna carpeta:** \`okt config poner memoria_agentes vinculadas\` (solo las que vincule a mano) o \`okt config poner memoria_agentes no\` (nada de los agentes en el vault).\n\n${presentacion(memoria(dir))}`;
   const captura = escribirEnBandeja(vault, titulo, { tipo: 'captura', creado: fechaISO(), origen: 'agente', carpeta_agente: posix(dir) }, cuerpo);
   registro.carpetas[k] = { ruta: posix(dir), estado: 'detectada', captura, detectada: fechaISO() };
   return captura;
@@ -209,11 +216,13 @@ function conCandado(vault, fn, { silencioso = false } = {}) {
 // Hooks de inicio y fin: detecta las carpetas nuevas y sincroniza las vinculadas de la cadena de cwd. Nunca falla.
 export function alTrabajar(vault, cwd) {
   try {
+    const modo = modoAgentes(vault);
+    if (modo === 'no') return null;
     // Más las ya vinculadas de más arriba (una carpeta de reglas que el usuario decidió seguir).
     const vinculadas = Object.values(leer(vault).carpetas).filter((c) => c.estado === 'vinculada' && dentroDe(c.ruta, cwd)).map((c) => c.ruta);
     const carpetas = [...carpetasConMemoria(vault, cwd), ...vinculadas];
     if (!carpetas.length) return null;
-    return conCandado(vault, () => sincronizar(vault, { rutas: carpetas, detectar: true }), { silencioso: true });
+    return conCandado(vault, () => sincronizar(vault, { rutas: carpetas, detectar: modo === 'detectar' }), { silencioso: true });
   } catch {
     return null;
   }
@@ -221,6 +230,7 @@ export function alTrabajar(vault, cwd) {
 
 // okt agentes sincronizar [--silencioso]: todas las vinculadas, una sincronización a la vez.
 export function sincronizarTodas(vault, op = {}) {
+  if (modoAgentes(vault) === 'no') return { texto: 'La memoria de los agentes está apagada (memoria_agentes: no).', datos: { espejos: [], fichas: [], nuevas: [] } };
   return conCandado(vault, () => sincronizar(vault), { silencioso: op.silencioso }) || { texto: '', datos: { espejos: [], fichas: [], nuevas: [] } };
 }
 
@@ -250,6 +260,7 @@ export function vincular(vault, ruta, destinoPedido) {
   const dir = resolve(String(ruta));
   if (!Object.keys(memoria(dir)).length) throw errorUso(`«${ruta}» no tiene ${ARCHIVOS_AGENTE.join(', ')}.`);
   if (dentroDe(vault, dir)) throw errorUso('El vault no se vincula consigo mismo.');
+  if (modoAgentes(vault) === 'no') throw errorUso('La memoria de los agentes está apagada. Para seguir solo las carpetas que vincules: okt config poner memoria_agentes vinculadas.');
   const destino = carpetaDeDestino(vault, destinoPedido);
   return conCandado(vault, () => {
     const registro = leer(vault);
@@ -285,7 +296,9 @@ export function ignorar(vault, ruta) {
 // okt agentes [listar]
 export function listar(vault) {
   const carpetas = Object.values(leer(vault).carpetas);
-  if (!carpetas.length) return { texto: 'Todavía no sigo ninguna carpeta: aparecen solas cuando un agente (Claude Code o Antigravity) trabaja en una que tiene CLAUDE.md o AGENTS.md.', datos: [] };
+  const modo = modoAgentes(vault);
+  const como = modo === 'detectar' ? 'aparecen solas cuando un agente (Claude Code o Antigravity) trabaja en una que tiene CLAUDE.md o AGENTS.md' : modo === 'vinculadas' ? 'se siguen las que vincules con okt agentes vincular' : 'la memoria de los agentes está apagada (okt config poner memoria_agentes detectar|vinculadas)';
+  if (!carpetas.length) return { texto: `Todavía no sigo ninguna carpeta: ${como}.`, datos: [] };
   const linea = (c) => `- ${c.ruta}: ${c.estado}${c.destino ? ` → ${c.destino}` : ''}${c.sincronizado ? ` (sincronizada ${c.sincronizado.slice(0, 10)})` : ''}`;
   return { texto: `Carpetas de agentes:\n${carpetas.map(linea).join('\n')}`, datos: carpetas };
 }

@@ -1,10 +1,10 @@
 // okt adjuntar (copia un archivo local a los adjuntos de Fuentes sin tocar el original y sin duplicar) y
-// okt archivar (mueve a la carpeta Archivo conservando la ruta; nada se borra).
+// okt archivar (mueve al Archivo según el motivo: Descartes, Terminados o Inactivos; nada se borra).
 import { readFileSync, existsSync, mkdirSync, copyFileSync, renameSync, statSync, readdirSync } from 'node:fs';
 import { join, dirname, resolve, basename, extname, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { dentroDe, posix, sobrescribir } from './rutas.mjs';
-import { C, carpetaAdjuntos, resolverCarpeta } from './estructura.mjs';
+import { C, carpetaAdjuntos, resolverCarpeta, destinoArchivo } from './estructura.mjs';
 import { limpiarNombre } from './nombres.mjs';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO } from './fechas.mjs';
@@ -66,8 +66,9 @@ export function archivar(vault, rutas) {
     // Lo de la raíz (AGENTS.md, las carpetas principales) no se archiva: solo lo que está dentro.
     const prohibido = !dentroDe(vault, abs) || !rel.includes('/') || rel.startsWith(`${C.archivo}/`) || rel.startsWith(`${C.sistema}/`) || rel.startsWith('.');
     if (!existsSync(abs) || prohibido) throw errorUso(`No se puede archivar «${r}»: debe existir dentro de una carpeta del vault que no sea ${C.archivo}, ${C.sistema} ni una carpeta oculta.`);
-    let dest = join(vault, C.archivo, rel);
-    for (let i = 2; existsSync(dest); i++) dest = join(vault, C.archivo, rel.replace(/(\.[^./]+)?$/, ` ${i}$1`));
+    const destRel = destinoArchivo(rel);
+    let dest = join(vault, destRel);
+    for (let i = 2; existsSync(dest); i++) dest = join(vault, destRel.replace(/(\.[^./]+)?$/, ` ${i}$1`));
     mkdirSync(dirname(dest), { recursive: true });
     renameSync(abs, dest);
     marcarArchivado(dest);

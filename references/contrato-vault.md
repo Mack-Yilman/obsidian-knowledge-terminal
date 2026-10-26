@@ -18,10 +18,10 @@ siempre; reescribe el texto del usuario solo cuando él lo pide.
    automático lo hace un script sin usar el modelo: bajar Telegram, traer el contenido de los enlaces y reflejar la
    memoria de los agentes (el `CLAUDE.md` o `AGENTS.md` de las carpetas que el usuario vinculó).
 4. **La fuente no se modifica.** Notion, Drive y NotebookLM se leen y nunca se editan. Los archivos de
-   `99 │ ⚙️ Sistema/📎 adjuntos/` no se modifican después de guardados.
-5. **Nada se borra.** Lo obsoleto se mueve a `90 │ 🗄️ Archivo/` con `okt archivar`. Borrar algo (incluidos los
+   `05 │ ⚙️ Sistema/📎 adjuntos/` no se modifican después de guardados.
+5. **Nada se borra.** Lo obsoleto se mueve a `04 │ 🗄️ Archivo/` con `okt archivar`. Borrar algo (incluidos los
    originales en bruto, con `okt bruto limpiar --aplicar`) exige un sí explícito del usuario.
-6. **Un solo escritor para el sistema.** `99 │ ⚙️ Sistema/` y `.cerebro/` los escribe solo `okt.mjs`. Las
+6. **Un solo escritor para el sistema.** `05 │ ⚙️ Sistema/` y `.cerebro/` los escribe solo `okt.mjs`. Las
    notas sí las escribe el modelo, siguiendo este contrato. Para mover o renombrar, siempre el CLI
    (`okt mover`, `okt renombrar`, `okt procesar`).
 7. **Fiel al usuario.** Al ordenar o pasar a limpio no se agregan datos, causas ni ejemplos que él no escribió.
@@ -35,11 +35,11 @@ siempre; reescribe el texto del usuario solo cuando él lo pide.
 | Carpeta | Qué va |
 |---|---|
 | `00 │ 📥 Bandeja/` | Todo lo que entra sin procesar, sin subcarpetas: notas rápidas (📝), Telegram (📲), importados (🗒️ ☁️ 🤖 🌐 ▶️), avances de los agentes (💻), carpetas de agente nuevas (🛠️) y fichas de fuentes aún sin ubicar |
-| `10 │ 🎯 Proyectos/<proyecto>/` | Lo que termina (un curso, la tesis, un viaje, un plugin): sus notas, sus fuentes y sus temas |
-| `20 │ 🧭 Areas/<área>/` | Lo continuo (salud, trabajo, finanzas, una disciplina): sus notas, sus fuentes y sus temas |
-| `50 │ 📅 Diario/` | La nota diaria (su nombre sigue `formato_diario`: `📅 2026-10-22` o `📅 22∕10∕26`) y la revisión semanal `🗓️ AAAA-Wnn` |
-| `90 │ 🗄️ Archivo/` | Lo terminado u obsoleto, con su ruta relativa, y `📥 Bruto/AAAA-MM/` con los originales ya procesados |
-| `99 │ ⚙️ Sistema/` | `🔥 hot`, `✅ pendientes`, `📜 bitacora`, `🗂️ indice` (el árbol del vault), `📎 adjuntos/<origen>/` y `🧱 plantillas/` |
+| `01 │ 🎯 Proyectos/<proyecto>/` | Lo que termina (un curso, la tesis, un viaje, un plugin): sus notas, sus fuentes y sus temas |
+| `02 │ 🧭 Areas/<área>/` | Lo continuo (salud, trabajo, finanzas, una disciplina): sus notas, sus fuentes y sus temas |
+| `03 │ 📅 Diario/` | La nota diaria (su nombre sigue `formato_diario`: `📅 2026-10-22` o `📅 22∕10∕26`) y la revisión semanal `🗓️ AAAA-Wnn` |
+| `04 │ 🗄️ Archivo/` | Por motivo: `🗑️ Descartes/` (lo de la Bandeja que no pasó a ser conocimiento), `✅ Terminados/<proyecto>/` y `💤 Inactivos/<área>/<tema>/` (y el resto, con su raíz sin número), más `📥 Bruto/AAAA-MM/` con los originales ya procesados |
+| `05 │ ⚙️ Sistema/` | `🔥 hot`, `✅ pendientes`, `📜 bitacora`, `🗂️ indice` (el árbol del vault), `📎 adjuntos/<origen>/` y `🧱 plantillas/` |
 
 **Todo es carpeta.** Cada área, proyecto y tema es una carpeta con emoji y una **nota principal del mismo nombre**
 (`🩺 Medicina/🩺 Medicina.md`). Esa nota lleva, entre marcas `okt`, el índice automático de su carpeta, y así la
@@ -49,14 +49,14 @@ jerarquía se navega por enlaces. Un proyecto dice a qué área pertenece con la
 nota. Ejemplos:
 
 ```text
-20 │ 🧭 Areas/🩺 Medicina/🫀 Cardiología/💔 Síndrome coronario agudo/🫀 Infarto agudo de miocardio.md
-20 │ 🧭 Areas/💻 Programación/🐍 Python/⚙️ Asincronía/🧵 asyncio vs hilos.md
-10 │ 🎯 Proyectos/📈 Curso de inversiones/📦 Módulo 2/🎬 Clase 3/💰 Fondos indexados.md
+02 │ 🧭 Areas/🩺 Medicina/🫀 Cardiología/💔 Síndrome coronario agudo/🫀 Infarto agudo de miocardio.md
+02 │ 🧭 Areas/💻 Programación/🐍 Python/⚙️ Asincronía/🧵 asyncio vs hilos.md
+01 │ 🎯 Proyectos/📈 Curso de inversiones/📦 Módulo 2/🎬 Clase 3/💰 Fondos indexados.md
 ```
 
 **Cómo ubicar cada nota:**
 
-1. Lee el árbol de `99 │ ⚙️ Sistema/🗂️ indice.md` (o `okt buscar`) y elige la carpeta **más profunda** que le
+1. Lee el árbol de `05 │ ⚙️ Sistema/🗂️ indice.md` (o `okt buscar`) y elige la carpeta **más profunda** que le
    corresponda. Nunca dejes una nota suelta en la raíz de un área si ya hay una rama adecuada.
 2. **Rama nueva:** si falta y es una división natural del dominio (Cardiología dentro de Medicina, Python dentro de
    Programación), propónla al usuario marcada con 🆕.
@@ -183,7 +183,7 @@ fuentes:
 editar sus frases (quitar muletillas, unir fragmentos, corregir la gramática) sin agregar nada: solo a pedido.
 `okt bruto limpiar --dias 90` lista los originales viejos; se borran solo con `--aplicar` y el sí del usuario.
 
-## 7. 99 │ ⚙️ Sistema: cómo se comunican las skills
+## 7. 05 │ ⚙️ Sistema: cómo se comunican las skills
 
 | Archivo | Para qué | Cómo se escribe |
 |---|---|---|

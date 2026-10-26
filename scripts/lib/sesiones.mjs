@@ -12,7 +12,7 @@ import { commit } from './git.mjs';
 import { actualizarAgents } from './init.mjs';
 import { bajar as bajarTelegram, leerConfigTelegram } from './telegram.mjs';
 import { lanzarSegundoPlano } from './importar-url.mjs';
-import { alTrabajar, sincronizarTodas } from './agentes.mjs';
+import { alTrabajar, sincronizarTodas, modoElegido } from './agentes.mjs';
 
 const TOPE_TELEGRAM_MS = 10000; // el hook tiene 15 s: la sesión nunca espera más que esto
 const TOPE_CONTEXTO = 9500; // Claude Code recorta en silencio lo que pase de 10 000 caracteres.
@@ -54,6 +54,8 @@ async function lineaTelegram(vault) {
   }
 }
 
+const PREGUNTA_AGENTES = 'Falta elegir qué guarda el vault de los agentes (memoria_agentes). Antes de otra cosa, pregúntale al usuario, en sus palabras: «¿Trabajas con Claude Code, Antigravity u otro agente en otras carpetas? ¿Quieres que lo que aprenden ahí (su CLAUDE.md o AGENTS.md) llegue a tu cerebro?». Opciones: «Sí, todas las carpetas» → okt config poner memoria_agentes detectar (cada carpeta nueva deja en la Bandeja una nota que pregunta dónde va); «Solo las que yo elija» → okt config poner memoria_agentes vinculadas (se siguen con «vincula esta carpeta a…»); «No» → okt config poner memoria_agentes no. Guarda su respuesta: no vuelvas a preguntar.';
+
 // Lo que se hace al empezar a trabajar en el vault, antes de leer hot.md (que esas operaciones actualizan).
 function alAbrirVault(vault) {
   let aviso = '';
@@ -64,6 +66,7 @@ function alAbrirVault(vault) {
     const { fichas, nuevas } = sincronizarTodas(vault, { silencioso: true }).datos;
     if (fichas.length || nuevas.length) aviso += `Memoria de los agentes: ${fichas.length} fichas de avance y ${nuevas.length} carpetas nuevas en la Bandeja.\n\n`;
   } catch {}
+  if (!modoElegido(vault)) aviso += `${PREGUNTA_AGENTES}\n\n`;
   return aviso;
 }
 

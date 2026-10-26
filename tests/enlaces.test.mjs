@@ -110,7 +110,7 @@ test('importar url: una web entra completa a la Bandeja, con sus imágenes desca
   assert.match(nota, /Hemoglobina baja\./);
   assert.equal((nota.match(/!\[\[Anemia - guía rápida 1\.png\]\]/g) || []).length, 2, 'la misma imagen se baja una vez');
   assert.match(nota, /!\[\[Anemia - guía rápida 2\.png\]\]/, 'una ruta relativa se resuelve contra la página');
-  assert.deepEqual(readdirSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/🌐 web')).sort(), ['Anemia - guía rápida 1.png', 'Anemia - guía rápida 2.png']);
+  assert.deepEqual(readdirSync(join(v.vault, '05 │ ⚙️ Sistema/📎 adjuntos/🌐 web')).sort(), ['Anemia - guía rápida 1.png', 'Anemia - guía rápida 2.png']);
   // Reimportar actualiza la misma nota.
   assert.match(v.run(['importar', 'url', WEB]).salida, /actualizada/);
   v.borrar();
@@ -120,7 +120,7 @@ test('importar url: YouTube incrusta el video y trae la transcripción; con --ca
   const v = preparar();
   let r = v.run(['importar', 'url', `https://youtu.be/${ID}`, '--carpeta', 'Medicina']);
   assert.equal(r.codigo, 0, r.error);
-  const nota = v.leer('20 │ 🧭 Areas/🧭 Medicina/▶️ Clase de anemia.md');
+  const nota = v.leer('02 │ 🧭 Areas/🧭 Medicina/▶️ Clase de anemia.md');
   assert.match(nota, /tipo: fuente/);
   assert.match(nota, /autor: Canal Médico/);
   assert.match(nota, new RegExp(`!\\[\\]\\(https://www.youtube.com/watch\\?v=${ID}\\)`));
@@ -201,7 +201,7 @@ test('drive: un video no se descarga; se ve con el reproductor de Drive y un enl
   const nota = v.leer('00 │ 📥 Bandeja/☁️ Clase grabada.md');
   assert.match(nota, /<iframe src="https:\/\/drive.google.com\/file\/d\/VIDEOID123456789abc\/preview"/);
   assert.match(nota, /\[▶️ Abrir en Drive\]\(https:\/\/drive.google.com\/file\/d\/VIDEOID123456789abc\/view\)/);
-  assert.ok(!existsSync(join(v.vault, '99 │ ⚙️ Sistema/📎 adjuntos/☁️ drive')), 'no baja el video');
+  assert.ok(!existsSync(join(v.vault, '05 │ ⚙️ Sistema/📎 adjuntos/☁️ drive')), 'no baja el video');
   v.borrar();
 });
 

@@ -1,4 +1,4 @@
-// De bruto a procesado: okt procesar, okt mover y los originales en 90 │ 🗄️ Archivo/📥 Bruto.
+// De bruto a procesado: okt procesar, okt mover y los originales en 04 │ 🗄️ Archivo/📥 Bruto.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import { vaultNuevo, escribir } from './ayuda.mjs';
 
 const leer = (v, rel) => readFileSync(join(v.vault, rel), 'utf8');
-const MEDICINA = '20 │ 🧭 Areas/🧭 Medicina';
-const BRUTO = '90 │ 🗄️ Archivo/📥 Bruto/2026-10';
+const MEDICINA = '02 │ 🧭 Areas/🧭 Medicina';
+const BRUTO = '04 │ 🗄️ Archivo/📥 Bruto/2026-10';
 
 function conCaptura() {
   const v = vaultNuevo();
@@ -27,7 +27,7 @@ test('procesar: la captura pasa a ser la nota en su tema, con título y propieda
   assert.match(texto, /^# 🧪 Troponina$/m);
   assert.match(texto, /la troponina sube a las 3 horas, eso dijo el profe/, 'ordenar no cambia sus frases');
   assert.equal(readdirSync(join(v.vault, '00 │ 📥 Bandeja')).length, 0);
-  assert.ok(!existsSync(join(v.vault, '90 │ 🗄️ Archivo/📥 Bruto')), 'si la captura es la nota tal cual, no queda copia en bruto');
+  assert.ok(!existsSync(join(v.vault, '04 │ 🗄️ Archivo/📥 Bruto')), 'si la captura es la nota tal cual, no queda copia en bruto');
   v.borrar();
 });
 
@@ -92,7 +92,7 @@ test('revisión de Argon: el área no pasa a ser tema, la Bandeja y el Sistema n
   v.okt(['bruto', 'guardar', '🧪 Troponina']);
   r = v.okt(['bruto', 'guardar', '🧪 Troponina'], { env: { OKT_FECHA: '2027-02-10T10:00' } });
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(v.vault, '90 │ 🗄️ Archivo/📥 Bruto/2027-02/📥 Troponina 2.md')));
+  assert.ok(existsSync(join(v.vault, '04 │ 🗄️ Archivo/📥 Bruto/2027-02/📥 Troponina 2.md')));
   assert.match(leer(v, `${MEDICINA}/🫀 Cardiología/🧪 Troponina.md`), /bruto:\n {2}- "\[\[📥 Troponina\]\]"\n {2}- "\[\[📥 Troponina 2\]\]"/);
   v.borrar();
 });

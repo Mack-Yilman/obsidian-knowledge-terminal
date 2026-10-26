@@ -35,19 +35,19 @@ Nada se importa ni se procesa solo, y nada se borra sin tu sí: lo terminado va 
 
 ```text
 00 │ 📥 Bandeja/            todo lo que entra, sin procesar (📝 notas, 📲 Telegram, 🗒️ Notion, 💻 sesiones…)
-10 │ 🎯 Proyectos/          lo que termina: una carpeta por proyecto
+01 │ 🎯 Proyectos/          lo que termina: una carpeta por proyecto
    🎓 Tesis/
       🎓 Tesis.md          nota principal: objetivo, próximos pasos y el índice de su contenido
-20 │ 🧭 Areas/              lo continuo: una carpeta por área, con temas anidados sin límite
+02 │ 🧭 Areas/              lo continuo: una carpeta por área, con temas anidados sin límite
    🩺 Medicina/
       🩺 Medicina.md       nota principal: sus proyectos y el índice de su contenido
       🫀 Cardiología/
          💔 Síndrome coronario agudo/
             🫀 Infarto agudo de miocardio.md
             📄 Guía ESC 2023.md      las fuentes van junto a lo que alimentan
-50 │ 📅 Diario/             📅 2026-10-22.md (o 📅 22∕10∕26.md) y revisiones 🗓️ 2026-W43.md
-90 │ 🗄️ Archivo/            lo terminado, y 📥 Bruto/ con los originales ya pasados a limpio
-99 │ ⚙️ Sistema/            🔥 hot · ✅ pendientes · 📜 bitácora · 🗂️ índice · 📎 adjuntos · 🧱 plantillas
+03 │ 📅 Diario/             📅 2026-10-22.md (o 📅 22∕10∕26.md) y revisiones 🗓️ 2026-W43.md
+04 │ 🗄️ Archivo/            por motivo: 🗑️ Descartes · ✅ Terminados · 💤 Inactivos · 📥 Bruto
+05 │ ⚙️ Sistema/            🔥 hot · ✅ pendientes · 📜 bitácora · 🗂️ índice · 📎 adjuntos · 🧱 plantillas
 AGENTS.md                 reglas del vault para cualquier agente
 ```
 
@@ -59,8 +59,12 @@ AGENTS.md                 reglas del vault para cualquier agente
 - **De bruto a procesado:** lo que entra se queda en la Bandeja hasta que pides procesarlo. La Bandeja nunca fuerza
   un destino para vaciarse: cada captura tiene destino claro (su carpeta), dudoso (con «¿?» y alternativa) o propone
   un área o proyecto nuevo (marcado 🆕). Si una captura pasa a ser la nota tal cual, se mueve; si se reescribe o se
-  reparte en varias notas, el original queda en `90 │ 🗄️ Archivo/📥 Bruto/`, enlazado desde la nota (`okt bruto limpiar`
-  borra los viejos con tu sí).
+  reparte en varias notas, el original queda en `04 │ 🗄️ Archivo/📥 Bruto/`, enlazado desde la nota.
+- **Archivo por motivo:** nada se borra sin tu sí. `okt archivar` ubica lo archivado según su motivo, en vez de copiar
+  la ruta completa: lo descartado de la Bandeja va a `🗑️ Descartes/` (sin subcarpetas por mes; si el nombre se repite,
+  añade « 2»), un proyecto a `✅ Terminados/<proyecto>/`, y un área o un tema a `💤 Inactivos/<área>/<tema>/` (lo demás
+  también a `💤 Inactivos/`, con su raíz sin número, como `💤 Inactivos/📅 Diario/`). Los originales en bruto ya
+  procesados quedan en `📥 Bruto/` (`okt bruto limpiar` borra los viejos con tu sí). La migración reubica lo ya archivado.
 - **Emojis:** en notas, temas, proyectos y áreas, la IA elige uno según el tema (🫀, 🐍, 💰); en lo demás, el CLI
   pone el del tipo (📄 fuente, 🔬 artículo, 📅 diario, 📲 Telegram…). Cada nota guarda su nombre sin emoji como alias,
   así que en Obsidian puedes buscar «Infarto» y la encuentra.
@@ -206,11 +210,13 @@ Abre tu agente en la carpeta del vault y prueba:
   `claude plugin update obsidian-knowledge-terminal@obsidian-knowledge-terminal`. Reinicia Claude Code.
 - **Antigravity:** después de cada actualización, repite `instalar antigravity --aplicar` (o pídeselo al agente);
   `okt doctor` avisa si la copia de Antigravity quedó en una versión anterior.
-- **Desde la 0.3 o la 0.2:** la 0.4.0 lleva el conocimiento a las áreas y los proyectos. Al abrir el vault, el agente
-  te avisa y te propone migrar. Cierra Obsidian y pide **«migra mi vault»**: `okt migrar` muestra qué cambia (qué
-  áreas pasan a ser carpetas y a dónde va cada nota) y `okt migrar --aplicar` mueve todo (nada se borra), actualiza
-  los enlaces y deja un commit que se deshace con git. Las notas que no decían su área quedan en la Bandeja, con un
-  pendiente para ubicarlas. Hasta migrar, los comandos que escriben en el vault se detienen.
+- **Desde una versión anterior (0.6 o más antigua):** la 0.7.0 numera las raíces de 00 a 05 y organiza el Archivo por
+  motivo (y, desde la 0.4.0, el conocimiento vive en áreas y proyectos). Al abrir el vault, el agente te avisa y te
+  propone migrar. Cierra Obsidian y pide **«migra mi vault»**: `okt migrar` muestra la vista previa (raíces que se
+  renombran y archivos reubicados en el Archivo) y `okt migrar --aplicar` mueve todo (nada se borra), actualiza las
+  rutas en `.obsidian`, los registros de `.cerebro/`, el texto de las notas y `AGENTS.md`, y deja un commit que se
+  deshace con git. Desde la 0.3, las notas que no decían su área quedan en la Bandeja, con un pendiente para
+  ubicarlas. Hasta migrar, los comandos que escriben en el vault se detienen.
 
 ## Usar el CLI a mano
 
@@ -225,7 +231,7 @@ node "<ruta>/scripts/okt.mjs" tema nuevo "Medicina/🫀 Cardiología"    # una c
 
 Comandos principales de importación y reorganización:
 - `okt importar url "<enlace>" [--carpeta <destino>]`: detecta el tipo e importa sin gastar tokens:
-  - **Web:** con **Defuddle** descarga la página completa en Markdown y sus imágenes (hasta 40) en `99 │ ⚙️ Sistema/📎 adjuntos/🌐 web/` (como `![[imagen]]`). Crea la nota `🌐 <título>` con `url`, `autor` y `publicado`.
+  - **Web:** con **Defuddle** descarga la página completa en Markdown y sus imágenes (hasta 40) en `05 │ ⚙️ Sistema/📎 adjuntos/🌐 web/` (como `![[imagen]]`). Crea la nota `🌐 <título>` con `url`, `autor` y `publicado`.
   - **YouTube:** con **yt-dlp** (usa Node) extrae solo los subtítulos (manuales antes que automáticos y en idioma original). El video **no se descarga**: la nota `▶️ <título>` incrusta el reproductor arriba (`![](url)`, nativo en Obsidian) y contiene la transcripción en bruto por capítulos o en párrafos de un minuto con marcas de tiempo enlazadas. Si no tiene subtítulos, avisa y sugiere NotebookLM.
   - **Drive:** pasa por `okt importar drive`. Los videos de Drive **no se descargan**: se muestran con el reproductor de Drive (`<iframe>` de `/preview`) y un enlace «▶️ Abrir en Drive» (si es privado, el reproductor puede pedir iniciar sesión dentro de Obsidian; el enlace lo abre en el navegador). Docs, PDF e imágenes siguen igual.
   Sin `--carpeta`, la nota va a la Bandeja como captura; con `--carpeta`, queda como fuente en esa carpeta. Reimportar el mismo enlace actualiza la nota entre las marcas `okt`.
@@ -260,8 +266,8 @@ vault permanece siempre en la PC y baja el contenido a pedido o al empezar a tra
 | Texto o `/nota <texto>` | encola `tipo: nota` | `00 │ 📥 Bandeja/📲 AAAA-MM-DD HHmm <primeras palabras>.md` |
 | Nota de voz o audio (≤ 10 min) | transcribe con Whisper de Workers AI (`@cf/openai/whisper-large-v3-turbo`, en español) y encola `tipo: voz` con el texto. El audio no se guarda. Si la transcripción falla, no encola y pide reenviar | captura con la transcripción, marcada como automática (pide «pásala a limpio» para corregirla) |
 | Enlace (solo, o con un comentario de hasta 12 palabras) | encola `tipo: enlace` con `url` | captura en la Bandeja con la url; se completa en segundo plano al abrir el vault |
-| Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/` y una captura con `![[archivo]]` y la leyenda |
-| `/tarea <texto>` (o `/tarea` sola: el bot pregunta y toma el siguiente mensaje) | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`50 │ 📅 Diario/📅 AAAA-MM-DD.md`) |
+| Foto o documento (PDF u otro, ≤ 20 MB) con leyenda opcional | encola `tipo: archivo` con el `file_id` de Telegram (el archivo se queda en Telegram: no hay R2) | el archivo en `05 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/` y una captura con `![[archivo]]` y la leyenda |
+| `/tarea <texto>` (o `/tarea` sola: el bot pregunta y toma el siguiente mensaje) | encola `tipo: tarea` | `- [ ] texto` bajo `## Tareas` de la nota diaria de hoy (`03 │ 📅 Diario/📅 AAAA-MM-DD.md`) |
 | `/estado`, `/start`, `/ayuda` | responde en Telegram (cuántos elementos esperan o ayuda) | — |
 
 ### Contrato de la cola
@@ -290,7 +296,7 @@ Agregar carpeta → «Hacer copia de seguridad»), o usa otro servicio. El vault
 ## Automatización (sin gastar tokens)
 
 En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
-- **Al iniciar** dentro del vault, carga el resumen `99 │ ⚙️ Sistema/🔥 hot.md` (proyectos en foco, actividad,
+- **Al iniciar** dentro del vault, carga el resumen `05 │ ⚙️ Sistema/🔥 hot.md` (proyectos en foco, actividad,
   pendientes y aprendizajes) y, si Telegram está configurado, baja la cola del bot (tope de 10 s; nunca frena la
   sesión). Si hay capturas con enlaces pendientes en la Bandeja (las que llegan de Telegram),
   se traen en un proceso aparte en segundo plano sin demorar la sesión: páginas web con Defuddle (Markdown e imágenes),
@@ -305,16 +311,29 @@ En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
 En **Antigravity**, los hooks de inicio (App y CLI) y la tarea del IDE hacen lo mismo (sección «Antigravity»).
 Antigravity no tiene un hook de cierre: lo de una sesión se recoge al empezar la siguiente o al abrir el vault.
 
-### Memoria de los agentes
+### Memoria de los agentes (opcional)
 
 El `CLAUDE.md` (o `AGENTS.md`, `GEMINI.md`) de cada carpeta donde trabajas con un agente ya guarda lo importante:
-decisiones, lo que descubriste, lo que corregiste y lo que falta. OKT lo trae a tu vault, sin usar el modelo:
+decisiones, lo que descubriste, lo que corregiste y lo que falta. OKT puede traerlo a tu vault, sin usar el modelo.
 
-1. **La primera vez** que un agente trabaja en una carpeta con esa memoria (o en una subcarpeta de ella), deja en la
-   Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla. Nada se copia hasta que respondes. Cada
-   proyecto (un plugin, una skill, un programa, una web) entra por separado: cuenta la carpeta con memoria más cercana
-   y, si abres el agente en una carpeta que agrupa proyectos, cada subcarpeta inmediata que tenga su propia memoria.
-   Las carpetas de más arriba (reglas generales) no se detectan solas; si quieres seguir una, vincúlala a mano.
+El ajuste `memoria_agentes` (`okt config poner memoria_agentes <modo>`) decide qué llega:
+
+| Modo | Carpeta nueva | Carpeta vinculada | Para quién |
+|---|---|---|---|
+| `detectar` | Deja en la Bandeja `🛠️ Carpeta nueva - <carpeta>`, que pregunta dónde va | Reflejo al día y ficha `💻` de avance por sesión | Quien programa con agentes y quiere todo |
+| `vinculadas` | Nada (sin capturas automáticas) | Reflejo al día y ficha `💻` de avance por sesión | Quien solo sigue proyectos vinculados a mano |
+| `no` | Nada | Nada (no se sincroniza ni se puede vincular) | Quien no usa agentes o no los quiere en el vault |
+
+Se elige en la entrevista inicial (6.ª pregunta, solo si usas agentes; por defecto `no`) y se puede cambiar cuando
+quieras. Un vault anterior a la 0.7.0 funciona como `vinculadas` hasta que elijas, y el hook de inicio pide al agente
+que pregunte una vez.
+
+Cómo funciona cuando está activa:
+1. **Detección o vinculación:** en modo `detectar`, la primera vez que un agente trabaja en una carpeta con esa memoria
+   (o en una subcarpeta), deja en la Bandeja `🛠️ Carpeta nueva - <nombre>`, que pregunta dónde seguirla (o si prefieres
+   no recibir más estas capturas). Nada se copia hasta que respondes. Cada proyecto entra por separado (la carpeta con
+   memoria más cercana o subcarpetas inmediatas con memoria propia); las carpetas superiores no se detectan solas, pero
+   puedes vincularlas a mano. En modo `vinculadas`, vinculas directamente con `okt agentes vincular "<carpeta>" "<destino>"`.
 2. **Al procesar la Bandeja**, la IA propone el destino: un proyecto si el trabajo termina, un área si es continuo o
    temporal, o una subcarpeta de otra ya vinculada. Con tu sí: `okt agentes vincular "<carpeta>" "<destino>"`.
 3. **Desde entonces**, la nota `🛠️ <carpeta> - memoria del agente` refleja ese archivo en su carpeta del vault, y
@@ -345,7 +364,7 @@ Lo que guarda Claude lo encuentra Antigravity, y al revés.
 | Síntoma | Qué hacer |
 |---|---|
 | «No encontré un vault de OKT aquí» | Abre el agente en la carpeta del vault (o en una subcarpeta) y vuelve a intentarlo |
-| «Este vault usa una estructura anterior a OKT 0.4.0» | Cierra Obsidian y pide «migra mi vault» (`okt migrar`, luego `--aplicar`) |
+| «Este vault usa una estructura anterior a OKT 0.7.0» | Cierra Obsidian y pide «migra mi vault» (`okt migrar`, luego `--aplicar`) |
 | El agente no ve el plugin después de instalarlo | Cierra y vuelve a abrir Claude Code |
 | «La sesión de NotebookLM venció» | `nlm login` |
 | En Antigravity no aparece el aviso de Telegram ni el resumen | Repite `okt instalar antigravity --aplicar`; en el IDE, permite las tareas automáticas; `okt doctor` lo comprueba |

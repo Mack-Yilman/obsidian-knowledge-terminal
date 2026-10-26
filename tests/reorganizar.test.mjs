@@ -4,7 +4,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { vaultNuevo, escribir } from './ayuda.mjs';
 
-const MEDICINA = '20 │ 🧭 Areas/🧭 Medicina';
+const MEDICINA = '02 │ 🧭 Areas/🧭 Medicina';
 
 function conNotas() {
   const v = vaultNuevo();

@@ -34,7 +34,7 @@ const errorUso = (m, codigo = 2) => Object.assign(new Error(m), { codigo });
 // Carpeta de destino de un tipo que vive dentro de un área, un proyecto o un tema. Comprueba que exista.
 export function carpetaDeDestino(vault, pedida, { propia = false } = {}) {
   const carpeta = resolverCarpeta(vault, pedida);
-  if (!dentroDeLaEstructura(carpeta)) throw errorUso(`No encontré «${pedida}» en el vault: usa un área, un proyecto o un tema que exista (p. ej. --carpeta "Medicina/Cardiología"). Míralos en 99 │ ⚙️ Sistema/🗂️ indice.md.`);
+  if (!dentroDeLaEstructura(carpeta)) throw errorUso(`No encontré «${pedida}» en el vault: usa un área, un proyecto o un tema que exista (p. ej. --carpeta "Medicina/Cardiología"). Míralos en 05 │ ⚙️ Sistema/🗂️ indice.md.`);
   if (!existsSync(join(vault, carpeta))) throw errorUso(`La carpeta «${carpeta}» no existe. Créala primero (okt tema nuevo "${pedida}") o elige otra.`);
   const { raiz, base } = ubicar(`${carpeta}/x.md`);
   // Solo dentro de un área o un proyecto: la Bandeja, el Diario, el Archivo y el Sistema no llevan notas ni temas aquí.
