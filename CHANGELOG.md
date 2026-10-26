@@ -1,5 +1,25 @@
 # Cambios
 
+## 0.7.0 — 2026-10-25
+
+- **Carpetas raíz correlativas (estructura v4):** pasan a ser `00 │ 📥 Bandeja`, `01 │ 🎯 Proyectos`, `02 │ 🧭 Areas`,
+  `03 │ 📅 Diario`, `04 │ 🗄️ Archivo` y `05 │ ⚙️ Sistema` (antes 00, 10, 20, 50, 90 y 99). `okt migrar` las renombra
+  y actualiza las rutas en `.obsidian` (también los marcadores y los datos de los plugins), los registros de
+  `.cerebro/`, el texto de las notas y `AGENTS.md`. Los enlaces `[[nota]]` no cambian. Si Obsidian ya creó una raíz
+  nueva, las junta sin perder nada. Mientras no se migre, los comandos que escriben se detienen.
+- **Archivo por motivo:** `okt archivar` ya no copia la ruta completa. Lo que se descarta de la Bandeja va a
+  `🗑️ Descartes/` (sin subcarpetas por mes; si el nombre se repite, « 2»), un proyecto a `✅ Terminados/<proyecto>/` y
+  un área o un tema a `💤 Inactivos/<área>/<tema>/` (lo demás también a `💤 Inactivos/`, con su raíz sin número, como
+  `💤 Inactivos/📅 Diario/`). `📥 Bruto/` no cambia. La migración reubica lo ya archivado.
+- **Memoria de los agentes opcional:** `okt config poner memoria_agentes <modo>` elige entre `detectar` (como antes:
+  una captura en la Bandeja por cada carpeta nueva y fichas de avance), `vinculadas` (sin capturas automáticas; sigue
+  solo las carpetas que vincules a mano) y `no` (nada de los agentes entra al vault; no se sincroniza ni se vincula).
+  La entrevista inicial lo pregunta (6.ª pregunta, solo si usas agentes; sin respuesta queda en `no`). Un vault
+  anterior a la 0.7.0 funciona como `vinculadas`, y el hook de inicio pide preguntarlo una vez. La captura «Carpeta
+  nueva» trae una opción para no recibir estas capturas en ninguna carpeta.
+- **Para actualizar:** cierra Obsidian y corre `okt migrar` (vista previa) y `okt migrar --aplicar` (hace commit: se
+  deshace con git).
+
 ## 0.6.2 — 2026-10-24
 
 - **Videos de YouTube en español, transcritos en español.** Un video con idioma `es-US` y doblaje automático al inglés

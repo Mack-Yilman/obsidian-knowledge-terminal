@@ -91,12 +91,12 @@ test('bajar escribe cada tipo en su lugar y confirma todo', async () => {
     assert.match(enlace, /url: https:\/\/www.youtube.com\/watch\?v=abc/);
     assert.match(enlace, /okt importar enlaces/);
 
-    assert.equal(readFileSync(join(t.vault, '99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
+    assert.equal(readFileSync(join(t.vault, '05 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/foto.jpg'), 'utf8'), 'JPEGDATA');
     const archivo = t.leer(`00 │ 📥 Bandeja/${notas.find((n) => /Pizarra/.test(n))}`);
     assert.match(archivo, /adjunto: "\[\[foto.jpg\]\]"/);
     assert.match(archivo, /!\[\[foto.jpg\]\]/);
 
-    assert.match(t.leer('50 │ 📅 Diario/📅 2026-10-22.md'), /## Tareas\n\n- \[ \] Comprar el libro de fisiología/);
+    assert.match(t.leer('03 │ 📅 Diario/📅 2026-10-22.md'), /## Tareas\n\n- \[ \] Comprar el libro de fisiología/);
     assert.equal(notas.length, 4);
   } finally {
     await t.fin();
@@ -135,7 +135,7 @@ test('no filtra el contenido: DNI, nombres y archivos con nombres se escriben (y
     assert.equal(r.datos.escritos.length, 3);
     assert.equal(r.datos.retenidos, undefined);
     assert.deepEqual(t.cola.estado.confirmados.sort(), ['c1', 'c2', 'c3']);
-    assert.ok(existsSync(join(t.vault, '99 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/Paciente Juan Perez - HC 45892.pdf')));
+    assert.ok(existsSync(join(t.vault, '05 │ ⚙️ Sistema/📎 adjuntos/📲 telegram/Paciente Juan Perez - HC 45892.pdf')));
     assert.doesNotMatch(readFileSync(join(t.vault, '.cerebro', 'telegram.json'), 'utf8'), /retenidos/);
     assert.ok(t.bandeja().some((n) => /DNI 45879632/.test(n)));
   } finally {
@@ -325,15 +325,15 @@ test('agregarTarea usa la línea vacía de la plantilla o crea la sección', () 
   const v = vaultNuevo();
   process.env.OKT_CONFIG_DIR = v.configDir;
   try {
-    escribir(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md', '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n\n## Tareas\n\n- [ ] \n\n## Lo que aprendí\n');
+    escribir(v.vault, '03 │ 📅 Diario/📅 2026-10-22.md', '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n\n## Tareas\n\n- [ ] \n\n## Lo que aprendí\n');
     agregarTarea(v.vault, 'Primera');
     agregarTarea(v.vault, 'Segunda');
-    const diaria = readFileSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md'), 'utf8');
+    const diaria = readFileSync(join(v.vault, '03 │ 📅 Diario/📅 2026-10-22.md'), 'utf8');
     assert.match(diaria, /## Tareas\n\n- \[ \] Primera\n- \[ \] Segunda\n\n## Lo que aprendí/);
 
-    writeFileSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md'), '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n');
+    writeFileSync(join(v.vault, '03 │ 📅 Diario/📅 2026-10-22.md'), '---\ntipo: diario\ncreado: 2026-10-22\n---\n\n# 2026-10-22\n');
     agregarTarea(v.vault, 'Sin sección');
-    assert.match(readFileSync(join(v.vault, '50 │ 📅 Diario/📅 2026-10-22.md'), 'utf8'), /## Tareas\n\n- \[ \] Sin sección\n$/);
+    assert.match(readFileSync(join(v.vault, '03 │ 📅 Diario/📅 2026-10-22.md'), 'utf8'), /## Tareas\n\n- \[ \] Sin sección\n$/);
   } finally {
     v.borrar();
   }

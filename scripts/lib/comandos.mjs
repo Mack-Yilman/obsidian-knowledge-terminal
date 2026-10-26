@@ -7,7 +7,7 @@ import { commit } from './git.mjs';
 import { buscar } from './buscar.mjs';
 import { lint } from './lint.mjs';
 import { hookInicio, hookInicioAntigravity, hookFin } from './sesiones.mjs';
-import { listar as agentesListar, sincronizarTodas, vincular, ignorar } from './agentes.mjs';
+import { listar as agentesListar, sincronizarTodas, vincular, ignorar, MODOS_AGENTES } from './agentes.mjs';
 import { preparar } from './bandeja.mjs';
 import { adjuntar, archivar } from './archivos.mjs';
 import { existsSync, readFileSync } from 'node:fs';
@@ -45,7 +45,8 @@ Configuración
   estado                                 Áreas, proyectos, bandeja, pendientes y última actividad
   config [excluir|incluir <proyecto>]    Ver o cambiar la configuración del vault
   config poner <clave> <valor>           perfil, frescura_dias, delegar (agy|ninguno), respaldo,
-                                         formato_diario (AAAA-MM-DD | DD/MM/YY)
+                                         formato_diario (AAAA-MM-DD | DD/MM/YY),
+                                         memoria_agentes (detectar | vinculadas | no)
   instalar antigravity [--aplicar]       Copia el plugin y las skills a Antigravity, con sus hooks y la tarea del IDE
   instalar obsidian-skills [--aplicar]   Skills de formato de Obsidian (kepano) para Antigravity
   migrar [--aplicar]                     Pasa un vault de una versión anterior a la estructura actual (sin --aplicar: vista previa)
@@ -55,7 +56,8 @@ Configuración
   nota nueva proyecto "<emoji> <nombre>" [--area "<área>"]   Proyecto (lo que termina)
   tema nuevo "<área o proyecto>/<tema>[/<tema>]"   Carpeta de tema con su nota principal
   mover "<nota o tema>" "<carpeta>"      Mueve una nota o un tema entero (los enlaces no cambian)
-  archivar "<ruta>" […]                  Mueve a la carpeta Archivo (nada se borra)
+  archivar "<ruta>" […]                  Mueve al Archivo según el motivo: 🗑️ Descartes (Bandeja), ✅ Terminados
+                                         (proyectos) o 💤 Inactivos (lo demás). Nada se borra
   reorganizar preparar [--carpeta "<área o proyecto>"]   Mapa compacto (árbol, resúmenes y enlaces) para rejerarquizar
   reorganizar aplicar <plan.json>        Aplica el plan aprobado (temas, mover, renombrar, archivar) en un solo commit
 
@@ -189,9 +191,10 @@ export const COMANDOS = {
       }
       if (accion === 'poner') {
         const [clave, ...valor] = resto;
-        const permitidas = { perfil: (v) => v.trim() || null, frescura_dias: Number, delegar: (v) => (v === 'ninguno' ? null : v), respaldo: (v) => v, formato_diario: (v) => v };
+        const permitidas = { perfil: (v) => v.trim() || null, frescura_dias: Number, delegar: (v) => (v === 'ninguno' ? null : v), respaldo: (v) => v, formato_diario: (v) => v, memoria_agentes: (v) => v };
         if (!permitidas[clave]) throw Object.assign(new Error(`Claves que se pueden cambiar: ${Object.keys(permitidas).join(', ')}`), { codigo: 2 });
         if (clave === 'formato_diario' && !FORMATOS_DIARIO[valor.join(' ')]) throw Object.assign(new Error(`Formatos de la nota diaria: ${Object.keys(FORMATOS_DIARIO).join(', ')}`), { codigo: 2 });
+        if (clave === 'memoria_agentes' && !MODOS_AGENTES.includes(valor.join(' '))) throw Object.assign(new Error(`Modos de la memoria de los agentes: ${MODOS_AGENTES.join(', ')}`), { codigo: 2 });
         guardarConfigVault(vault, { [clave]: permitidas[clave](valor.join(' ')) });
         if (clave === 'perfil') actualizarAgents(vault);
         // El botón «Nota diaria» de Obsidian usa el mismo nombre que OKT: si no, habría dos notas por día.

@@ -38,9 +38,15 @@ const capturas = (v, prefijo) => {
   return existsSync(d) ? readdirSync(d).filter((n) => n.startsWith(prefijo)) : [];
 };
 const fin = (v, cwd) => v.okt(['hook', 'fin'], { cwd, input: JSON.stringify({ cwd, session_id: 's' }) });
+// La detección automática de carpetas nuevas es el modo «detectar»: sin elegir, el vault solo sigue las vinculadas.
+const conDeteccion = () => {
+  const v = vaultNuevo();
+  v.okt(['config', 'poner', 'memoria_agentes', 'detectar']);
+  return v;
+};
 
 test('memoria de agentes: una carpeta con CLAUDE.md pregunta una sola vez dónde va; sin memoria, excluida o el vault, nada', () => {
-  const v = vaultNuevo();
+  const v = conDeteccion();
   const proyecto = proyectoGit(v.dir, 'mi-plugin');
   memoriaDe(proyecto, '# Mi plugin\n\n## Qué es\n\nUn plugin de prueba.\n');
   let r = v.okt(['hook', 'inicio'], { cwd: proyecto, input: JSON.stringify({ cwd: proyecto, session_id: 'a' }) });
@@ -75,7 +81,7 @@ test('memoria de agentes: vincular crea el espejo en su carpeta; cada sesión de
   v.okt(['nota', 'nueva', 'proyecto', '🧩 Plugins', '--area', 'Medicina']);
   let r = v.okt(['agentes', 'vincular', proyecto, 'Plugins']);
   assert.equal(r.codigo, 0, r.error);
-  const espejo = '10 │ 🎯 Proyectos/🧩 Plugins/🛠️ mi-plugin - memoria del agente.md';
+  const espejo = '01 │ 🎯 Proyectos/🧩 Plugins/🛠️ mi-plugin - memoria del agente.md';
   const textoEspejo = readFileSync(join(v.vault, espejo), 'utf8');
   assert.match(textoEspejo, /tipo: fuente/);
   assert.match(textoEspejo, /Usar Edit con CRLF/);
@@ -106,7 +112,7 @@ test('memoria de agentes: vincular crea el espejo en su carpeta; cada sesión de
   // Volver a vincular a otro destino mueve el espejo y conserva lo ya visto.
   r = v.okt(['agentes', 'vincular', proyecto, 'Medicina']);
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(v.vault, '20 │ 🧭 Areas/🧭 Medicina/🛠️ mi-plugin - memoria del agente.md')));
+  assert.ok(existsSync(join(v.vault, '02 │ 🧭 Areas/🧭 Medicina/🛠️ mi-plugin - memoria del agente.md')));
   assert.ok(!existsSync(join(v.vault, espejo)));
   fin(v, proyecto);
   assert.equal(capturas(v, '💻').length, 1);
@@ -114,7 +120,7 @@ test('memoria de agentes: vincular crea el espejo en su carpeta; cada sesión de
 });
 
 test('memoria de agentes: cuenta el proyecto más cercano y las subcarpetas con memoria, no las reglas de más arriba; ignorar no vuelve a preguntar', async () => {
-  const v = vaultNuevo();
+  const v = conDeteccion();
   memoriaDe(v.dir, '# Reglas de todos los proyectos\n');
   const padre = join(v.dir, 'Plugins');
   memoriaDe(padre, '# Reglas de todos los plugins\n');
@@ -152,19 +158,52 @@ test('memoria de agentes: cuenta el proyecto más cercano y las subcarpetas con 
   memoriaDe(padre, '# Reglas de todos los plugins\n\n- No apilar PR.\n');
   fin(v, hijo);
   assert.equal(capturas(v, '💻').length, 1, 'el cambio de la carpeta vinculada de arriba deja su ficha');
-  assert.match(v.okt(['agentes']).salida, /okt-telegram: ignorada[\s\S]*Plugins: vinculada → 20 │ 🧭 Areas\/🧭 Medicina\/💻 Desarrollo/);
+  assert.match(v.okt(['agentes']).salida, /okt-telegram: ignorada[\s\S]*Plugins: vinculada → 02 │ 🧭 Areas\/🧭 Medicina\/💻 Desarrollo/);
   r = v.okt(['agentes', 'vincular', join(v.dir, 'no-existe'), 'Medicina']);
   assert.equal(r.codigo, 2);
   v.borrar();
 });
 
 test('memoria de agentes: el hook de Antigravity detecta las carpetas abiertas fuera del vault', () => {
-  const v = vaultNuevo();
+  const v = conDeteccion();
   const proyecto = proyectoGit(v.dir, 'tesis');
   memoriaDe(proyecto, '# Tesis\n');
   const r = v.okt(['hook', 'inicio', '--formato', 'antigravity'], { input: JSON.stringify({ workspacePaths: [proyecto], conversationId: 'c1' }) });
   assert.equal(r.salida, '{}');
   assert.deepEqual(capturas(v, '🛠️'), ['🛠️ Carpeta nueva - tesis.md']);
+  v.borrar();
+});
+
+test('memoria de agentes: sin elegir el modo se pregunta y no llega nada; «vinculadas» sigue solo lo vinculado; «no» apaga todo', () => {
+  const v = vaultNuevo();
+  const proyecto = proyectoGit(v.dir, 'app');
+  memoriaDe(proyecto, '# App\n\nUna app.\n');
+  const inicioVault = () => v.okt(['hook', 'inicio'], { input: JSON.stringify({ cwd: v.vault, session_id: 's' }) }).salida;
+  // Sin elegir: el hook del vault pide preguntar, y una carpeta nueva no deja captura.
+  assert.match(inicioVault(), /Falta elegir qué guarda el vault de los agentes[\s\S]*memoria_agentes vinculadas/);
+  fin(v, proyecto);
+  assert.deepEqual(capturas(v, '🛠️'), []);
+  assert.match(v.okt(['agentes']).salida, /se siguen las que vincules/);
+  // vinculadas: vincular a mano funciona y la sesión deja su avance; ya no se pregunta.
+  assert.equal(v.okt(['config', 'poner', 'memoria_agentes', 'vinculadas']).codigo, 0);
+  assert.doesNotMatch(inicioVault(), /Falta elegir/);
+  let r = v.okt(['agentes', 'vincular', proyecto, 'Medicina']);
+  assert.equal(r.codigo, 0, r.error);
+  memoriaDe(proyecto, '# App\n\nUna app.\n\n- Regla nueva.\n');
+  fin(v, proyecto);
+  assert.equal(capturas(v, '💻').length, 1);
+  // no: nada se sincroniza ni se vincula.
+  assert.equal(v.okt(['config', 'poner', 'memoria_agentes', 'no']).codigo, 0);
+  memoriaDe(proyecto, '# App\n\nUna app.\n\n- Regla nueva.\n- Otra más.\n');
+  fin(v, proyecto);
+  assert.equal(v.okt(['agentes', 'sincronizar']).codigo, 0);
+  assert.equal(capturas(v, '💻').length, 1);
+  r = v.okt(['agentes', 'vincular', proyecto, 'Medicina']);
+  assert.equal(r.codigo, 2);
+  assert.match(r.error, /memoria_agentes vinculadas/);
+  r = v.okt(['config', 'poner', 'memoria_agentes', 'siempre']);
+  assert.equal(r.codigo, 2);
+  assert.match(r.error, /detectar, vinculadas, no/);
   v.borrar();
 });
 
@@ -178,7 +217,7 @@ test('memoria de agentes: el diff es por líneas y un CLAUDE.md con marcas okt n
   assert.equal(v.okt(['agentes', 'vincular', proyecto, 'Medicina']).codigo, 0);
   memoriaDe(proyecto, '# Raro\n\nfinal 2\n');
   assert.equal(v.okt(['agentes', 'sincronizar']).codigo, 0);
-  const espejo = readFileSync(join(v.vault, '20 │ 🧭 Areas/🧭 Medicina/🛠️ raro - memoria del agente.md'), 'utf8');
+  const espejo = readFileSync(join(v.vault, '02 │ 🧭 Areas/🧭 Medicina/🛠️ raro - memoria del agente.md'), 'utf8');
   assert.match(espejo, /final 2/);
   assert.doesNotMatch(espejo, /medio/, 'la copia anterior se reemplazó entera');
   v.borrar();
@@ -191,7 +230,7 @@ test('hook fin nunca falla aunque la entrada sea basura', () => {
   v.borrar();
 });
 
-test('bandeja preparar junta lo pendiente en un paquete; archivar lo mueve a 90 │ 🗄️ Archivo', () => {
+test('bandeja preparar junta lo pendiente en un paquete; archivar lo mueve a 🗑️ Descartes', () => {
   const v = vaultNuevo();
   v.okt(['tema', 'nuevo', 'Medicina/🫀 Cardiología']);
   v.okt(['indice']);
@@ -207,7 +246,7 @@ test('bandeja preparar junta lo pendiente en un paquete; archivar lo mueve a 90 
   assert.match(paquete, /Una idea sobre hierro/);
   r = v.okt(['bandeja', 'archivar', '00 │ 📥 Bandeja/Idea.md']);
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(v.vault, '90 │ 🗄️ Archivo/00 │ 📥 Bandeja/Idea.md')));
+  assert.ok(existsSync(join(v.vault, '04 │ 🗄️ Archivo/🗑️ Descartes/Idea.md')));
   assert.ok(!existsSync(join(v.vault, '00 │ 📥 Bandeja/Idea.md')));
   r = v.okt(['bandeja', 'archivar', '../fuera.md']);
   assert.notEqual(r.codigo, 0);

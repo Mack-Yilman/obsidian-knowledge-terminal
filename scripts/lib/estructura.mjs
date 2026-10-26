@@ -10,9 +10,20 @@ import { join } from 'node:path';
 import { esVault, leerConfigVault } from './rutas.mjs';
 import { emojiInicial, empiezaConEmoji, sinEmoji } from './nombres.mjs';
 
-export const VERSION_ESTRUCTURA = 3;
+// Versión 4 (OKT 0.7.0): las raíces se numeran de 00 a 05, y el Archivo se ordena por motivo.
+export const VERSION_ESTRUCTURA = 4;
 
 export const C = {
+  bandeja: '00 │ 📥 Bandeja',
+  proyectos: '01 │ 🎯 Proyectos',
+  areas: '02 │ 🧭 Areas',
+  diario: '03 │ 📅 Diario',
+  archivo: '04 │ 🗄️ Archivo',
+  sistema: '05 │ ⚙️ Sistema',
+};
+
+// Raíces de la versión 3 (0.4 a 0.6), para okt migrar.
+export const C3 = {
   bandeja: '00 │ 📥 Bandeja',
   proyectos: '10 │ 🎯 Proyectos',
   areas: '20 │ 🧭 Areas',
@@ -25,6 +36,9 @@ export const R = {
   adjuntos: `${C.sistema}/📎 adjuntos`,
   plantillas: `${C.sistema}/🧱 plantillas`,
   bruto: `${C.archivo}/📥 Bruto`,
+  descartes: `${C.archivo}/🗑️ Descartes`,
+  terminados: `${C.archivo}/✅ Terminados`,
+  inactivos: `${C.archivo}/💤 Inactivos`,
   hot: `${C.sistema}/🔥 hot.md`,
   bitacora: `${C.sistema}/📜 bitacora.md`,
   pendientes: `${C.sistema}/✅ pendientes.md`,
@@ -121,6 +135,21 @@ export function ubicar(rel) {
 // Ruta de la nota principal de una carpeta: «…/🫀 Cardiología» → «…/🫀 Cardiología/🫀 Cardiología.md».
 export const notaPrincipal = (carpeta) => `${carpeta}/${carpeta.split('/').pop()}.md`;
 
+// ---------- Archivo por motivo ----------
+
+const sinNumero = (raiz) => raiz.replace(/^\d+\s*│\s*/, '');
+const MOTIVOS = { [sinNumero(C.bandeja)]: R.descartes, [sinNumero(C.proyectos)]: R.terminados, [sinNumero(C.areas)]: R.inactivos };
+
+// Dónde va algo que se archiva, según de dónde sale: «00 │ 📥 Bandeja/x.md» → «…/🗑️ Descartes/x.md»,
+// «01 │ 🎯 Proyectos/🎓 Tesis» → «…/✅ Terminados/🎓 Tesis», «02 │ 🧭 Areas/🩺 Medicina/🫀 Cardiología» →
+// «…/💤 Inactivos/🩺 Medicina/🫀 Cardiología», y el resto a Inactivos con su raíz sin número
+// («03 │ 📅 Diario/x.md» → «…/💤 Inactivos/📅 Diario/x.md»). Acepta raíces de cualquier versión numerada.
+export function destinoArchivo(rel) {
+  const [raiz, ...resto] = String(rel).replace(/\\/g, '/').split('/');
+  const nombre = sinNumero(raiz);
+  return MOTIVOS[nombre] ? [MOTIVOS[nombre], ...resto].join('/') : [R.inactivos, nombre, ...resto].join('/');
+}
+
 // ---------- estructuras anteriores ----------
 
 // Versión 2 (OKT 0.3.x): conocimiento y fuentes en carpetas propias, bandeja con subcarpetas por origen.
@@ -209,7 +238,7 @@ export function necesitaMigrar(vault) {
   return Boolean(vault) && esVault(vault) && versionDe(vault) < VERSION_ESTRUCTURA;
 }
 
-export const AVISO_MIGRAR = 'Este vault usa una estructura anterior a OKT 0.4.0 (conocimiento separado de las áreas y los proyectos). Ejecuta «okt migrar» para ver qué cambia y «okt migrar --aplicar» para migrarlo (hace commit: se puede deshacer con git).';
+export const AVISO_MIGRAR = 'Este vault usa una estructura anterior a OKT 0.7.0 (carpetas raíz 10, 20, 50, 90 y 99, o una más antigua). Cierra Obsidian y ejecuta «okt migrar» para ver qué cambia y «okt migrar --aplicar» para migrarlo (hace commit: se puede deshacer con git).';
 
 // ---------- --carpeta ----------
 

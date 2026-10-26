@@ -13,7 +13,7 @@ test('formato_diario DD/MM/YY: la nota diaria se llama «📅 22∕10∕26» y O
   assert.equal(JSON.parse(readFileSync(join(v.vault, '.obsidian', 'daily-notes.json'), 'utf8')).format, '[📅] DD∕MM∕YY');
   r = v.okt(['nota', 'nueva', 'diario']);
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(v.vault, '50 │ 📅 Diario', '📅 22∕10∕26.md')), r.salida);
+  assert.ok(existsSync(join(v.vault, '03 │ 📅 Diario', '📅 22∕10∕26.md')), r.salida);
   // La segunda vez reconoce la misma nota (las tareas de Telegram van ahí).
   assert.match(v.okt(['nota', 'nueva', 'diario']).salida, /Ya existía/);
   assert.notEqual(v.okt(['config', 'poner', 'formato_diario', 'MM/DD']).codigo, 0);

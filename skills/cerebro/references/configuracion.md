@@ -8,7 +8,7 @@ Pide confirmación antes de cada instalación o cambio. Si el usuario ya tiene u
 - **macOS:** `brew install --cask obsidian` o la descarga.
 - **Linux:** AppImage o Flatpak (`flatpak install flathub md.obsidian.Obsidian`).
 
-Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `99 │ ⚙️ Sistema/📎 adjuntos`, notas nuevas en `00 │ 📥 Bandeja`, plantillas en `99 │ ⚙️ Sistema/🧱 plantillas`, diario en `50 │ 📅 Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
+Después: en Obsidian, «Abrir carpeta como bóveda» y elegir la carpeta del vault. OKT ya trae `.obsidian/` configurado (adjuntos en `05 │ ⚙️ Sistema/📎 adjuntos`, notas nuevas en `00 │ 📥 Bandeja`, plantillas en `05 │ ⚙️ Sistema/🧱 plantillas`, diario en `03 │ 📅 Diario`). `okt doctor` comprueba que Obsidian conozca el vault.
 
 **Folder Notes (recomendado).** Cada área, proyecto y tema es una carpeta con una nota principal del mismo nombre: lleva el índice automático de la carpeta y es a la que apuntan los enlaces y el grafo, porque Obsidian no enlaza carpetas. Para no verla repetida en el explorador, instala el plugin de la comunidad **Folder Notes** (de LostPaul): en Obsidian, Configuración → Plugins de la comunidad → Explorar → «Folder notes» → Instalar y Activar. En sus opciones:
 - **Ubicación de la nota:** dentro de la carpeta (*Inside the folder*);
@@ -63,6 +63,18 @@ Con el vault ya creado, `--aplicar` deja también lo que baja Telegram y carga `
 No hay evento al abrir la aplicación: lo más temprano es la primera conversación (o, en el IDE, abrir la carpeta).
 
 Antigravity no tiene un hook de cierre: lo que cambió en la memoria de una carpeta de trabajo (su `CLAUDE.md` o `AGENTS.md`) se recoge al empezar la siguiente conversación, o al abrir el vault (`okt agentes sincronizar`). Nunca se copia el texto de los pedidos.
+
+## Memoria de los agentes (opcional)
+
+`memoria_agentes` decide qué llega de las carpetas donde trabaja un agente (las que tienen `CLAUDE.md` o `AGENTS.md`):
+
+| Modo | Carpeta nueva | Carpeta vinculada | Para quién |
+|---|---|---|---|
+| `detectar` | Deja en la Bandeja `🛠️ Carpeta nueva - <carpeta>`, que pregunta dónde va | Copia al día y una ficha `💻` de avance por sesión | Quien programa con agentes y quiere todo |
+| `vinculadas` | Nada | Igual que arriba | Quien sigue uno o dos proyectos |
+| `no` | Nada | Nada | Quien no usa agentes o no los quiere en su cerebro |
+
+Se elige en la entrevista (pregunta 6) y se cambia con `okt config poner memoria_agentes <modo>`. Un vault sin elegir (creado antes de la 0.7.0) funciona como `vinculadas`, y el hook de inicio del vault pide al agente que pregunte una vez.
 
 ## Capa de formato (opcional)
 

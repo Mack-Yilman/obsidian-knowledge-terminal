@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { vaultNuevo, escribir } from './ayuda.mjs';
 
 const nota = (datos, cuerpo) => `---\n${Object.entries(datos).map(([k, v]) => (Array.isArray(v) ? `${k}:\n${v.map((x) => `  - "${x}"`).join('\n')}` : `${k}: ${v}`)).join('\n')}\n---\n${cuerpo}\n`;
-const MEDICINA = '20 │ 🧭 Areas/🧭 Medicina';
+const MEDICINA = '02 │ 🧭 Areas/🧭 Medicina';
 
 function vaultConNotas() {
   const v = vaultNuevo();
@@ -41,7 +41,7 @@ test('buscar muestra el fragmento, filtra por carpeta sin escribir la raíz y no
   v.okt(['nota', 'nueva', 'nota', '💰 Presupuesto con anemia de ahorro', '--carpeta', 'Personal']);
   r = v.okt(['buscar', 'anemia', '--carpeta', 'Medicina', '--tipo', 'fuente', '--json']);
   assert.deepEqual(JSON.parse(r.salida).map((x) => x.nombre), ['Guía MINSA anemia']);
-  escribir(v.vault, '90 │ 🗄️ Archivo/📥 Bruto/2026-10/📥 vitamina vieja.md', nota({ tipo: 'captura', creado: '2026-10-01' }, 'vitamina C del original'));
+  escribir(v.vault, '04 │ 🗄️ Archivo/📥 Bruto/2026-10/📥 vitamina vieja.md', nota({ tipo: 'captura', creado: '2026-10-01' }, 'vitamina C del original'));
   r = v.okt(['buscar', 'vitamina', '--json']);
   assert.ok(!JSON.parse(r.salida).some((x) => x.ruta.startsWith('90 │')), 'lo archivado no aparece si no se pide');
   r = v.okt(['buscar', 'vitamina', '--carpeta', 'bruto', '--json']);
@@ -85,7 +85,7 @@ test('lint detecta enlaces rotos, frontmatter incompleto, resumen largo, notas s
 
 test('lint: notas fuera de lugar y tipos de la 0.3; los temas profundos ya no son un hallazgo', () => {
   const v = vaultConNotas();
-  escribir(v.vault, '20 │ 🧭 Areas/Suelta.md', nota({ tipo: 'nota', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'r' }, '[[Hierro]]'));
+  escribir(v.vault, '02 │ 🧭 Areas/Suelta.md', nota({ tipo: 'nota', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'r' }, '[[Hierro]]'));
   escribir(v.vault, `${MEDICINA}/Viejo.md`, nota({ tipo: 'concepto', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'r' }, '[[Hierro]]'));
   escribir(v.vault, `${MEDICINA}/a/b/c/d/Hondo.md`, nota({ tipo: 'nota', creado: '2026-10-01', actualizado: '2026-10-01', estado: 'borrador', resumen: 'r' }, '[[Hierro]]'));
   const h = JSON.parse(v.okt(['lint', '--json']).salida).hallazgos;

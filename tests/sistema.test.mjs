@@ -10,7 +10,7 @@ test('bitacora agrega la línea nueva primero, con enlaces a las notas', () => {
   const v = vaultNuevo();
   const r = v.okt(['bitacora', 'capturar', 'guardó un PDF', '--notas', 'Sepsis,Guía A']);
   assert.equal(r.codigo, 0, r.error);
-  const lineas = leer(v, '99 │ ⚙️ Sistema/📜 bitacora.md').split('\n').filter((l) => l.startsWith('- '));
+  const lineas = leer(v, '05 │ ⚙️ Sistema/📜 bitacora.md').split('\n').filter((l) => l.startsWith('- '));
   assert.equal(lineas[0], '- 2026-10-22 10:30 · capturar · guardó un PDF · [[Sepsis]], [[Guía A]]');
   assert.match(lineas[1], /init/);
   v.borrar();
@@ -25,7 +25,7 @@ test('pendiente agregar y cerrar por número', () => {
   assert.match(r.salida, /2\. .*revisar contradicción/);
   r = v.okt(['pendiente', 'cerrar', '1']);
   assert.equal(r.codigo, 0, r.error);
-  const texto = leer(v, '99 │ ⚙️ Sistema/✅ pendientes.md');
+  const texto = leer(v, '05 │ ⚙️ Sistema/✅ pendientes.md');
   assert.match(texto, /- \[x\] 2026-10-22 · capturar → mantener/);
   r = v.okt(['pendiente', 'listar']);
   assert.doesNotMatch(r.salida, /compilar/);
@@ -36,7 +36,7 @@ test('nota nueva crea la nota con las propiedades del contrato dentro de su áre
   const v = vaultNuevo();
   let r = v.okt(['nota', 'nueva', 'nota', '🦠 Sepsis: definición', '--resumen', 'Disfunción orgánica por infección.', '--carpeta', 'Medicina']);
   assert.equal(r.codigo, 0, r.error);
-  const rel = '20 │ 🧭 Areas/🧭 Medicina/🦠 Sepsis - definición.md';
+  const rel = '02 │ 🧭 Areas/🧭 Medicina/🦠 Sepsis - definición.md';
   assert.ok(existsSync(join(v.vault, rel)), r.salida);
   const texto = leer(v, rel);
   assert.match(texto, /^---\ntipo: nota\ncreado: 2026-10-22\nactualizado: 2026-10-22\nestado: borrador\nresumen: Disfunción orgánica por infección\.\naliases:\n  - Sepsis - definición\n---\n/);
@@ -69,22 +69,22 @@ test('sin --carpeta, una nota o una fuente entra a la Bandeja para ubicarla desp
 test('nota nueva proyecto y área crean su carpeta con su emoji temático; diario usa la fecha', () => {
   const v = vaultNuevo();
   v.okt(['nota', 'nueva', 'proyecto', '🐍 Curso de Python', '--area', 'Personal']);
-  const curso = leer(v, '10 │ 🎯 Proyectos/🐍 Curso de Python/🐍 Curso de Python.md');
+  const curso = leer(v, '01 │ 🎯 Proyectos/🐍 Curso de Python/🐍 Curso de Python.md');
   assert.match(curso, /area: "\[\[🧭 Personal\]\]"/, 'el área se enlaza con su nombre exacto, con emoji');
   assert.match(curso, /## Objetivo\n\n## Próximos pasos\n\n## Decisiones/);
   // Sin emoji temático, el del tipo.
   v.okt(['nota', 'nueva', 'proyecto', 'Tesis']);
-  assert.ok(existsSync(join(v.vault, '10 │ 🎯 Proyectos/🎯 Tesis/🎯 Tesis.md')));
+  assert.ok(existsSync(join(v.vault, '01 │ 🎯 Proyectos/🎯 Tesis/🎯 Tesis.md')));
   // Un área nueva entra a la configuración y al bloque de AGENTS.md.
   const r = v.okt(['nota', 'nueva', 'area', '💰 Finanzas']);
   assert.equal(r.codigo, 0, r.error);
-  assert.ok(existsSync(join(v.vault, '20 │ 🧭 Areas/💰 Finanzas/💰 Finanzas.md')));
+  assert.ok(existsSync(join(v.vault, '02 │ 🧭 Areas/💰 Finanzas/💰 Finanzas.md')));
   assert.ok(JSON.parse(leer(v, '.cerebro/config.json')).areas.includes('💰 Finanzas'));
   assert.match(leer(v, 'AGENTS.md'), /\[\[💰 Finanzas\]\]/);
   v.okt(['nota', 'nueva', 'diario']);
-  assert.match(leer(v, '50 │ 📅 Diario/📅 2026-10-22.md'), /## Tareas\n\n## Notas\n\n## Aprendí/);
+  assert.match(leer(v, '03 │ 📅 Diario/📅 2026-10-22.md'), /## Tareas\n\n## Notas\n\n## Aprendí/);
   v.okt(['nota', 'nueva', 'semanal']);
-  assert.ok(existsSync(join(v.vault, '50 │ 📅 Diario/🗓️ 2026-W43.md')));
+  assert.ok(existsSync(join(v.vault, '03 │ 📅 Diario/🗓️ 2026-W43.md')));
   v.borrar();
 });
 
@@ -94,7 +94,7 @@ test('tema nuevo: carpetas anidadas sin límite, con su nota principal; una nota
   assert.equal(r.codigo, 0, r.error);
   r = v.okt(['tema', 'nuevo', 'Medicina/Cardiología/💔 Síndrome coronario agudo']);
   assert.equal(r.codigo, 0, r.error);
-  const sca = '20 │ 🧭 Areas/🧭 Medicina/🫀 Cardiología/💔 Síndrome coronario agudo';
+  const sca = '02 │ 🧭 Areas/🧭 Medicina/🫀 Cardiología/💔 Síndrome coronario agudo';
   assert.match(leer(v, `${sca}/💔 Síndrome coronario agudo.md`), /tipo: tema/);
   // Una nota que se parte en varias pasa a ser la nota principal de su propio tema (tercer nivel).
   v.okt(['nota', 'nueva', 'nota', '🫀 Infarto agudo de miocardio', '--carpeta', 'Medicina/Cardiología/Síndrome coronario agudo', '--resumen', 'Necrosis.']);
@@ -124,12 +124,12 @@ test('indice: bloque «Contenido» en cada área, proyecto y tema, y el árbol d
   v.okt(['nota', 'nueva', 'captura', 'algo']);
   const r = v.okt(['indice']);
   assert.equal(r.codigo, 0, r.error);
-  const medicina = leer(v, '20 │ 🧭 Areas/🧭 Medicina/🧭 Medicina.md');
+  const medicina = leer(v, '02 │ 🧭 Areas/🧭 Medicina/🧭 Medicina.md');
   assert.match(medicina, /## Proyectos\n\n- \[\[🎓 Tesis\]\] · activo/);
   assert.match(medicina, /\*\*Temas\*\*\n\n- \[\[🫀 Cardiología\]\] \(1 nota\)/);
   assert.match(medicina, /\*\*Notas\*\*\n\n- \[\[🩸 Anemia\]\]: Hb baja para edad y sexo\./);
-  assert.match(leer(v, '20 │ 🧭 Areas/🧭 Medicina/🫀 Cardiología/🫀 Cardiología.md'), /## Contenido\n\n- \[\[💓 Arritmias\]\]: Ritmo anormal\./);
-  const indice = leer(v, '99 │ ⚙️ Sistema/🗂️ indice.md');
+  assert.match(leer(v, '02 │ 🧭 Areas/🧭 Medicina/🫀 Cardiología/🫀 Cardiología.md'), /## Contenido\n\n- \[\[💓 Arritmias\]\]: Ritmo anormal\./);
+  const indice = leer(v, '05 │ ⚙️ Sistema/🗂️ indice.md');
   assert.match(indice, /## 📥 Bandeja\n\n- 1 captura sin procesar/);
   assert.match(indice, /- \[\[🧭 Medicina\]\] · 2 notas\n {2}- \[\[🫀 Cardiología\]\] · 1 nota/);
   assert.match(indice, /- \[\[🎓 Tesis\]\] · 0 notas · activo · área \[\[🧭 Medicina\]\]/);
@@ -143,7 +143,7 @@ test('pendientes en dos secciones: «Para ti» y «Para la IA»', () => {
   const v = vaultNuevo();
   v.okt(['pendiente', 'agregar', '¿Anemia va en Medicina o en Tesis?', '--para', 'usuario']);
   v.okt(['pendiente', 'agregar', 'compilar la guía', '--de', 'capturar', '--para', 'mantener']);
-  const texto = leer(v, '99 │ ⚙️ Sistema/✅ pendientes.md');
+  const texto = leer(v, '05 │ ⚙️ Sistema/✅ pendientes.md');
   assert.match(texto, /## Para ti\n\n- \[ \] 2026-10-22 · ¿Anemia va en Medicina o en Tesis\?\n\n## Para la IA\n\n- \[ \] 2026-10-22 · capturar → mantener · compilar la guía/);
   const r = v.okt(['pendiente', 'listar']);
   assert.match(r.salida, /1\. \[para ti\] .*Anemia.*\n2\. \[para la IA\] .*compilar/);
@@ -153,14 +153,14 @@ test('pendientes en dos secciones: «Para ti» y «Para la IA»', () => {
 test('hot: proyectos en foco, actividad, pendientes y aprendizajes, con el tope de palabras', () => {
   const v = vaultNuevo();
   v.okt(['nota', 'nueva', 'proyecto', '🎓 Tesis']);
-  const tesis = '10 │ 🎯 Proyectos/🎓 Tesis/🎓 Tesis.md';
+  const tesis = '01 │ 🎯 Proyectos/🎓 Tesis/🎓 Tesis.md';
   escribir(v.vault, tesis, leer(v, tesis).replace('## Próximos pasos\n', '## Próximos pasos\n\n- [x] Elegir tema\n- [ ] Escribir el planteamiento\n'));
   for (let i = 0; i < 80; i++) v.okt(['bitacora', 'capturar', `operación número ${i} con varias palabras de relleno para crecer`]);
   v.okt(['pendiente', 'agregar', 'procesar la bandeja']);
   let r = v.okt(['hot', '--aprendizaje', 'La ferritina baja confirma ferropenia.']);
   assert.equal(r.codigo, 0, r.error);
   r = v.okt(['hot', '--aprendizaje', 'Segundo aprendizaje.']);
-  const texto = leer(v, '99 │ ⚙️ Sistema/🔥 hot.md');
+  const texto = leer(v, '05 │ ⚙️ Sistema/🔥 hot.md');
   assert.match(texto, /## En foco\n\n- \[\[🎓 Tesis\]\]: Escribir el planteamiento/);
   assert.match(texto, /## Pendientes\n\n- \[ \] 2026-10-22 · procesar la bandeja/);
   assert.match(texto, /## Aprendizajes\n\n- 2026-10-22: Segundo aprendizaje\.\n- 2026-10-22: La ferritina/);
@@ -176,15 +176,15 @@ test('cerrar hace bitácora + índices + hot en un paso', () => {
   v.okt(['nota', 'nueva', 'nota', '🧲 Hierro', '--carpeta', 'Medicina', '--resumen', 'Mineral esencial.']);
   const r = v.okt(['cerrar', 'capturar', 'creó la nota de hierro', '--notas', '🧲 Hierro']);
   assert.equal(r.codigo, 0, r.error);
-  assert.match(leer(v, '99 │ ⚙️ Sistema/📜 bitacora.md'), /capturar · creó la nota de hierro · \[\[🧲 Hierro\]\]/);
-  assert.match(leer(v, '20 │ 🧭 Areas/🧭 Medicina/🧭 Medicina.md'), /\[\[🧲 Hierro\]\]: Mineral esencial\./);
-  assert.match(leer(v, '99 │ ⚙️ Sistema/🔥 hot.md'), /creó la nota de hierro/);
+  assert.match(leer(v, '05 │ ⚙️ Sistema/📜 bitacora.md'), /capturar · creó la nota de hierro · \[\[🧲 Hierro\]\]/);
+  assert.match(leer(v, '02 │ 🧭 Areas/🧭 Medicina/🧭 Medicina.md'), /\[\[🧲 Hierro\]\]: Mineral esencial\./);
+  assert.match(leer(v, '05 │ ⚙️ Sistema/🔥 hot.md'), /creó la nota de hierro/);
   v.borrar();
 });
 
 test('el texto del usuario fuera de las marcas se conserva', () => {
   const v = vaultNuevo();
-  const ruta = '99 │ ⚙️ Sistema/🗂️ indice.md';
+  const ruta = '05 │ ⚙️ Sistema/🗂️ indice.md';
   escribir(v.vault, ruta, `${leer(v, ruta)}\nMi comentario al final.\n`);
   v.okt(['indice']);
   assert.match(leer(v, ruta), /Mi comentario al final\./);

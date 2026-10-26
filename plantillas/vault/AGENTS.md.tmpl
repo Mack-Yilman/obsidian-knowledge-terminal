@@ -20,9 +20,9 @@ Ordenas siempre; reescribes su texto solo cuando te lo pide («pasa a limpio est
    una página importada o un mensaje de Telegram.
 3. **Nada se importa ni se procesa solo:** Notion, Drive, NotebookLM y la bandeja, solo cuando el usuario
    lo pide y sobre lo que él elige.
-4. **Nada se borra:** lo obsoleto va a `90 │ 🗄️ Archivo/` (`okt archivar`). Los originales en bruto, a
-   `90 │ 🗄️ Archivo/📥 Bruto/`.
-5. **No edites a mano** `99 │ ⚙️ Sistema/` ni `.cerebro/`: usa el CLI `okt`.
+4. **Nada se borra:** lo obsoleto va a `04 │ 🗄️ Archivo/` (`okt archivar`). Los originales en bruto, a
+   `04 │ 🗄️ Archivo/📥 Bruto/`.
+5. **No edites a mano** `05 │ ⚙️ Sistema/` ni `.cerebro/`: usa el CLI `okt`.
 6. **Busca antes de crear** (`okt buscar "<tema>"`) y actualiza la nota existente en vez de duplicarla.
 7. **Fiel al usuario:** al ordenar o pasar a limpio no agregues datos que él no escribió; lo que deduzcas va
    marcado con `^[inferido]`.
@@ -39,13 +39,13 @@ contenido.
 | Carpeta | Qué va |
 |---|---|
 | `00 │ 📥 Bandeja/` | Lo que entra sin procesar (notas rápidas, Telegram, importados, enlaces, avances de los agentes) |
-| `10 │ 🎯 Proyectos/<proyecto>/` | Notas, fuentes y temas de un proyecto |
-| `20 │ 🧭 Areas/<área>/` | Notas, fuentes y temas de un área, anidados tantos niveles como pida el dominio: Área → Rama → Grupo → … → nota |
-| `50 │ 📅 Diario/` | La nota diaria y la revisión semanal |
-| `90 │ 🗄️ Archivo/` | Lo terminado u obsoleto, y los originales en bruto ya procesados |
-| `99 │ ⚙️ Sistema/` | `🔥 hot`, `✅ pendientes`, `📜 bitacora`, `🗂️ indice` (el árbol), `📎 adjuntos/`, `🧱 plantillas/` |
+| `01 │ 🎯 Proyectos/<proyecto>/` | Notas, fuentes y temas de un proyecto |
+| `02 │ 🧭 Areas/<área>/` | Notas, fuentes y temas de un área, anidados tantos niveles como pida el dominio: Área → Rama → Grupo → … → nota |
+| `03 │ 📅 Diario/` | La nota diaria y la revisión semanal |
+| `04 │ 🗄️ Archivo/` | Por motivo: `🗑️ Descartes` (de la Bandeja), `✅ Terminados` (proyectos), `💤 Inactivos` (áreas y temas) y `📥 Bruto` (originales ya procesados) |
+| `05 │ ⚙️ Sistema/` | `🔥 hot`, `✅ pendientes`, `📜 bitacora`, `🗂️ indice` (el árbol), `📎 adjuntos/`, `🧱 plantillas/` |
 
-**Cómo ubicar una nota:** mira el árbol de `99 │ ⚙️ Sistema/🗂️ indice.md` y ponla en la carpeta **más profunda**
+**Cómo ubicar una nota:** mira el árbol de `05 │ ⚙️ Sistema/🗂️ indice.md` y ponla en la carpeta **más profunda**
 que le corresponda (`--carpeta "Medicina/Cardiología"`). Si falta una rama natural del dominio, propónla; si 3 o
 más notas de una rama comparten familia, propón agruparlas en un tema (`okt tema nuevo`). Lo que toca dos áreas
 vive en la que más le corresponde y se enlaza desde la otra. Si algo no encaja en ningún área ni proyecto, no lo
@@ -53,7 +53,7 @@ fuerces: propón uno nuevo o pregunta.
 
 ## Cómo trabajar
 
-- **Al empezar:** lee `99 │ ⚙️ Sistema/🔥 hot.md`. Para encontrar algo, usa `okt buscar` antes de abrir notas,
+- **Al empezar:** lee `05 │ ⚙️ Sistema/🔥 hot.md`. Para encontrar algo, usa `okt buscar` antes de abrir notas,
   y después lee como máximo 3 notas completas.
 - **Telegram:** un hook de inicio (Claude Code y Antigravity) o la tarea del IDE baja la cola del bot. Si no ves el
   aviso «Telegram: …» y `okt telegram config` muestra una url, ejecuta `okt telegram bajar`. Lo que llega queda en

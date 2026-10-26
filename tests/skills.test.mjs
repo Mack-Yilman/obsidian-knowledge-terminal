@@ -51,7 +51,7 @@ test('ninguna skill, el contrato ni las plantillas del vault conservan la estruc
     join('references', 'contrato-vault.md'),
     join('plantillas', 'vault', 'AGENTS.md.tmpl'),
   ];
-  const prohibidos = [/📚 Fuentes\/📎/, /Bandeja\/(📝 notas|📦 importados|📲 telegram|💻 sesiones)/, /💡 conceptos|🏷️ entidades|🧩 sintesis/, /nota nueva (concepto|entidad|sintesis)/, /pacientes?/i, /\bDNI\b/, /--forzar/, /datos_sensibles/];
+  const prohibidos = [/📚 Fuentes\/📎/, /Bandeja\/(📝 notas|📦 importados|📲 telegram|💻 sesiones)/, /💡 conceptos|🏷️ entidades|🧩 sintesis/, /nota nueva (concepto|entidad|sintesis)/, /pacientes?/i, /\bDNI\b/, /--forzar/, /datos_sensibles/, /\b(10|20|50|90|99) │/];
   for (const f of archivos) {
     const texto = readFileSync(join(RAIZ, f), 'utf8');
     for (const p of prohibidos) assert.doesNotMatch(texto, p, `${f} todavía menciona ${p}`);
@@ -64,26 +64,35 @@ test('adjuntar copia sin tocar el original y no duplica el mismo contenido', () 
   let r = v.okt(['adjuntar', pdf, '--json']);
   assert.equal(r.codigo, 0, r.error);
   const d = JSON.parse(r.salida);
-  assert.equal(d.ruta, '99 │ ⚙️ Sistema/📎 adjuntos/📕 pdf/Guía - anemia.pdf');
+  assert.equal(d.ruta, '05 │ ⚙️ Sistema/📎 adjuntos/📕 pdf/Guía - anemia.pdf');
   assert.ok(existsSync(pdf));
   const copia = escribir(v.dir, 'otra copia.pdf', '%PDF-1');
   r = v.okt(['adjuntar', copia]);
-  assert.match(r.salida, /Ya estaba: 99 │ ⚙️ Sistema\/📎 adjuntos\/📕 pdf\/Guía - anemia\.pdf/);
+  assert.match(r.salida, /Ya estaba: 05 │ ⚙️ Sistema\/📎 adjuntos\/📕 pdf\/Guía - anemia\.pdf/);
   r = v.okt(['adjuntar', escribir(v.dir, 'Foto.PNG', 'img'), '--json']);
-  assert.equal(JSON.parse(r.salida).ruta, '99 │ ⚙️ Sistema/📎 adjuntos/🖼️ imagenes/Foto.png');
+  assert.equal(JSON.parse(r.salida).ruta, '05 │ ⚙️ Sistema/📎 adjuntos/🖼️ imagenes/Foto.png');
   v.borrar();
 });
 
-test('archivar mueve a 90 │ 🗄️ Archivo con la misma ruta y marca estado archivado; protege la raíz y el sistema', () => {
+test('archivar ordena por motivo (Descartes, Terminados, Inactivos), marca estado archivado y protege la raíz y el sistema', () => {
   const v = vaultNuevo();
   v.okt(['nota', 'nueva', 'proyecto', 'Curso viejo']);
-  // Acepta el nombre sin emoji y la ruta de la estructura anterior.
+  // Acepta el nombre sin emoji y la ruta de las estructuras anteriores.
   let r = v.okt(['archivar', '10-Proyectos/Curso viejo']);
   assert.equal(r.codigo, 0, r.error);
-  const movida = join(v.vault, '90 │ 🗄️ Archivo/10 │ 🎯 Proyectos/🎯 Curso viejo/🎯 Curso viejo.md');
+  const movida = join(v.vault, '04 │ 🗄️ Archivo/✅ Terminados/🎯 Curso viejo/🎯 Curso viejo.md');
   assert.ok(existsSync(movida));
   assert.match(readFileSync(movida, 'utf8'), /estado: archivado/);
-  for (const prohibido of ['99 │ ⚙️ Sistema/🔥 hot.md', 'AGENTS.md', '10 │ 🎯 Proyectos', '../x']) {
+  v.okt(['tema', 'nuevo', 'Medicina/🫀 Cardiología']);
+  assert.equal(v.okt(['archivar', '20 │ 🧭 Areas/Medicina/Cardiología']).codigo, 0);
+  assert.ok(existsSync(join(v.vault, '04 │ 🗄️ Archivo/💤 Inactivos/🧭 Medicina/🫀 Cardiología/🫀 Cardiología.md')));
+  // Lo de la Bandeja va a Descartes, sin pisar lo que ya estaba.
+  for (const t of ['uno', 'dos']) {
+    escribir(v.vault, '00 │ 📥 Bandeja/📝 idea.md', t);
+    assert.equal(v.okt(['archivar', '00 │ 📥 Bandeja/📝 idea.md']).codigo, 0);
+  }
+  assert.equal(readFileSync(join(v.vault, '04 │ 🗄️ Archivo/🗑️ Descartes/📝 idea 2.md'), 'utf8'), 'dos');
+  for (const prohibido of ['05 │ ⚙️ Sistema/🔥 hot.md', 'AGENTS.md', '01 │ 🎯 Proyectos', '../x']) {
     r = v.okt(['archivar', prohibido]);
     assert.notEqual(r.codigo, 0, `debió rechazar ${prohibido}`);
   }

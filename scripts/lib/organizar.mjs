@@ -100,7 +100,7 @@ export function mover(vault, ref, destinoPedido) {
 
 // ---------- originales en bruto ----------
 
-// Mueve (o copia) un original a «90 │ 🗄️ Archivo/📥 Bruto/AAAA-MM/📥 <nombre>.md» y anota en él a qué notas pasó.
+// Mueve (o copia) un original a «04 │ 🗄️ Archivo/📥 Bruto/AAAA-MM/📥 <nombre>.md» y anota en él a qué notas pasó.
 function aBruto(vault, rel, en, { copiar = false } = {}) {
   const hoy = fechaISO();
   const dir = `${R.bruto}/${hoy.slice(0, 7)}`;
