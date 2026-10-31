@@ -35,6 +35,13 @@ test('las rutas que citan las skills existen', () => {
   }
 });
 
+test('redactar cita sus 3 perfiles y la plantilla de reunión trae sus secciones', () => {
+  const t = leerSkill('redactar');
+  for (const p of ['clase', 'reunion', 'propia']) assert.ok(t.includes(`<raíz>/skills/redactar/references/perfil-${p}.md`), p);
+  const r = readFileSync(join(RAIZ, 'skills', 'redactar', 'references', 'perfil-reunion.md'), 'utf8');
+  for (const s of ['## ✅ Acuerdos', '## 📋 Tareas', '## ❓ Quedan abiertos', '## 🗣️ Desarrollo']) assert.ok(r.includes(s), s);
+});
+
 test('los comandos okt que citan las skills existen en el CLI', () => {
   for (const s of SKILLS) {
     for (const m of leerSkill(s).matchAll(/`okt ([a-z]+)/g)) assert.ok(COMANDOS[m[1]], `${s} cita «okt ${m[1]}», que no existe`);

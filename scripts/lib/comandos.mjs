@@ -16,6 +16,7 @@ import { instalarAntigravity, instalarObsidianSkills } from './instalar.mjs';
 import { leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { temaNuevo, mover, procesar, brutoGuardar, brutoLimpiar } from './organizar.mjs';
 import { preparar as reorganizarPreparar, aplicar as reorganizarAplicar } from './reorganizar.mjs';
+import { preparar as redactarPreparar, indice as redactarIndice, verificar as redactarVerificar } from './redactar.mjs';
 import { sinEmoji } from './nombres.mjs';
 import { basename } from 'node:path';
 import { FORMATOS_DIARIO } from './estructura.mjs';
@@ -72,6 +73,9 @@ Notas
   procesar "<captura>" --en "A,B"        Su contenido ya está en A y B: el original va a Archivo/📥 Bruto
   bruto guardar "<nota>"                 Copia el original a Bruto antes de reescribir una nota
   bruto limpiar [--dias 90] [--aplicar]  Lista (y con --aplicar borra) los originales viejos
+  redactar preparar "<nota>"             Palabras, hablantes, tiempos, perfil sugerido y tramos para leerla por partes
+  redactar indice "<nota>"               Arma el índice de una nota con temas, desde sus encabezados
+  redactar verificar "<nota>"            Compara con su original en Bruto: cifras, URL, nombres, índice y extensión
   renombrar "<nota>" "<nombre nuevo>"     Cambia el nombre (y el emoji) y actualiza los enlaces
   buscar "<texto>" [--carpeta --tipo --limite]
   adjuntar "<archivo>" [--origen pdf]    Copia un archivo a los adjuntos (Sistema) sin duplicar
@@ -223,6 +227,15 @@ export const COMANDOS = {
       if (accion === 'guardar') return brutoGuardar(vault, pos.join(' '));
       if (accion === 'limpiar') return brutoLimpiar(vault, op);
       throw Object.assign(new Error('Uso: okt bruto guardar "<nota>" | bruto limpiar [--dias 90] [--aplicar]'), { codigo: 2 });
+    },
+  },
+  redactar: {
+    correr({ pos, vault }) {
+      const accion = pos.shift();
+      if (accion === 'preparar') return redactarPreparar(vault, pos.join(' '));
+      if (accion === 'indice') return redactarIndice(vault, pos.join(' '));
+      if (accion === 'verificar') return redactarVerificar(vault, pos.join(' '));
+      throw Object.assign(new Error('Uso: okt redactar preparar "<nota>" | redactar indice "<nota>" | redactar verificar "<nota>"'), { codigo: 2 });
     },
   },
   archivar: { correr: ({ pos, vault }) => archivar(vault, pos) },

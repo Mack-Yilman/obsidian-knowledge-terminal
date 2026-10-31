@@ -3,7 +3,7 @@
 **Un segundo cerebro en Obsidian que gestionas hablando con tu IA**, en Claude Code, en Antigravity o en cualquier
 agente que lea skills. Escribes como te salga (ideas sueltas, notas de voz desde Telegram, apuntes de Notion o de
 Google Docs, PDFs, páginas web, respuestas de NotebookLM) y la IA **lo ordena dentro de tus áreas y proyectos, lo
-enlaza y, si se lo pides, lo pasa a limpio**. Te responde citando tus propias notas.
+enlaza y lo pasa a limpio cuando se lo pides**. Te responde citando tus propias notas.
 
 Sirve para cualquier persona y cualquier tema: al configurarlo, la IA te pregunta a qué te dedicas y crea tus áreas,
 tus proyectos y tus temas a partir de tus respuestas.
@@ -12,6 +12,7 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 - **Lo mecánico lo hace un script, no el modelo:** índices, búsqueda, revisión, importaciones, mover y renombrar.
 - **El arranque de cada sesión es corto:** el agente lee un resumen de 500 palabras como máximo, no todo el vault.
 - **El orden se hace por lotes y a pedido**, y se puede delegar a Gemini Flash vía Antigravity.
+- **Las transcripciones largas se leen por tramos,** y un script comprueba cifras, URL, nombres e índice contra el original (`okt redactar`).
 
 ## Qué puedes pedirle
 
@@ -19,9 +20,12 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 |---|---|
 | «Configura mi segundo cerebro» | Te pregunta a qué te dedicas, propone tus áreas, proyectos y temas, y crea las carpetas con tu sí |
 | «Guarda esta idea: …» / «guárdalo en Cardiología» | Lo guarda en la Bandeja o directo en el área, el proyecto o el tema que digas |
-| «Procesa mi bandeja» | Ubica cada cosa en su carpeta con destino claro, marca dudas y propone áreas o proyectos nuevos (🆕) sin forzar destinos; la ordena y enlaza |
-| «Pasa a limpio esta nota» | Quita muletillas y corrige la redacción sin agregar ni resumir nada; guarda el original por si acaso |
-| «Organiza mi área de Medicina» | Agrupa sus notas en temas: Medicina → Cardiología → Síndrome coronario agudo → Infarto |
+| «Procesa mi bandeja» | Te muestra una tabla de qué va dónde, marca dudas y propone carpetas, áreas o proyectos nuevos (🆕). Con un solo sí, pasa a limpio cada cosa con su perfil, la ubica y la enlaza; los originales quedan en `📥 Bruto` |
+| «Pasa a limpio esta nota» | Lo mismo con una sola nota, según lo que sea (abajo) |
+| «Haz apuntes de esta clase» / «ordena este video» | **Clase o video:** índice y temas numerados en una misma página, sin resumir |
+| «Ordena esta reunión» | **Reunión:** acuerdos, tareas y puntos abiertos arriba y el desarrollo por temas; nunca inventa quién habló |
+| «Dale forma a mis ideas» | **Nota propia:** reescribe claro lo que escribiste sin orden, le da estructura y agrega `🔗 Conexiones` con tus demás notas |
+| «Organiza mi área de Medicina» | Agrupa sus notas de lo general a lo específico: Medicina → Cardiología → Síndrome coronario agudo → Infarto. Lo general va en la nota principal de cada carpeta, y una carpeta nueva se crea desde 2 notas del mismo tema (o 1, si es algo con identidad propia, como un producto) |
 | «Reorganiza mi cerebro» / «reorganiza mi área de …» | Prepara un mapa compacto, propone la nueva jerarquía en una tabla y la aplica con tu sí (crea temas, mueve, renombra o archiva en un solo commit) |
 | «Guarda este PDF» / «guarda este enlace» | Copia el original, crea su ficha y te ofrece compilarlo en tus notas |
 | «Importa esta base de Notion» / «trae este documento de Drive» | Lista lo que hay, tú eliges qué, y lo trae sin tocar el original |
@@ -301,7 +305,7 @@ En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
   sesión). Si hay capturas con enlaces pendientes en la Bandeja (las que llegan de Telegram),
   se traen en un proceso aparte en segundo plano sin demorar la sesión: páginas web con Defuddle (Markdown e imágenes),
   subtítulos de YouTube con yt-dlp y enlaces de Drive con `gws` (los videos, sin descargarlos). Al decir «procesa mi bandeja», el contenido ya
-  está listo y la IA solo lo ordena (y lo pasa a limpio si el usuario lo pide).
+  está listo, y la IA lo pasa a limpio con su perfil (una web solo se ordena).
 - **Idioma:** de un video se toma primero la pista en español (también la del doblaje automático de YouTube, si lo
   tiene). Lo que llega en otro idioma lleva la propiedad `idioma` y, al procesar la Bandeja, la IA escribe la nota en
   español y deja el original en `📥 Bruto`. En Claude Code, con `okt config poner delegar agy`, esa traducción la hace
@@ -377,7 +381,7 @@ Lo que guarda Claude lo encuentra Antigravity, y al revés.
 - [okt-telegram](https://github.com/Mack-Yilman/okt-telegram): el bot para mandar notas, voz y enlaces desde el
   celular a la Bandeja del vault.
 - [transcriptor-academico](https://github.com/Mack-Yilman/transcriptor-academico): la skill de apuntes de la que salen
-  las reglas de redacción de «pasa a limpio».
+  las reglas de redacción y el formato de índice y temas de «pasa a limpio».
 
 ## Licencia
 

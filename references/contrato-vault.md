@@ -4,8 +4,8 @@ Fuente de verdad que comparten las 6 skills de OKT (`cerebro`, `capturar`, `cons
 `notebooklm`, `redactar`). Si algo de una skill contradice este archivo, manda este archivo.
 
 **Para qué existe OKT:** que el usuario escriba como le salga y la IA lo **ordene, lo enlace y lo haga
-entendible**. Lo que llega en bruto pasa a notas procesadas dentro de su área o su proyecto. La IA ordena
-siempre; reescribe el texto del usuario solo cuando él lo pide.
+entendible**. Lo que llega en bruto pasa a notas procesadas dentro de su área o su proyecto. Nada ocurre solo: la
+IA ordena y reescribe cuando el usuario lo pide, y pedir «procesa mi bandeja» incluye reescribir (sección 6).
 
 ## 1. Reglas que no se negocian
 
@@ -60,17 +60,20 @@ nota. Ejemplos:
    corresponda. Nunca dejes una nota suelta en la raíz de un área si ya hay una rama adecuada.
 2. **Rama nueva:** si falta y es una división natural del dominio (Cardiología dentro de Medicina, Python dentro de
    Programación), propónla al usuario marcada con 🆕.
-3. **Grupo nuevo:** cuando una rama junta 3 o más notas de la misma familia, propón agruparlas en un tema
-   (`okt tema nuevo "<área>/<rama>/<grupo>"` y `okt mover`).
+3. **De lo general a lo específico:** lo que habla de una carpeta en general va en su **nota principal**, y lo
+   específico baja a una subcarpeta (`🤖 Claude/🤖 Claude.md` dice qué es Claude; `🤖 Claude/💻 Claude Code/` guarda lo
+   de Claude Code). A medida que un tema acumula conocimiento, abre otro nivel.
+   **Carpeta nueva:** desde **2 notas** del mismo tema (`okt tema nuevo "<área>/<rama>/<grupo>"` y `okt mover`), o con
+   **1** si es algo con identidad propia: un producto, una materia, un curso. Una idea suelta no lleva carpeta.
 4. **Nota que crece:** si una nota se parte en varias, pasa a ser la nota principal de su propio tema
    (`okt tema nuevo` con su mismo nombre la convierte).
 5. **Una confirmación por lote, no por carpeta:** muestra la tabla «qué → dónde» con las carpetas nuevas marcadas 🆕
    y aplica todo con un solo sí.
-6. **Cada nivel debe ser una división real** (un módulo, una disciplina, una familia), no una carpeta para una sola
-   nota. Cuando el árbol ya no refleja cómo piensa el usuario, propón reorganizarlo (skill `mantener`,
+6. **Cada nivel debe ser una división real** (un módulo, una disciplina, un producto, una familia). Cuando el árbol ya no refleja cómo piensa el usuario, propón reorganizarlo (skill `mantener`,
    «Reorganizar»).
 7. **Lo que toca dos áreas** vive en la que más le corresponde y se cita desde la otra (sección 3, «Citar entre
-   áreas»).
+   áreas»). Una clase, un video o una reunión de varios temas queda **entera en una nota**, en la carpeta de su tema
+   principal, y las notas de los otros temas la enlazan.
 8. **No fuerces un destino.** Si una captura no encaja en ningún área ni proyecto, no la metas en el que más se
    parezca para vaciar la Bandeja: propón un área o un proyecto nuevo (🆕) o déjala en la Bandeja con un pendiente
    «para ti».
@@ -160,9 +163,12 @@ fuentes:
   fija: cada nota toma la forma de lo que dice) y `## Relacionado` con los enlaces. `## Contradicciones` si hay.
 - **Ficha de fuente:** `# Título`, la cita, `## TL;DR`, `## Puntos clave` y `## Qué aporta`. Los artículos
   científicos agregan `## Pregunta`, `## Método`, `## Resultados` y `## Limitaciones`.
-- **Área y tema:** `## De qué trata` (1 o 2 líneas del usuario) y el índice automático.
+- **Área y tema:** `## De qué trata` (1 o 2 líneas del usuario), lo que se sabe del tema en general, en secciones
+  `##`, y el índice automático. Esas secciones van siempre fuera de las marcas del índice.
 - **Proyecto:** `## Objetivo`, `## Próximos pasos` (tareas `- [ ]`: la primera abierta aparece en `hot.md`),
   `## Decisiones` y el índice automático.
+- **Lo que sale de `redactar`:** una clase o un video, con índice y temas; una reunión, con su plantilla; una nota
+  propia, con `## 🔗 Conexiones` si la IA encontró relación con otras notas (cada punto cita su nota).
 - **Actualizar, no duplicar:** antes de crear, busca con `okt buscar`. Si la nota existe, agrega en la sección
   que corresponda y actualiza `actualizado`. El historial lo guarda git.
 - **Bloques del script:** lo que está entre `<!-- okt:inicio -->` y `<!-- okt:fin -->` lo regenera `okt.mjs`
@@ -176,11 +182,12 @@ fuentes:
 |---|---|---|
 | Pasa a ser la nota tal cual (solo se ordena, titula y enlaza) | `okt procesar "<captura>" --a "<carpeta>" --titulo "<emoji> <título>"` | No: el texto sigue siendo del usuario |
 | Su contenido se agregó a una o varias notas (fusionada o dividida) | Escribe en esas notas y luego `okt procesar "<captura>" --en "A,B"` | Sí, en `📥 Bruto/AAAA-MM/`, enlazado desde `bruto` |
-| El usuario pidió pasar a limpio una nota | `okt bruto guardar "<nota>"` y luego reescribe (skill `redactar`) | Sí, igual |
+| El usuario pidió pasar a limpio una nota, o procesar la Bandeja y la captura es una clase, un video, una reunión o una nota propia | `okt bruto guardar "<nota>"` y luego reescribe, sin pedir aprobación del texto (skill `redactar`) | Sí, igual |
 | Nada que conservar | `okt archivar "<captura>"` | En el Archivo |
 
-**Ordenar** es poner encabezados, listas y separar ideas sin cambiar las frases del usuario. **Pasar a limpio** es
-editar sus frases (quitar muletillas, unir fragmentos, corregir la gramática) sin agregar nada: solo a pedido.
+**Ordenar** es poner encabezados, listas y separar ideas sin cambiar las frases: lo que se hace con un documento
+importado (web, Notion, Drive). **Pasar a limpio** es editar las frases sin agregar datos, con el perfil de la skill
+`redactar`; en una nota propia, puede reformularlas por completo.
 `okt bruto limpiar --dias 90` lista los originales viejos; se borran solo con `--aplicar` y el sí del usuario.
 
 ## 7. 05 │ ⚙️ Sistema: cómo se comunican las skills

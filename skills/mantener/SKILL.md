@@ -1,6 +1,6 @@
 ---
 name: mantener
-description: Mantiene y organiza el segundo cerebro de Obsidian (OKT). Procesa la bandeja por lotes (notas rápidas, Telegram, enlaces, importados y avances de los agentes) pasándola de bruto a notas ordenadas y enlazadas dentro de su área, proyecto o tema; organiza o reorganiza el conocimiento en temas; compila fuentes, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces rotos, notas sueltas o sin enlaces, datos vencidos, contradicciones), renombra, mueve y archiva. Úsala cuando el usuario diga «procesa mi bandeja», «ordena mi cerebro», «organiza mi área de…», «reorganiza mi cerebro», «vuelve a jerarquizar», «agrupa estas notas», «mueve esta nota a…», «baja lo de Telegram», «qué llegó de Telegram», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «renombra esta nota», «cambia el emoji de…», «archiva este proyecto», «borra los originales viejos» o «qué aprendieron mis agentes».
+description: Mantiene y organiza el segundo cerebro de Obsidian (OKT). Procesa la bandeja por lotes (notas, Telegram, enlaces, transcripciones, importados y avances de los agentes) pasándola de bruto a notas claras y enlazadas dentro de su área, proyecto o tema; organiza o reorganiza el conocimiento en temas; compila fuentes, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces rotos, notas sueltas o sin enlaces, datos vencidos, contradicciones), renombra, mueve y archiva. Úsala cuando el usuario diga «procesa mi bandeja», «ordena mi cerebro», «organiza mi área de…», «reorganiza mi cerebro», «vuelve a jerarquizar», «agrupa estas notas», «mueve esta nota a…», «baja lo de Telegram», «qué llegó de Telegram», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «renombra esta nota», «cambia el emoji de…», «archiva este proyecto», «borra los originales viejos» o «qué aprendieron mis agentes».
 ---
 
 # Mantener
@@ -20,15 +20,20 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `04 │ 
    - **dudoso:** la mejor opción con «¿?» y, al lado, la alternativa;
    - **no encaja en nada:** no la metas en el área que más se parezca. Propón un **🆕 área** o un **🆕 proyecto** con su nombre y su emoji (si termina, proyecto; si es continuo, área), o déjala en la Bandeja con `okt pendiente agregar "<qué decidir>" --para usuario`.
 
+   **Antes de decidir una nota suelta, comprueba:** si habla de un producto, una materia o un curso que aún no tiene carpeta, su destino es una carpeta 🆕 con ese nombre, aunque sea una sola captura (Claude Duet dentro de Claude). Si ya hay otra nota del mismo tema en esa carpeta, propón una carpeta 🆕 para las dos.
+
    Qué será cada una:
 
 | La captura es… | Destino |
 |---|---|
-| Conocimiento (una idea, un apunte, una explicación) | Una nota en la **carpeta más profunda** que le corresponda de su área o su proyecto |
-| Varias ideas mezcladas | Se divide en varias notas, cada una en su tema |
+| Conocimiento (una idea, un apunte, una explicación) | Una nota en la **carpeta más profunda** que le corresponda de su área o su proyecto. Si es lo general de un tema, va en la nota principal de su carpeta |
+| Varias ideas mezcladas | Si tienen algo en común, una nota con secciones; si no, se divide en varias notas, cada una en su tema |
+| Una transcripción (clase, video o reunión) que toca varios temas | **Una sola nota**, en la carpeta de su tema principal; las notas de los otros temas la enlazan |
+| Ya hay una nota del mismo tema suelta en esa carpeta | Propón una carpeta 🆕 para las 2 (el contrato, sección 2, regla 3) |
+| Algo con identidad propia que aún no tiene carpeta: un producto, una materia, un curso | Carpeta 🆕 aunque sea una sola captura (`okt tema nuevo`). Su contenido va en la nota principal de esa carpeta, con `okt procesar --en`. Una idea suelta no lleva carpeta |
 | Algo que ya existe | Se agrega a esa nota (no se duplica) |
 | Una fuente (PDF, web, video, importado) | Una ficha de fuente junto a las notas que alimenta; lo aprendido, compílalo (abajo) |
-| Una web o un video ya traídos (🌐, ▶️, o una captura de Telegram con el bloque `okt` completo) | Ordena el bruto con las reglas de `<raíz>/skills/redactar/references/reglas-redaccion.md`, modo «ordenar»: encabezados por tema; en un video, sin saludos ni charla, y conserva las marcas de tiempo de las ideas que quedan. **Si tiene la propiedad `idioma`** (no está en español), la nota ordenada se escribe **en español**: traducción fiel, con los nombres propios, cifras, citas y marcas de tiempo intactos (quién traduce: paso 2); el original en su idioma va a `📥 Bruto` con `okt procesar "<captura>" --en "<nota>"`. Luego es una fuente como la fila de arriba |
+| Un video (▶️) o una web (🌐) ya traídos, o una captura de Telegram con el bloque `okt` completo | **Video:** perfil clase. **Web:** se ordena con el perfil «solo ordenar». **Si tiene la propiedad `idioma`** (no está en español), se escribe **en español**: traducción fiel, con los nombres propios, cifras y citas intactos (quién traduce: paso 2). Son fuentes como la fila de arriba (`--tipo fuente`) |
 | Una captura con `importar_error` | Dile qué falló y ofrece la alternativa de `<raíz>/skills/capturar/references/fuentes.md` («Si falla») |
 | Una tarea o un avance de un proyecto | `## Próximos pasos` o `## Decisiones` de la nota del proyecto |
 | Algo del día sin valor durable | El diario de ese día |
@@ -36,23 +41,25 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `04 │ 
 | 💻 Avance de un agente (lo que cambió en su memoria y sus commits) | Lo que sirve más allá de esa carpeta (trampas de herramientas, reglas del dominio, decisiones) va a una nota de su tema en el área que corresponda, citando el espejo (`memoria:`). El avance (commits, pendientes resueltos) va a `## Decisiones` o `## Próximos pasos` de la nota principal donde vive el espejo. Luego `okt procesar "<ficha>" --en "<notas>"` |
 | Nada que conservar | `okt archivar` (va a `🗑️ Descartes`) |
 
-4. **Muestra el plan como una tabla y espera un solo sí para todo el lote:**
+4. **Muestra el plan como una tabla y espera un solo sí para todo el lote.** El perfil sugerido viene en el paquete; lo dudoso se pregunta aquí, marcado con «¿?», no después:
 
-| Captura | Qué será | Dónde |
-|---|---|---|
-| 📲 2026-10-21 1805 troponina sube | 🧪 Troponina (nota) | Medicina / 🫀 Cardiología / 🆕 💔 Síndrome coronario agudo |
-| 📝 ideas para el portafolio | se suma a 🖌️ Portafolio 2026 | Próximos pasos del proyecto |
-| ▶️ Clase de fotografía nocturna | 📷 Exposición larga (fuente) | ¿? Personal / 🎨 Hobbies (o 🆕 área 📷 Fotografía) |
+| Captura | Qué será | Perfil | Dónde |
+|---|---|---|---|
+| 📲 2026-10-21 1805 troponina sube | 🧪 Troponina (nota) | Nota propia | Medicina / 🫀 Cardiología / 🆕 💔 Síndrome coronario agudo |
+| 📝 ideas para el portafolio | se suma a 🖌️ Portafolio 2026 | Nota propia | Próximos pasos del proyecto |
+| ▶️ Clase de fotografía nocturna | 📷 Exposición larga (fuente) | Clase | ¿? Personal / 🎨 Hobbies (o 🆕 área 📷 Fotografía) |
+| grabacion-30-10 | 🤝 Reunión de presupuesto | ¿? Reunión (o clase) | Trabajo / 💰 Presupuesto |
+| 📝 salió Claude Duet, un producto nuevo | Nota principal de la carpeta (es un producto: lleva carpeta aunque sea una sola captura) | Nota propia | IA / 🤖 Claude / 🆕 👥 Claude Duet |
 
-   Marca con 🆕 cada carpeta, área o proyecto nuevo, y con «¿?» lo dudoso. El usuario puede corregir cualquier fila antes de su sí.
+   Marca con 🆕 cada carpeta, área o proyecto nuevo, y con «¿?» lo dudoso. El usuario puede corregir cualquier fila antes de su sí. **Solo esta tabla pide confirmación:** con el sí, se escribe todo de corrido.
 5. **Aplica:**
    - áreas y proyectos nuevos: `okt nota nueva area "<emoji> <nombre>"` o `okt nota nueva proyecto "<emoji> <nombre>" --area "<área>"`;
    - temas nuevos: `okt tema nuevo "<área>/<rama>/<emoji> <grupo>"`;
    - la captura pasa a ser la nota tal cual: `okt procesar "<captura>" --a "<carpeta>" --titulo "<emoji> <título>" --resumen "<1 frase>"` (no queda copia en bruto);
    - el contenido va a notas que ya existen o se divide: escribe en esas notas (crea las nuevas con `okt nota nueva nota … --carpeta …`) y luego `okt procesar "<captura>" --en "<nota A>,<nota B>"` (el original queda en `📥 Bruto/`, enlazado);
-   - **ordena sin reescribir:** encabezados, listas, separar ideas, quitar lo que se repite literal. No cambies sus frases ni agregues datos; si el texto está muy desordenado o lleno de muletillas, **propón** pasarlo a limpio (skill `redactar`) en vez de hacerlo;
+   - **reescribe según el perfil de la tabla,** una nota a la vez: ya ubicada, sigue las secciones 2 y 3 de `<raíz>/skills/redactar/SKILL.md` (`okt redactar preparar`, `okt bruto guardar`, escribir de corrido, `okt redactar verificar`), sin mostrar el texto en el chat y sin cerrar en cada una. Una captura que se suma a otra nota o se divide no lleva `bruto guardar`: `okt procesar --en` ya guarda el original. Con el perfil «solo ordenar», encabezados y listas, sin cambiar sus frases;
    - **enlaza:** cada nota lleva en `## Relacionado` (o en el texto) al menos 2 notas existentes: su fuente, una vecina del tema, el proyecto donde se usa. Si menciona un concepto que ya tiene nota en **otra** área, enlázalo en el texto (contrato, «Citar entre áreas»);
-   - si una rama junta 3 o más notas de la misma familia, propón agruparlas (sección siguiente).
+   - si una rama junta 2 o más notas del mismo tema, propón agruparlas (sección siguiente).
 6. **Cierra:** `okt cerrar mantener "procesó N capturas de la bandeja" --notas "…"` y un resumen de 3 líneas.
 
 **Insights para el CLAUDE.md de un proyecto:** muéstralos agrupados por proyecto, una viñeta con fecha por insight, y pregunta cuáles agregar. Solo con su sí, escríbelos en la sección `## Insights` del `CLAUDE.md` de ese proyecto (la ruta está en la ficha: `carpeta_agente:`), sin duplicar lo que ya diga ese archivo.
@@ -62,14 +69,14 @@ Todo aquí ocurre a pedido. Nada se borra sin un sí: lo terminado va a `04 │ 
 Para «organiza mi área de Medicina», «agrupa estas notas» o cuando una rama tiene muchas notas sueltas:
 
 1. Lee el índice de la nota principal del área (y `okt buscar --carpeta "<área>"` si hace falta).
-2. Propón la jerarquía: **Área → Rama** (disciplina o gran tema: Cardiología, Python, Inversiones) **→ Grupo** (familia: Síndrome coronario agudo, Asincronía, Fondos indexados) **→ … → nota** (una unidad: una enfermedad, un concepto). Sin límite de niveles, pero cada nivel es una división natural del dominio, la que el usuario reconocería (un curso: Módulo → Clase); nunca una carpeta para una sola nota.
+2. Propón la jerarquía **de lo general a lo específico: Área → Rama** (disciplina o gran tema: Cardiología, Python, Claude) **→ Grupo** (familia: Síndrome coronario agudo, Asincronía, Claude Code) **→ … → nota** (una unidad: una enfermedad, un concepto). Sin límite de niveles, pero cada nivel es una división natural del dominio, la que el usuario reconocería (un curso: Módulo → Clase). Lo general de cada carpeta va en su nota principal; una carpeta nueva pide 2 notas del mismo tema, o 1 si es algo con identidad propia (contrato, sección 2, regla 3).
 3. Tabla «nota → tema», con los temas nuevos marcados 🆕, y un solo sí.
 4. `okt tema nuevo …` y `okt mover "<nota>" "<carpeta>"`. Si una nota creció y se parte en varias, `okt tema nuevo` con su mismo nombre la convierte en tema.
 5. `okt cerrar mantener "organizó <área> en N temas"`.
 
 ## Reorganizar el conocimiento
 
-Para «reorganiza mi cerebro», «reorganiza mi área de…» o «vuelve a jerarquizar», o cuando el árbol ya no refleja cómo piensa el usuario (aparecieron temas nuevos, una rama se llenó de notas sueltas, dos temas dicen lo mismo):
+Para «reorganiza mi cerebro», «reorganiza mi área de…» o «vuelve a jerarquizar», o cuando el árbol ya no refleja cómo piensa el usuario (aparecieron temas nuevos, una rama se llenó de notas sueltas, dos temas dicen lo mismo). La jerarquía va de lo general a lo específico (contrato, sección 2, regla 3):
 
 1. `okt reorganizar preparar [--carpeta "<área o proyecto>"]` deja en `.cerebro/cache/` un mapa compacto: el árbol y, por nota, su tipo, su resumen y sus enlaces de entrada y salida, sin el texto. Lee ese mapa, no las notas.
 2. Propón la jerarquía nueva en una tabla «actual → propuesto»: temas 🆕, notas que se mueven, temas que se renombran o se fusionan (mover sus notas a uno y archivar el otro) y temas vacíos que se archivan. Explica en una línea el criterio. Una nota muy enlazada (←) suele ser buen centro de un tema.

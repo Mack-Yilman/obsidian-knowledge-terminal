@@ -1,5 +1,27 @@
 # Cambios
 
+## 0.8.0 — 2026-10-31
+
+- **`redactar` tiene tres perfiles** y escribe de corrido, sin pedir aprobación del texto: el original queda antes en
+  `📥 Bruto`.
+  - **Clase o video:** un solo expositor. Índice y temas numerados (`## Tema X`, `### X.Y`) en una misma página, sin
+    resumir. Un video conserva el reproductor y el enlace al minuto de cada tema.
+  - **Reunión:** acuerdos, tareas y puntos abiertos arriba y el desarrollo por temas debajo. Atribuye solo lo que el archivo
+    identifica: nunca adivina quién habló, ni responsables ni plazos.
+  - **Nota propia:** reescribe claro lo que escribiste sin orden, le da estructura sin agregar datos y añade
+    `## 🔗 Conexiones`, con cada relación citada y aparte de tu texto.
+- **«Procesa mi bandeja» ahora también pasa a limpio.** Antes solo ordenaba y proponía reescribir. Sigue pidiendo un solo sí
+  sobre una tabla (qué será, perfil y dónde), y nada ocurre sin pedirlo. Una web o un documento importado solo se ordena.
+- **Carpetas de lo general a lo específico:** lo general de un tema va en la nota principal de su carpeta y lo específico
+  baja a subcarpetas. Una carpeta nueva se propone desde 2 notas del mismo tema (antes 3), o con 1 si es algo con identidad
+  propia, como un producto o una materia. Una clase o reunión de varios temas queda entera en una nota, y las demás la enlazan.
+- **`okt redactar`, para gastar menos:** `preparar` da palabras, hablantes, tiempos y perfil sugerido, y parte un texto largo
+  en tramos; `indice` arma el índice desde los encabezados; `verificar` compara con el original y avisa de cifras, URL y
+  nombres agregados o perdidos, entradas del índice sin desarrollar y un posible resumen.
+- **`okt bandeja preparar` recorta cada captura a 2 000 caracteres** (antes 20 000) y agrega su perfil sugerido: para decidir
+  la tabla basta el inicio, y cada transcripción se lee al reescribirla.
+- **Volver a importar una nota ya pasada a limpio** agrega el bruto al final: la versión limpia no se pierde.
+
 ## 0.7.0 — 2026-10-25
 
 - **Carpetas raíz correlativas (estructura v4):** pasan a ser `00 │ 📥 Bandeja`, `01 │ 🎯 Proyectos`, `02 │ 🧭 Areas`,

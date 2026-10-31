@@ -3,7 +3,7 @@
 OKT no copia código de estos proyectos, pero adapta ideas y patrones de diseño suyos. Se reconocen
 aquí, junto con sus avisos de licencia MIT.
 
-Las reglas de redacción de la skill `redactar` (`skills/redactar/references/reglas-redaccion.md`) se adaptaron del
+Las reglas de redacción y el formato de índice y temas de la skill `redactar` (`skills/redactar/references/`) se adaptaron del
 [transcriptor académico](https://github.com/Mack-Yilman/transcriptor-academico), del mismo autor (Mack Chirinos), que
 autoriza su uso en OKT.
 
