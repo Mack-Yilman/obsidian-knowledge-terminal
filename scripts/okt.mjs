@@ -8,7 +8,7 @@ import { necesitaMigrar, AVISO_MIGRAR } from './lib/estructura.mjs';
 
 // Comandos que escriben en el vault: con una estructura anterior se detienen hasta migrar, para no dejar carpetas
 // nuevas junto a las viejas. telegram se revisa aparte (config no toca el vault).
-const ESCRIBEN = new Set(['init', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'agentes', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar', 'tema', 'mover', 'procesar', 'bruto', 'reorganizar']);
+const ESCRIBEN = new Set(['init', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'agentes', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar', 'tema', 'mover', 'procesar', 'bruto', 'redactar', 'reorganizar']);
 
 const BOOLEANOS = new Set(['aplicar', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'reintentar', 'nuevo', 'completo']);
 

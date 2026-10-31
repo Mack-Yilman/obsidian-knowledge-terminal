@@ -110,7 +110,7 @@ Si el pedido es de otra skill, aplica esa skill (en Claude se activa sola; si no
 | Guardar algo (idea, PDF, web, video, sesión) o importar de Notion o Drive | `capturar` | «guarda este PDF en Cardiología», «importa esta página de Notion» |
 | Encontrar o preguntar a sus notas | `consultar` | «¿qué sé de anemia?», «¿qué tengo en Finanzas?» |
 | Ordenar: bandeja, temas, revisión semanal, lint, renombrar, archivar | `mantener` | «procesa mi bandeja», «revisa mi vault» |
-| Mejorar la redacción de una nota | `redactar` | «pasa a limpio esta nota», «ordénala para que se entienda» |
+| Pasar a limpio una clase, un video, una reunión o sus ideas | `redactar` | «pasa a limpio esta nota», «ordena esta reunión», «dale forma a mis ideas» |
 | Usar un cuaderno de NotebookLM | `notebooklm` | «crea una infografía del cuaderno Tesis» |
 
 **Ajustes:** `okt config` muestra la configuración. Con `okt config poner memoria_agentes <detectar|vinculadas|no>` eliges qué llega de los agentes. Con `okt config excluir <carpeta>` la memoria de los agentes ignora esa carpeta (o, para una sola, `okt agentes ignorar "<ruta>"`). Con `okt config poner frescura_dias <n>` cambias la ventana de frescura, y con `okt config poner delegar agy` el procesamiento de la bandeja se puede delegar a Antigravity.

@@ -19,7 +19,7 @@ Lo trae un script, sin pasar por ti: no gastes tokens leyendo la página ni el v
 - **Sin `--carpeta`** va a la Bandeja; con `--carpeta`, es una fuente en esa carpeta. Volver a importar el mismo enlace actualiza la misma nota.
 - **Lo que llega de Telegram:** las capturas que solo traen un enlace se completan solas al abrir el vault (un proceso en segundo plano), o con `okt importar enlaces`.
 - **Si falla** (muro de pago, una página que se arma con JavaScript, un video sin subtítulos): la nota lo dice o queda con `importar_error`. Ofrece la alternativa: para una web, tu herramienta web (WebFetch en Claude, la lectura de URL en Antigravity), con la ficha `okt nota nueva fuente "<título>" --origen web --url "<url>"`; para un video sin subtítulos, agregarlo como fuente de un cuaderno de NotebookLM (skill `notebooklm`), que lo transcribe.
-- **Al procesarlo** (skill `mantener`), ese bruto se ordena con las reglas de `redactar` en modo «ordenar»: encabezados por tema, sin la charla ni los saludos del video. Pasarlo a limpio, solo si el usuario lo pide.
+- **Al procesarlo** (skill `mantener`), un video se pasa a limpio con el perfil de clase de `redactar`: índice y temas en una misma página, con el reproductor arriba y el enlace al minuto de cada tema. Una web solo se ordena.
 - **Si falta la herramienta:** el error dice cómo instalarla; `okt doctor` muestra cuáles están.
 
 ## Notion
