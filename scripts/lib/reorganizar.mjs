@@ -101,8 +101,19 @@ export function validarPlan(vault, plan) {
     const k = claves[0];
     if (!String(o[k] || '').trim()) return errores.push(`${n}: «${k}» está vacío.`);
     if (k === 'tema') {
-      const padre = String(o.tema).replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+      const partes = String(o.tema).replace(/\\/g, '/').split('/').filter(Boolean);
+      const nombre = partes.pop() || '';
+      const padre = partes.join('/');
       if (!padre || !carpeta(padre)) errores.push(`${n}: no existe la carpeta donde iría el tema «${o.tema}».`);
+      else {
+        let dirPadre = null;
+        try {
+          dirPadre = carpetaDeDestino(vault, padre, { propia: true });
+        } catch {}
+        const esPrincipal = (r) => basename(dirname(r)) === basename(r, '.md');
+        const otra = mismasNotas(vault, nombre).find((r) => !(dirPadre && dirname(r) === dirPadre && !esPrincipal(r)) && !(dirPadre && dirname(dirname(r)) === dirPadre && esPrincipal(r)));
+        if (otra) errores.push(`${n}: ya existe una nota llamada «${sinEmoji(nombre)}» en ${otra}: elige otro nombre.`);
+      }
       creadas.add(ultimo(o.tema));
       return;
     }

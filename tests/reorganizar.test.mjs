@@ -81,3 +81,21 @@ test('reorganizar: el plan detecta un destino fuera de las áreas, un nombre vie
   assert.doesNotMatch(r.error, /6:/, 'cambiar solo el emoji no choca consigo misma');
   v.borrar();
 });
+
+test('reorganizar validarPlan: rechaza un tema con el nombre de una nota de otra área y acepta la nota que crece', () => {
+  const v = conNotas();
+  const malo = escribir(v.dir, 'choque-tema.json', JSON.stringify({ operaciones: [
+    { tema: 'Personal/🩸 Anemia' },
+  ] }));
+  let r = v.okt(['reorganizar', 'aplicar', malo]);
+  assert.equal(r.codigo, 2);
+  assert.match(r.error, /1: ya existe una nota llamada «Anemia» en 02 │ 🧭 Areas\/🧭 Medicina\/🩸 Anemia\.md: elige otro nombre/);
+
+  const crece = escribir(v.dir, 'crece.json', JSON.stringify({ operaciones: [
+    { tema: 'Medicina/🩸 Anemia' },
+  ] }));
+  r = v.okt(['reorganizar', 'aplicar', crece]);
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(v.vault, `${MEDICINA}/🩸 Anemia/🩸 Anemia.md`)));
+  v.borrar();
+});
