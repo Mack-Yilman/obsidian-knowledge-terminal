@@ -39,6 +39,9 @@ function renovarRutaCli(vault) {
   guardarConfigGlobal({ cli: actual });
   // Sin migrar, el bloque nuevo describiría carpetas que aún no existen: lo regenera okt migrar.
   if (necesitaMigrar(vault)) return;
+  // El commit es «git add -A»: lo que el usuario dejó sin guardar (p. ej. en Obsidian) se guarda antes, con su propia
+  // etiqueta; si no, entraba en el commit de la ruta.
+  guardarSinCerrar(vault);
   if (actualizarAgents(vault, actual)) commit(vault, 'okt: ruta del CLI actualizada en AGENTS.md');
 }
 
