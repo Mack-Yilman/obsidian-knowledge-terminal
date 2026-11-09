@@ -1,5 +1,5 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "archivos": {
     "plantillas/vault/.obsidian/app.json": "cf2562a353ad44c17caf5e768b6128713a904144ed28ebd02df4c1640d1a1745",
     "plantillas/vault/.obsidian/core-plugins.json": "a3e5ab51c3254f1c79b7a1ce8c3ad8b7ce04dbb3bdd795a4638225cfb66a88e7",
@@ -38,7 +38,7 @@
     "scripts/lib/importar-drive.mjs": "b1d70871053454a50dff9c47fb973232afc211eeb82ca78910744be2f48ed503",
     "scripts/lib/importar-notion.mjs": "fb8df5442f61753dbbbb9a815a6146b7fca5ec5c95fa5847a50f5790b23d5772",
     "scripts/lib/importar-url.mjs": "6d01292290d1c1dc82518c2f6577656106f247773fe2123de548690ac6c82c12",
-    "scripts/lib/init.mjs": "44ec0f4074e2ae9303edbbf7378ef07d188184205fa344ee59157c51a39e6b9b",
+    "scripts/lib/init.mjs": "d5e187c571c4b0b83d1b1dff221906e4ed677a6ec94e0b6acde84f48cd3635f3",
     "scripts/lib/instalar.mjs": "071fb45743a474be6bba84420f61047b439c9fc72db06535b36af0f7baa387ac",
     "scripts/lib/jerarquia.mjs": "b1746adbba87a372aa5230d8982f56c581976185ec75f74f1a5db7f27cc4c7f0",
     "scripts/lib/libro.mjs": "48b96d9224041d0f1e8f5b4f83426b659ab57a70cf38f297bf61ba037e751fb5",

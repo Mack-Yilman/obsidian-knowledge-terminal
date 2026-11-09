@@ -3,7 +3,7 @@
 // y los temas salen de la entrevista de la skill cerebro: sin --areas no se crea ninguna.
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, copyFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
+import { RAIZ_PLUGIN, CLI, posix, dentroDe, guardarConfigGlobal, leerConfigGlobal, leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { CARPETAS, mismasNotas } from './vault.mjs';
 import { C, VERSION_ESTRUCTURA, conEmoji, traducir, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
 import { reemplazarBloque, leerBloque } from './bloques.mjs';
@@ -45,7 +45,9 @@ export function textoAgents(valores) {
 }
 
 // Valores del bloque de AGENTS.md según la configuración del vault.
-export function valoresAgents(vault, cli = posix(CLI)) {
+// Sin cli, la ruta configurada (la que renueva el hook de Claude Code): renombrar o numerar desde otra copia del plugin
+// no debe cambiar la ruta que leen los agentes.
+export function valoresAgents(vault, cli = leerConfigGlobal().cli || posix(CLI)) {
   const cfg = leerConfigVault(vault);
   const areas = (cfg.areas || []).map((a) => `[[${a}]]`).join(', ') || 'aún ninguna (pide «agrega un área»)';
   const perfil = cfg.perfil ? `**Quién usa este vault:** ${cfg.perfil}. Adapta los ejemplos, el tono y las propuestas a eso.` : '';
