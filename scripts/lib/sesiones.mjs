@@ -84,7 +84,7 @@ async function contextoInicio(vault, { guardado } = {}) {
     : '';
   const rutaHot = existsSync(join(vault, R.hot)) ? join(vault, R.hot) : join(vault, '99-Sistema', 'hot.md');
   const hot = existsSync(rutaHot) ? leerBloque(readFileSync(rutaHot, 'utf8')) || '' : '';
-  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${avisoGuardado}${avisos}## Contexto reciente (${posix(rutaHot.slice(vault.length + 1))})\n\n`;
+  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>". Una preferencia o forma de trabajar del usuario se anota solo con su sí y con okt preferencia agregar "<texto>" --sobre flujo|formato|fuentes|herramientas (queda en AGENTS.md, que leen todos sus agentes): no en tu memoria propia. Si un comando de okt falla o improvisas un script, okt reportar.\n\n${avisoGuardado}${avisos}## Contexto reciente (${posix(rutaHot.slice(vault.length + 1))})\n\n`;
   const texto = cab + hot;
   if (texto.length <= TOPE_CONTEXTO) return texto;
   return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(rutaHot)}`;
