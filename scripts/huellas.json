@@ -1,5 +1,5 @@
 {
-  "version": "0.9.0",
+  "version": "0.9.1",
   "archivos": {
     "plantillas/vault/.obsidian/app.json": "cf2562a353ad44c17caf5e768b6128713a904144ed28ebd02df4c1640d1a1745",
     "plantillas/vault/.obsidian/core-plugins.json": "a3e5ab51c3254f1c79b7a1ce8c3ad8b7ce04dbb3bdd795a4638225cfb66a88e7",
@@ -28,7 +28,7 @@
     "scripts/lib/bloques.mjs": "99a2f7665eb18fd2a8908881d6f0d5cae021fc20845acfa4fe53d5445bafdc43",
     "scripts/lib/buscar.mjs": "0a1f8fed4dcae4a11e3a6edd903acdff87d8c9e17ea19a57a1529a1afc38837f",
     "scripts/lib/comandos.mjs": "b5a5505f3fb01e84dcd3b40848c59042fd91d1fed9d7b0be830f21f155eb93f6",
-    "scripts/lib/doctor.mjs": "131d894b0cd18e6db0c64b3dc1a4ce801056df4d259d4d730c27974a5f046aea",
+    "scripts/lib/doctor.mjs": "60cb27958995187258b009d5729a6cd1bd0c2a029a3c3f43b7b05c58d1992578",
     "scripts/lib/estado.mjs": "c4a788b60efd337d157debef42974090daacfb5c3fa7bce97e158049fbc0d9da",
     "scripts/lib/estructura.mjs": "86dc120a7a13a74e083a813a2225bb668fc8535f5073ad0397d16db48313da05",
     "scripts/lib/fechas.mjs": "ef35021aada4576a5430c0157fea509439eecaf4cfaf8cd0c53ee25604b4df5d",
