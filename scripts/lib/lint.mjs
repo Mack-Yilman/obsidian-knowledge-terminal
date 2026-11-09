@@ -2,12 +2,43 @@
 // modelo solo a pedido; aquí nada gasta tokens.
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
-import { listarNotas, leerNota, extraerEnlaces, mapaDeNombres, esSistema } from './vault.mjs';
+import { listarNotas, leerNota, extraerEnlaces, extraerAnclas, listarArchivos, mapaDeNombres, esSistema } from './vault.mjs';
+import { normalizar } from './buscar.mjs';
 import { leerConfigVault } from './rutas.mjs';
 import { leerBloque } from './bloques.mjs';
-import { nombreValido, empiezaConEmoji, sinEmoji } from './nombres.mjs';
-import { C, R, ubicar } from './estructura.mjs';
+import { nombreValido, empiezaConEmoji, sinEmoji, numeroDe } from './nombres.mjs';
+import { C, R, ubicar, numerarActivo } from './estructura.mjs';
+import { avisosLint as avisosJerarquia } from './jerarquia.mjs';
 import { diasEntre, fechaISO } from './fechas.mjs';
+
+function limpiarCodigo(texto) {
+  return String(texto || '')
+    .replace(/```[\s\S]*?```/g, (m) => m.replace(/[^\r\n]/g, ' '))
+    .replace(/`[^`\r\n]*`/g, (m) => ' '.repeat(m.length));
+}
+
+function extraerEncabezados(texto) {
+  const sinCod = limpiarCodigo(texto);
+  const encabezados = [];
+  for (const l of sinCod.split(/\r?\n/)) {
+    const m = l.match(/^#{1,6}[ \t]+(.*)$/);
+    if (m) {
+      const limpio = m[1].replace(/[ \t#\r]+$/, '').trim();
+      if (limpio) encabezados.push(limpio);
+    }
+  }
+  return encabezados;
+}
+
+function tieneBloqueId(texto, id) {
+  const lineas = texto.split(/\r?\n/);
+  const target = id.toLowerCase();
+  for (const l of lineas) {
+    const r = l.replace(/[ \t\r]+$/, '').toLowerCase();
+    if (r.endsWith(target)) return true;
+  }
+  return false;
+}
 
 const ANTIGUOS = new Set(['concepto', 'entidad', 'sintesis', 'sesion']);
 const REQUERIDOS = {
@@ -26,6 +57,9 @@ export function lint(vault) {
   const notas = listarNotas(vault).map((rel) => leerNota(vault, rel));
   const porBase = new Map(notas.map((n) => [sinEmoji(n.nombre).toLowerCase(), n.nombre]));
   const principales = new Map(); // carpeta → nota principal (para comprobar su índice)
+  const cacheNotas = new Map();
+  const cacheEncabezados = new Map();
+  for (const n of notas) cacheNotas.set(n.rel, n.texto);
 
   for (const n of notas) {
     if (esSistema(n.rel)) continue;
@@ -39,6 +73,93 @@ export function lint(vault) {
       // [[Anemia]] cuando la nota se llama «🩸 Anemia»: Obsidian no resuelve el enlace por el alias.
       const parecida = porBase.get(sinEmoji(e.destino).toLowerCase());
       agregar(bandeja || archivo ? 'aviso' : 'error', 'enlace_roto', n.rel, `[[${e.destino}]] no existe${parecida ? `: ¿quisiste decir [[${parecida}]]?` : ''}`);
+    }
+
+    // Imagen en enlace y anclas rotas (error fuera de Bandeja/Archivo, aviso dentro).
+    const nivelEnlace = bandeja || archivo ? 'aviso' : 'error';
+    const imagenesReportadas = new Set();
+
+    for (const a of extraerAnclas(n.texto)) {
+      if ((a.ancla && a.ancla.includes('![[')) || (a.etiqueta && a.etiqueta.includes('![['))) {
+        const k = `${a.linea}:${a.crudo}`;
+        if (!imagenesReportadas.has(k)) {
+          imagenesReportadas.add(k);
+          agregar(nivelEnlace, 'imagen_en_enlace', n.rel, `Imagen incrustada dentro de un enlace: ${a.crudo}`, a.linea);
+        }
+        continue;
+      }
+
+      // ancla_rota
+      let textoDestino = null;
+      let rutaDestino = null;
+
+      if (!a.destino) {
+        textoDestino = n.texto;
+        rutaDestino = n.rel;
+      } else {
+        const clave = a.destino.toLowerCase().replace(/\.md$/, '');
+        const rutas = nombres.get(clave) || nombres.get(a.destino.toLowerCase());
+        if (!rutas || !rutas.length) continue; // Si no existe el destino, ya lo marca enlace_roto
+        rutaDestino = rutas[0];
+        if (!rutaDestino.toLowerCase().endsWith('.md')) continue;
+
+        if (cacheNotas.has(rutaDestino)) {
+          textoDestino = cacheNotas.get(rutaDestino);
+        } else {
+          try {
+            textoDestino = readFileSync(join(vault, rutaDestino), 'utf8');
+            cacheNotas.set(rutaDestino, textoDestino);
+          } catch {
+            continue;
+          }
+        }
+      }
+
+      const objetivo = a.destino ? `[[${a.destino}#${a.ancla}]]` : `[[#${a.ancla}]]`;
+      const enDonde = a.destino ? `[[${a.destino}]]` : 'esta nota';
+
+      if (a.bloque) {
+        if (!tieneBloqueId(textoDestino, a.ancla)) {
+          agregar(nivelEnlace, 'ancla_rota', n.rel, `${objetivo} no existe en ${enDonde}`, a.linea);
+        }
+      } else {
+        let encs = cacheEncabezados.get(rutaDestino);
+        if (!encs) {
+          encs = extraerEncabezados(textoDestino);
+          cacheEncabezados.set(rutaDestino, encs);
+        }
+        const anclaLimpia = a.ancla.replace(/[ \t#\r]+$/, '').trim().toLowerCase();
+        // Como Obsidian: «## *Calma tus nervios*» o «## Parte 1: Inicio» se enlazan sin el formato ni los signos.
+        const clave = (t) => normalizar(t).replace(/[*_`~=:#|^[\]]/g, '').replace(/\s+/g, ' ').trim();
+        const existe = encs.some((h) => clave(h) === clave(anclaLimpia));
+        if (!existe) {
+          const normA = normalizar(anclaLimpia);
+          let mejor = null;
+          let maxPref = 0;
+          for (const h of encs) {
+            const normH = normalizar(h.replace(/[ \t#\r]+$/, '').trim());
+            let p = 0;
+            while (p < normA.length && p < normH.length && normA[p] === normH[p]) p++;
+            if (p > maxPref) {
+              maxPref = p;
+              mejor = h;
+            }
+          }
+          const sugerencia = mejor ? `: ¿quisiste decir #${mejor}?` : '';
+          agregar(nivelEnlace, 'ancla_rota', n.rel, `${objetivo} no existe en ${enDonde}${sugerencia}`, a.linea);
+        }
+      }
+    }
+
+    // Imagen en enlaces sin ancla (ej. [[Nota|alias ![[img.png]]]])
+    for (const e of extraerEnlaces(n.texto)) {
+      if ((e.ancla && e.ancla.includes('![[')) || (e.etiqueta && e.etiqueta.includes('![['))) {
+        const k = `${e.linea}:${e.crudo}`;
+        if (!imagenesReportadas.has(k)) {
+          imagenesReportadas.add(k);
+          agregar(nivelEnlace, 'imagen_en_enlace', n.rel, `Imagen incrustada dentro de un enlace: ${e.crudo}`, e.linea);
+        }
+      }
     }
     if (bandeja || archivo) continue;
 
@@ -96,9 +217,28 @@ export function lint(vault) {
   faltan += [...principales.values()].filter((p) => !enIndice.includes(`[[${p.nombre}]]`)).length;
   if (faltan) agregar('aviso', 'indice_desactualizado', R.indice, `${faltan} notas no están en los índices automáticos: ejecuta okt indice.`);
 
+  // Numeración: en un vault que numera, cada área, proyecto y tema lleva «NN │ ».
+  if (numerarActivo(vault)) {
+    const sinNumero = [...principales.keys()].filter((d) => d.split('/').length >= 2 && numeroDe(basename(d)) === null);
+    if (sinNumero.length) agregar('aviso', 'sin_numero', sinNumero[0], `${sinNumero.length} carpetas sin número (${sinNumero.slice(0, 3).map((d) => basename(d)).join(', ')}${sinNumero.length > 3 ? '…' : ''}): okt numerar.`);
+  }
+
+  // Jerarquía: candidatos a ordenarse de lo general a lo específico (los descartados no salen).
+  try {
+    for (const h of avisosJerarquia(vault)) agregar(h.nivel, h.regla, h.archivo, h.detalle);
+  } catch {}
+
   // Bandeja sin procesar hace más de 14 días.
   const viejas = notas.filter((n) => n.rel.startsWith(`${C.bandeja}/`) && /^\d{4}-\d{2}-\d{2}$/.test(n.datos.creado || '') && diasEntre(n.datos.creado) > 14).length;
   if (viejas) agregar('aviso', 'bandeja_vieja', `${C.bandeja}/`, `${viejas} elementos llevan más de 14 días sin procesar.`);
+
+  // Rutas largas: más de 240 caracteres en la ruta absoluta (todos los archivos, incluido Sistema).
+  for (const rel of listarArchivos(vault)) {
+    const abs = join(vault, rel);
+    if (abs.length > 240) {
+      agregar('aviso', 'ruta_larga', rel, `La ruta tiene ${abs.length} caracteres (máximo 240): acorta el nombre de la nota o de una carpeta (okt renombrar).`);
+    }
+  }
 
   const errores = hallazgos.filter((h) => h.nivel === 'error').length;
   const avisos = hallazgos.length - errores;
