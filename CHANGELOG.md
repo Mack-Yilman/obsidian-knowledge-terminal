@@ -1,5 +1,12 @@
 # Cambios
 
+## 0.9.2 — 2026-11-09
+
+- **Al actualizar el plugin, tus ediciones pendientes ya no se mezclan con el commit de la ruta del CLI.** Si abrías tu
+  agente fuera del vault después de una actualización, el commit «okt: ruta del CLI actualizada en AGENTS.md» se llevaba
+  también lo que tenías sin guardar (por ejemplo, la nota diaria editada en Obsidian). Ahora esos cambios van antes en su
+  propio commit, «okt: cambios sin cerrar», y el de la ruta lleva solo `AGENTS.md`.
+
 ## 0.9.1 — 2026-11-09
 
 - **`okt doctor` encuentra Obsidian instalado para todo el equipo** (`C:\Program Files\Obsidian`), no solo por usuario:

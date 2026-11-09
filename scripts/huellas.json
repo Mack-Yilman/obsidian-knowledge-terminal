@@ -1,5 +1,5 @@
 {
-  "version": "0.9.1",
+  "version": "0.9.2",
   "archivos": {
     "plantillas/vault/.obsidian/app.json": "cf2562a353ad44c17caf5e768b6128713a904144ed28ebd02df4c1640d1a1745",
     "plantillas/vault/.obsidian/core-plugins.json": "a3e5ab51c3254f1c79b7a1ce8c3ad8b7ce04dbb3bdd795a4638225cfb66a88e7",
@@ -55,7 +55,7 @@
     "scripts/lib/redactar.mjs": "a2a6c36249d0e89a795842cbc205c20801ca3fd613bc5ce870dbf781771b3956",
     "scripts/lib/reorganizar.mjs": "30c8e1ab2326470c190c4253b0dc869525debffeea0e8fa9caa47921f7a700dc",
     "scripts/lib/rutas.mjs": "88bedd4562562216808cb5e310fa75e180a8475b28a59b3269779b232674c672",
-    "scripts/lib/sesiones.mjs": "d0f3b8b06c169fc1f9b1c342daba8c0fac4327b5b89063127d018e0de077272a",
+    "scripts/lib/sesiones.mjs": "1b621161b3d0893e1fa423d8f5928ae1038d951a6acb93d8fcd6d00d9d94f99d",
     "scripts/lib/sistema.mjs": "9065b62f98adec826f8a2940204c6a0165f4150f65eea7fc1377f5e97cc0420e",
     "scripts/lib/telegram.mjs": "957381ad98e98faccc62b7fb65ab8cff1660012c9aa03fa9068a8fd7ee22784d",
     "scripts/lib/vault.mjs": "4daf8002daf798c54dc811ea64e7e265da693bf3004e25d25c534de6b28eddba",

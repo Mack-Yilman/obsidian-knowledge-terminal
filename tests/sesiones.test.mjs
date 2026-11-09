@@ -292,3 +292,29 @@ test('red de seguridad de commits en hook inicio: guarda cambios sin cerrar y av
   v.borrar();
 });
 
+test('al renovar la ruta del CLI desde otra carpeta, los cambios pendientes del vault van en su propio commit', () => {
+  const v = vaultNuevo();
+  const g = (...a) => spawnSync('git', ['-c', 'core.quotepath=false', ...a], { cwd: v.vault, encoding: 'utf8' });
+  // AGENTS.md y la config con la ruta de una versión anterior del plugin.
+  const agents = join(v.vault, 'AGENTS.md');
+  writeFileSync(agents, readFileSync(agents, 'utf8').replace(/node "[^"]*okt\.mjs"/, 'node "C:/viejo/okt.mjs"'));
+  g('init', '-q', '-b', 'main');
+  g('config', 'user.name', 'T');
+  g('config', 'user.email', 't@t');
+  g('add', '-A');
+  g('commit', '-q', '-m', 'inicio');
+  // Una actualización del plugin deja vieja la ruta guardada; mientras, el usuario editó una nota en Obsidian.
+  const cfg = join(v.configDir, 'config.json');
+  writeFileSync(cfg, JSON.stringify({ ...JSON.parse(readFileSync(cfg, 'utf8')), cli: 'C:/viejo/okt.mjs' }));
+  escribir(v.vault, '03 │ 📅 Diario/📅 Nota de Obsidian.md', 'escrita a mano');
+  const r = v.okt(['hook', 'inicio'], { env: { OKT_SIN_GIT: '0' }, input: JSON.stringify({ cwd: v.dir, session_id: 'fuera' }) });
+  assert.equal(r.codigo, 0, r.error);
+  const ultimo = g('show', '--name-only', '--pretty=%s', 'HEAD').stdout.trim().split('\n');
+  assert.equal(ultimo[0], 'okt: ruta del CLI actualizada en AGENTS.md');
+  assert.deepEqual(ultimo.slice(1).filter(Boolean), ['AGENTS.md'], 'el commit de la ruta lleva solo AGENTS.md');
+  const anterior = g('show', '--name-only', '--pretty=%s', 'HEAD~1').stdout;
+  assert.match(anterior, /^okt: cambios sin cerrar/);
+  assert.match(anterior, /Nota de Obsidian/);
+  v.borrar();
+});
+
