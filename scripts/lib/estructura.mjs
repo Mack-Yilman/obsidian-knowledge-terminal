@@ -43,6 +43,7 @@ export const R = {
   bitacora: `${C.sistema}/📜 bitacora.md`,
   pendientes: `${C.sistema}/✅ pendientes.md`,
   indice: `${C.sistema}/🗂️ indice.md`,
+  mejoras: `${C.sistema}/🛠️ Mejoras OKT.md`,
 };
 
 // Subcarpetas de adjuntos por origen.
