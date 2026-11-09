@@ -10,7 +10,8 @@
     "okt": "scripts/okt.mjs"
   },
   "scripts": {
-    "test": "node --test \"tests/**/*.test.mjs\""
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "huellas": "node scripts/huellas.mjs"
   },
   "engines": {
     "node": ">=20"

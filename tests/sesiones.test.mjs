@@ -252,3 +252,43 @@ test('bandeja preparar junta lo pendiente en un paquete; archivar lo mueve a �
   assert.notEqual(r.codigo, 0);
   v.borrar();
 });
+
+test('red de seguridad de commits en hook inicio: guarda cambios sin cerrar y avisa; sin cambios o con OKT_SIN_GIT=1 no hace nada', () => {
+  const v = vaultNuevo();
+  // Asienta archivos de configuración inicial (como agentes.json) antes de inicializar git
+  v.okt(['hook', 'inicio'], { input: JSON.stringify({ cwd: v.vault, session_id: 'prep' }) });
+  const g = (...a) => spawnSync('git', ['-c', 'user.name=T', '-c', 'user.email=t@t', '-c', 'core.quotepath=false', '-c', 'core.longpaths=true', ...a], { cwd: v.vault, encoding: 'utf8' });
+  g('init', '-q', '-b', 'main');
+  g('config', 'user.name', 'T');
+  g('config', 'user.email', 't@t');
+  g('add', '-A');
+  g('commit', '-q', '-m', 'inicio');
+
+  // Con un archivo modificado sin commit, el hook hace el commit y el contexto trae el aviso con el hash
+  escribir(v.vault, '00 │ 📥 Bandeja/Nota.md', 'Cambio sin cerrar');
+  let r = v.okt(['hook', 'inicio'], { env: { OKT_SIN_GIT: '0' }, input: JSON.stringify({ cwd: v.vault, session_id: 's-mod' }) });
+  assert.equal(r.codigo, 0, r.error);
+  const hash = g('rev-parse', '--short', 'HEAD').stdout.trim();
+  assert.match(r.salida, new RegExp(`Se guardaron 1 cambios que no se habían cerrado \\(de una sesión anterior o de Obsidian\\) en el commit ${hash}`));
+  assert.match(r.salida, new RegExp(`git show --stat ${hash}`));
+  assert.equal(g('status', '--porcelain').stdout.trim(), '', 'el working tree quedó limpio');
+  assert.equal(g('log', '-1', '--pretty=%s').stdout.trim(), 'okt: cambios sin cerrar (sesión anterior u Obsidian)');
+
+  // Sin cambios, no hay aviso ni commit
+  const headAntes = g('rev-parse', 'HEAD').stdout.trim();
+  r = v.okt(['hook', 'inicio'], { env: { OKT_SIN_GIT: '0' }, input: JSON.stringify({ cwd: v.vault, session_id: 's-limpio' }) });
+  assert.equal(r.codigo, 0, r.error);
+  assert.doesNotMatch(r.salida, /Se guardaron \d+ cambios que no se habían cerrado/);
+  assert.equal(g('rev-parse', 'HEAD').stdout.trim(), headAntes, 'no se creó commit');
+
+  // Con OKT_SIN_GIT=1, nada
+  escribir(v.vault, '00 │ 📥 Bandeja/Otra.md', 'Sin git');
+  r = v.okt(['hook', 'inicio'], { env: { OKT_SIN_GIT: '1' }, input: JSON.stringify({ cwd: v.vault, session_id: 's-singit' }) });
+  assert.equal(r.codigo, 0, r.error);
+  assert.doesNotMatch(r.salida, /Se guardaron \d+ cambios que no se habían cerrado/);
+  assert.equal(g('rev-parse', 'HEAD').stdout.trim(), headAntes, 'no se creó commit con OKT_SIN_GIT=1');
+  assert.match(g('status', '--porcelain').stdout.trim(), /Otra\.md/);
+
+  v.borrar();
+});
+

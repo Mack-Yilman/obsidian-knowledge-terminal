@@ -36,12 +36,34 @@ export function iniciarGit(vault) {
 export function commit(vault, mensaje) {
   if (!activo()) return { omitido: true };
   if (!existsSync(join(vault, '.git'))) return { sinRepo: true };
+  if (!git(vault, ['config', 'user.name']).salida) git(vault, ['config', 'user.name', 'OKT']);
+  if (!git(vault, ['config', 'user.email']).salida) git(vault, ['config', 'user.email', 'okt@localhost']);
   const add = git(vault, ['add', '-A']);
   // Sin esto, un «add» fallido (p. ej. una ruta demasiado larga) dejaba el commit sin hacer y sin avisar.
   if (!add.ok) return { error: add.error.split('\n').filter((l) => !/^warning:/.test(l)).join('\n') || add.error };
   if (!git(vault, ['status', '--porcelain']).salida) return { sinCambios: true };
   const r = git(vault, ['commit', '-q', '-m', mensaje]);
   return r.ok ? { hecho: true, hash: git(vault, ['rev-parse', '--short', 'HEAD']).salida } : { error: r.error };
+}
+
+export function guardarSinCerrar(vault) {
+  try {
+    if (!activo() || !hayGit() || !existsSync(join(vault, '.git'))) return { hecho: false };
+    const st = git(vault, ['status', '--porcelain', '-z']);
+    if (!st.ok || !st.salida) return { hecho: false };
+    const tokens = st.salida.split('\0').filter(Boolean);
+    if (!tokens.length) return { hecho: false };
+    let n = 0;
+    for (let i = 0; i < tokens.length; i++) {
+      n++;
+      if (tokens[i].startsWith('R ') || tokens[i].startsWith('C ')) i++;
+    }
+    const r = commit(vault, 'okt: cambios sin cerrar (sesión anterior u Obsidian)');
+    if (r.hecho) return { hecho: true, cambios: n, hash: r.hash };
+    return { hecho: false };
+  } catch {
+    return { hecho: false };
+  }
 }
 
 // Para la memoria de los agentes: los asuntos de los commits nuevos desde el último visto, por hash y no por fecha (con

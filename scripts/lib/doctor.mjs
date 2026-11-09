@@ -6,6 +6,7 @@ import { homedir } from 'node:os';
 import { ejecutar, resolverBinario, jsonDe } from './binarios.mjs';
 import { leerConfigVault, posix, RAIZ_PLUGIN } from './rutas.mjs';
 import { dirSkillsAgy, dirPluginAgy, dirAgyConfig, deConfianza, SKILL_OBSIDIAN, ETIQUETA_TAREA } from './instalar.mjs';
+import { calcularHuellas } from '../huellas.mjs';
 
 // Plugins de Claude Code instalados (~/.claude/plugins/installed_plugins.json; OKT_CLAUDE_PLUGINS para las pruebas).
 function pluginClaude(id) {
@@ -50,6 +51,49 @@ function driveInstalado() {
   return false;
 }
 
+export function verificarHuellas(raiz = RAIZ_PLUGIN) {
+  const rutaHuellas = join(raiz, 'scripts', 'huellas.json');
+  if (!existsSync(rutaHuellas)) {
+    return { ok: true, sinHuellas: true, version: null, cambiados: [], faltan: [], sobran: [] };
+  }
+  let guardado;
+  try {
+    guardado = JSON.parse(readFileSync(rutaHuellas, 'utf8'));
+  } catch {
+    return { ok: false, version: null, cambiados: [], faltan: [], sobran: [] };
+  }
+  const version = guardado.version || null;
+  const esperados = guardado.archivos || {};
+  const actuales = calcularHuellas(raiz).archivos;
+
+  const cambiados = [];
+  const faltan = [];
+  const sobran = [];
+
+  for (const [rel, sha] of Object.entries(esperados)) {
+    if (!(rel in actuales)) {
+      faltan.push(rel);
+    } else if (actuales[rel] !== sha) {
+      cambiados.push(rel);
+    }
+  }
+
+  for (const rel of Object.keys(actuales)) {
+    if (!(rel in esperados)) {
+      if (rel.endsWith('.mjs') || rel.endsWith('.md')) {
+        sobran.push(rel);
+      }
+    }
+  }
+
+  cambiados.sort();
+  faltan.sort();
+  sobran.sort();
+
+  const ok = cambiados.length === 0 && faltan.length === 0 && sobran.length === 0;
+  return { ok, version, cambiados, faltan, sobran };
+}
+
 export function doctor(vault, op = {}) {
   const c = [];
   const add = (grupo, nombre, ok, detalle, como, opcional = false) => c.push({ grupo, nombre, estado: ok ? 'ok' : opcional ? 'opcional' : 'falta', detalle, como: ok ? '' : como });
@@ -66,6 +110,14 @@ export function doctor(vault, op = {}) {
   add('Base', 'Vault', Boolean(vault), vault ? posix(vault) : 'no configurado', 'Abre tu agente en la carpeta de tus notas y pide «configura mi segundo cerebro» (okt init).');
   if (vault) add('Base', 'Estructura con emojis (0.3.0)', !necesitaMigrar(vault), necesitaMigrar(vault) ? 'estructura anterior' : 'al día', 'okt migrar (vista previa) y okt migrar --aplicar');
   if (vault) add('Base', 'Git del vault', existsSync(join(vault, '.git')), existsSync(join(vault, '.git')) ? 'historial local activo' : 'sin historial', 'okt init --aplicar lo crea (git local, sin remoto).');
+
+  const vHuellas = verificarHuellas(RAIZ_PLUGIN);
+  const okHuellas = vHuellas.ok;
+  const detalleHuellas = okHuellas
+    ? (vHuellas.sinHuellas ? 'sin huellas' : 'al día')
+    : vHuellas.cambiados.join(', ') || [...vHuellas.faltan, ...vHuellas.sobran].join(', ');
+  const comoHuellas = 'Un agente editó la copia instalada. Esos cambios se pierden al actualizar: regístralos con okt reportar script <archivo> --para "<qué arreglaba>" y llévalos al repo';
+  add('Plugin', 'Plugin sin cambios locales', okHuellas, detalleHuellas, comoHuellas);
 
   const obs = obsidianInstalado();
   add('Obsidian', 'Obsidian instalado', obs, obs ? 'sí' : 'no encontrado', plataforma === 'win32' ? 'winget install Obsidian.Obsidian (o https://obsidian.md/download)' : 'https://obsidian.md/download');
@@ -137,5 +189,6 @@ export function doctor(vault, op = {}) {
     .map((g) => `${g}\n${c.filter((x) => x.grupo === g).map((x) => `  ${marca[x.estado]} ${x.nombre}${x.detalle ? `: ${x.detalle}` : ''}${x.como ? `\n      → ${x.como}` : ''}`).join('\n')}`)
     .join('\n');
   const faltan = c.filter((x) => x.estado === 'falta').length;
+  c.parches = vHuellas.cambiados;
   return { texto: `${texto}\n\n${faltan ? `Faltan ${faltan} pasos obligatorios.` : 'Lo obligatorio está listo.'}${op.completo ? '' : ' (Para verificar las sesiones de los conectores: okt doctor --completo)'}`, datos: c };
 }
