@@ -8,6 +8,7 @@ import { C, EMOJI, resolverCarpeta, ubicar } from './estructura.mjs';
 import { diasEntre, fechaISO } from './fechas.mjs';
 import { leerConfigVault, posix, sobrescribir } from './rutas.mjs';
 import { leerNota, listarNotas } from './vault.mjs';
+import { sinNumero } from './nombres.mjs';
 
 const errorUso = (m, codigo = 2) => Object.assign(new Error(m), { codigo });
 
@@ -40,7 +41,9 @@ function umbralesDe(vault) {
 }
 
 export function idCandidato(tipo, carpeta, nota = '') {
-  return createHash('sha1').update(`${tipo}|${carpeta}|${nota}`).digest('hex').slice(0, 8);
+  // Sin los números: okt numerar o mover no deben hacer reaparecer lo descartado.
+  const sinNum = (r) => String(r).split('/').map((p) => sinNumero(p)).join('/');
+  return createHash('sha1').update(`${tipo}|${sinNum(carpeta)}|${sinNumero(nota)}`).digest('hex').slice(0, 8);
 }
 
 const rutaDescartados = (vault) => join(vault, '.cerebro', 'jerarquia.json');

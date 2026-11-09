@@ -52,7 +52,9 @@ function leerOrden(vault, archivo) {
     const rel = RAICES.includes(padre) ? padre : resolverCarpeta(vault, padre);
     if (!existsSync(join(vault, rel))) throw errorUso(`No encontré la carpeta «${padre}» del orden.`);
     if (!Array.isArray(hijas)) throw errorUso(`«${padre}»: el valor es una lista de nombres.`);
-    mapa.set(rel, hijas.map((h) => ({ nombre: String(h), base: base(h) })));
+    // Una hija repetida en el orden contaría dos veces.
+    const unicas = [...new Map(hijas.map((h) => [base(h), { nombre: String(h), base: base(h) }])).values()];
+    mapa.set(rel, unicas);
   }
   return mapa;
 }
@@ -96,6 +98,19 @@ function planificar(vault, op) {
   const porNombre = new Map();
   for (const c of reales) porNombre.set(c.de.toLowerCase(), [...(porNombre.get(c.de.toLowerCase()) || []), c]);
   const choques = [...porNombre.values()].filter((l) => l.length > 1).map((l) => `«${l[0].de}» está en ${l.map((c) => c.padre).join(' y ')}`);
+  // Un nombre que también existe en otra rama (fuera de lo que se numera) haría que sus enlaces apuntaran a la nueva.
+  const enVault = new Map();
+  const contar = (padre) => {
+    for (const h of hijasPrincipales(vault, padre)) {
+      enVault.set(h.toLowerCase(), (enVault.get(h.toLowerCase()) || 0) + 1);
+      contar(`${padre}/${h}`);
+    }
+  };
+  RAICES.forEach(contar);
+  for (const c of reales) {
+    if ((enVault.get(c.de.toLowerCase()) || 0) > 1 && !choques.some((x) => x.includes(c.de))) choques.push(`«${c.de}» existe en más de una carpeta del vault`);
+    if (enVault.has(c.a.toLowerCase())) choques.push(`«${c.a}» ya existe en el vault`);
+  }
   if (choques.length) throw errorUso(`Hay carpetas con el mismo nombre y sus enlaces serían ambiguos (no se tocó nada):\n${choques.map((c) => `- ${c}`).join('\n')}\nRenombra una de cada par con okt renombrar.`, 3);
   return reales;
 }
@@ -133,7 +148,8 @@ export function numerar(vault, op = {}) {
       : 'Todas las carpetas ya tienen su número: no hay nada que cambiar.';
     return { texto, datos: { cambios, largas } };
   }
-  guardarConfigVault(vault, { numerar_carpetas: true });
+  // Con --carpeta se numera solo una rama: la numeración del resto del vault no se activa.
+  if (!op.carpeta) guardarConfigVault(vault, { numerar_carpetas: true });
   if (!cambios.length) return { texto: 'Todas las carpetas ya tienen su número. La numeración queda activa para las nuevas.', datos: { cambios: [] } };
 
   commit(vault, 'okt: antes de numerar');

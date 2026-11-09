@@ -53,13 +53,16 @@ export function guardarSinCerrar(vault) {
     if (!st.ok || !st.salida) return { hecho: false };
     const tokens = st.salida.split('\0').filter(Boolean);
     if (!tokens.length) return { hecho: false };
-    let n = 0;
+    const rutas = [];
     for (let i = 0; i < tokens.length; i++) {
-      n++;
-      if (tokens[i].startsWith('R ') || tokens[i].startsWith('C ')) i++;
+      rutas.push(tokens[i].slice(3));
+      if (tokens[i].startsWith('R') || tokens[i].startsWith('C')) i++;
     }
-    const r = commit(vault, 'okt: cambios sin cerrar (sesión anterior u Obsidian)');
-    if (r.hecho) return { hecho: true, cambios: n, hash: r.hash };
+    // Los registros de OKT y el estado de Obsidian cambian solos (la memoria de los agentes, la ventana): se guardan, pero
+    // sin avisar al agente, que si no recibiría el aviso en cada sesión.
+    const propios = rutas.filter((r) => !/^"?\.(cerebro|obsidian)\//.test(r));
+    const r = commit(vault, propios.length ? 'okt: cambios sin cerrar (sesión anterior u Obsidian)' : 'okt: registros de OKT y de Obsidian');
+    if (r.hecho && propios.length) return { hecho: true, cambios: propios.length, hash: r.hash };
     return { hecho: false };
   } catch {
     return { hecho: false };

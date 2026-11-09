@@ -68,7 +68,8 @@ async function main() {
     process.stderr.write(`${e.message}\n`);
     // Mejora continua: los fallos internos (1) y los de uso (2, suelen ser una skill que explica mal un comando) quedan
     // en Mejoras OKT. Un choque (3, «ya existe») es una respuesta normal y no se anota.
-    if ((e.codigo ?? 1) !== 3 && !['reportar', 'mejoras', 'hook'].includes(nombre)) registrarFalloCli(vault, { comando: [nombre, sub].filter(Boolean).join(' '), mensaje: e.message.split('\n')[0] });
+    // En un vault sin migrar no se escribe: la nota de Mejoras quedaría junto a las carpetas viejas.
+    if ((e.codigo ?? 1) !== 3 && !['reportar', 'mejoras', 'hook'].includes(nombre) && !(vault && necesitaMigrar(vault))) registrarFalloCli(vault, { comando: [nombre, sub].filter(Boolean).join(' '), mensaje: e.message.split('\n')[0] });
     return e.codigo ?? 1;
   }
 }

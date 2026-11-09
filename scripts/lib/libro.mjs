@@ -5,7 +5,7 @@
 //   pendientes(vault)
 //   sanear(md) -> { texto, cambios }
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, rmSync, readdirSync, copyFileSync } from 'node:fs';
-import { join, dirname, basename, extname, resolve, isAbsolute } from 'node:path';
+import { join, dirname, basename, extname, resolve, isAbsolute, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { resolverBinario, ejecutar, jsonDe } from './binarios.mjs';
 import { C, R } from './estructura.mjs';
@@ -143,7 +143,26 @@ function informePropuestas(tituloBase, carpetaTema, propuestas) {
   };
 }
 
+// Encabezados ## fuera de bloques de código (un comentario «## …» dentro de ``` no es un capítulo).
+function encabezadosH2(md) {
+  const sinCodigo = String(md).replace(/```[\s\S]*?```/g, '');
+  return [...sinCodigo.matchAll(/^##[ \t]+(.+?)[ \t]*$/gm)].map((m) => m[1].trim());
+}
+
+// Un encabezado con [ ] | # ^ rompe el enlace [[nota#encabezado|etiqueta]]: no entra al índice y se informa.
+const anclaSegura = (enc) => !/[[\]|#^]/.test(enc);
+
+// Si el tema se movió o se renumeró mientras el libro esperaba decisiones, se busca por su nombre sin número.
+function temaActual(vault, tema) {
+  if (existsSync(join(vault, tema))) return tema;
+  const base = sinEmoji(basename(tema)).toLowerCase();
+  const principal = listarNotas(vault).find((r) => !r.startsWith(`${C.archivo}/`) && basename(dirname(r)) === basename(r, '.md') && sinEmoji(basename(r, '.md')).toLowerCase() === base);
+  if (!principal) throw errorUso(`No encontré el tema del libro («${basename(tema)}»): ¿se archivó? Vuelve a prepararlo.`);
+  return dirname(principal);
+}
+
 function terminar(vault, estado) {
+  estado.tema = temaActual(vault, estado.tema);
   const mdCrudo = readFileSync(estado.md, 'utf8');
   const { datos: fmConv, cuerpo: cuerpoConvertido } = leerFrontmatter(mdCrudo);
 
@@ -167,8 +186,9 @@ function terminar(vault, estado) {
   }
 
   // 2. Saneamiento propio de OKT.
-  const { texto: cuerpoSaneadoBase, cambios: cambiosSanear } = sanear(cuerpoConvertido);
-  const cuerpoFinal = separarImagenesDeEncabezados(cuerpoSaneadoBase).replace(/^\n+/, '');
+  // Primero se bajan las imágenes de los encabezados: así una llamada [19] queda al final y sanear la quita.
+  const { texto: cuerpoSaneadoBase, cambios: cambiosSanear } = sanear(separarImagenesDeEncabezados(cuerpoConvertido));
+  const cuerpoFinal = cuerpoSaneadoBase.replace(/^\n+/, '');
 
   // 3. Escribe en la carpeta del tema 📖 <Título> - Texto completo.md.
   const hoy = fechaISO();
@@ -190,8 +210,9 @@ function terminar(vault, estado) {
   sobrescribir(join(vault, relTexto), escribirFrontmatter(datosTexto, `\n${cuerpoFinal}`));
 
   // 4. Escribe la ficha 📄 <Título>.md en la misma carpeta.
-  const encabezados = [...cuerpoFinal.matchAll(/^##[ \t]+(.+?)[ \t]*$/gm)].map((m) => m[1].trim());
-  const lineasIndice = encabezados.map((enc) => {
+  const encabezados = encabezadosH2(cuerpoFinal);
+  const sinIndice = encabezados.filter((enc) => !anclaSegura(enc));
+  const lineasIndice = encabezados.filter(anclaSegura).map((enc) => {
     const etiqueta = limpiarEtiqueta(enc) || enc;
     return `- [[${nombreTexto}#${enc}|${etiqueta}]]`;
   });
@@ -233,7 +254,11 @@ function terminar(vault, estado) {
   // 5. Si el archivo original está dentro del vault, muévelo a R.bruto/AAAA-MM/ (si existe uno igual, " 2").
   let relBruto = null;
   let avisoOriginal;
-  if (dentroDe(vault, estado.archivo) && existsSync(estado.archivo)) {
+  const relOriginal = dentroDe(vault, estado.archivo) ? posix(relative(vault, estado.archivo)) : '';
+  if (relOriginal.startsWith(`${R.bruto}/`) || relOriginal.startsWith(`${R.adjuntos}/`)) {
+    // Ya estaba guardado (Bruto o adjuntos, con sus registros): moverlo lo dejaría huérfano.
+    avisoOriginal = `El original ya estaba guardado y no se movió: ${relOriginal}`;
+  } else if (relOriginal && existsSync(estado.archivo)) {
     const dirBruto = `${R.bruto}/${hoy.slice(0, 7)}`;
     mkdirSync(join(vault, dirBruto), { recursive: true });
     const ext = extname(estado.archivo);
@@ -261,6 +286,7 @@ function terminar(vault, estado) {
     `- Avisos de conversión: ${avisos.length ? avisos.join('; ') : 'ninguno'}`,
     `- Cambios de pulir: ${JSON.stringify(estado.pulir?.cambios || {})} · Cambios de sanear: ${JSON.stringify(cambiosSanear)}`,
     `- Muestra de encabezados (hasta 5): ${muestras.join(' | ') || 'ninguno'}`,
+    ...(sinIndice.length ? [`- Fuera del índice (llevan [ ] | # o ^, que rompen el enlace): ${sinIndice.slice(0, 5).join(' · ')}. Si son capítulos, quita esos signos del encabezado en el texto completo y agrega su línea al índice.`] : []),
     `- Ficha: ${relFicha}`,
     `- Texto completo: ${relTexto}`,
     `- ${avisoOriginal}`,
@@ -309,12 +335,8 @@ export function preparar(vault, archivo, op = {}) {
     throw errorUso('Falta la CLI todo-a-markdown (no está en el PATH). Instálala con su skill todo-a-markdown, o convierte el libro a Markdown con esa skill y guárdalo con okt adjuntar.');
   }
 
-  const resTema = temaNuevo(vault, `${carpetaPadre}/${tituloConEmoji}`);
-  const carpetaTema = dirname(resTema.datos.ruta);
-  const rutaTextoExistente = join(vault, carpetaTema, `📖 ${tituloBase} - Texto completo.md`);
-  if (existsSync(rutaTextoExistente)) {
-    throw errorUso(`El tema «${tituloBase}» ya tiene un «Texto completo» en ${carpetaTema}.`, 3);
-  }
+  const yaEsta = listarNotas(vault).find((r) => basename(r, '.md').toLowerCase() === `📖 ${tituloBase} - Texto completo`.toLowerCase());
+  if (yaEsta) throw errorUso(`El libro «${tituloBase}» ya tiene un «Texto completo»: ${yaEsta}.`, 3);
 
   const id = idLibro(tituloBase);
   const dirCache = dirCacheLibro(vault, id);
@@ -337,6 +359,10 @@ export function preparar(vault, archivo, op = {}) {
   if (!rPulir.ok || !resPulir || resPulir.estado === 'error') {
     throw errorUso(`Error al pulir el libro: ${rPulir.error || rPulir.salida}`);
   }
+
+  // El tema se crea recién ahora: si la conversión falla, el vault queda como estaba.
+  const resTema = temaNuevo(vault, `${carpetaPadre}/${tituloConEmoji}`);
+  const carpetaTema = dirname(resTema.datos.ruta);
 
   const estado = {
     id,
@@ -449,11 +475,11 @@ export function verificar(vault, titulo) {
   } else {
     const { cuerpo: cuerpoTextoRaw } = leerFrontmatter(readFileSync(join(vault, relTexto), 'utf8'));
     const cuerpoTexto = cuerpoTextoRaw.replace(/\r\n/g, '\n');
-    const encabezadosTexto = new Set([...cuerpoTexto.matchAll(/^##[ \t]+(.+?)[ \t]*$/gm)].map((m) => m[1].trim()));
+    const encabezadosTexto = new Set(encabezadosH2(cuerpoTexto));
 
     const enlacesIndice = [...seccionIndice.matchAll(/^\s*-\s*\[\[([^\n]+?)\]\]/gm)].map((m) => m[1]);
     for (const raw of enlacesIndice) {
-      const [destinoYAncla] = raw.split('|');
+      const destinoYAncla = raw.includes('|') ? raw.slice(0, raw.lastIndexOf('|')) : raw;
       const idx = destinoYAncla.indexOf('#');
       const ancla = idx >= 0 ? destinoYAncla.slice(idx + 1).trim() : '';
       if (!ancla || !encabezadosTexto.has(ancla)) {

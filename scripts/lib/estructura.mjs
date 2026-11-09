@@ -102,7 +102,8 @@ export function conEmoji(tipo, titulo) {
   if (!base) return titulo;
   const n = numeroDe(titulo);
   const con = TEMATICOS.has(tipo) && empiezaConEmoji(titulo) ? `${emojiInicial(titulo)} ${base}` : EMOJI[tipo] ? `${EMOJI[tipo]} ${base}` : base;
-  return n === null ? con : conNumero(n, con);
+  // Solo las carpetas llevan número: una copia en Bruto o una captura de una nota principal no.
+  return n === null || !['area', 'proyecto', 'tema'].includes(tipo) ? con : conNumero(n, con);
 }
 
 // ---------- numeración de carpetas (OKT 0.9.0) ----------

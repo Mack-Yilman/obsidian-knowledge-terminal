@@ -146,13 +146,17 @@ export async function hookInicioAntigravity(entradaTexto) {
     const vault = vaultGlobal();
     if (!vault) return '{}';
     const carpetas = [...new Set([...[].concat(e.workspacePaths || []), e.cwd].filter(Boolean).map((c) => posix(resolve(c))))];
-    for (const c of carpetas) if (!dentroDe(vault, c)) enOtraCarpeta(vault, c);
-    if (!carpetas.some((c) => dentroDe(vault, c))) return '{}';
-    if (!primeraVez(vault, e.conversationId)) return '{}';
+    const enVault = carpetas.some((c) => dentroDe(vault, c));
+    // Antes que la memoria de los agentes, que hace su propio commit y se tragaría los cambios sin cerrar.
     let guardado;
-    try {
-      guardado = guardarSinCerrar(vault);
-    } catch {}
+    if (enVault) {
+      try {
+        guardado = guardarSinCerrar(vault);
+      } catch {}
+    }
+    for (const c of carpetas) if (!dentroDe(vault, c)) enOtraCarpeta(vault, c);
+    if (!enVault) return '{}';
+    if (!primeraVez(vault, e.conversationId)) return '{}';
     const texto = await contextoInicio(vault, { guardado });
     return texto ? JSON.stringify({ injectSteps: [{ systemMessage: { systemMessage: texto } }] }) : '{}';
   } catch {

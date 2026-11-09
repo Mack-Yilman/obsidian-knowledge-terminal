@@ -13,7 +13,7 @@ import { join, dirname, basename } from 'node:path';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { leerConfigVault, guardarConfigVault, sobrescribir, posix, RAIZ_PLUGIN } from './rutas.mjs';
 import { C, C3, R, C2, R2, CARPETAS, CARPETAS2, EMOJI, ANTIGUAS, conEmoji, destinoArchivo, traducir, traducirV3, necesitaMigrar, versionDe, VERSION_ESTRUCTURA } from './estructura.mjs';
-import { empiezaConEmoji, sinEmoji, limpiarNombre, nombreValido, numeroDe, conNumero } from './nombres.mjs';
+import { empiezaConEmoji, sinEmoji, limpiarNombre, nombreValido, numeroDe, conNumero, sinNumero } from './nombres.mjs';
 import { listarNotas, mismasNotas, esSistema } from './vault.mjs';
 import { actualizarAgents } from './init.mjs';
 import { cerrar, pendiente } from './sistema.mjs';
@@ -652,7 +652,9 @@ export function renombrar(vault, nota, nuevoPedido) {
   if (basename(dirname(rel)) === viejo && numeroDe(viejo) !== null && numeroDe(nuevo) === null) nuevo = conNumero(numeroDe(viejo), nuevo);
   if (!sinEmoji(nuevo) || !nombreValido(nuevo)) throw errorUso(`Nombre no válido: «${nuevoPedido}».`);
   if (nuevo === viejo) return { texto: 'El nombre no cambia.', datos: { ruta: rel } };
-  const otras = mismasNotas(vault, nuevo).filter((r) => r !== rel);
+  // Si solo cambia el número, el nombre base no cambia y no hay choque nuevo (la ficha 📄 de un libro comparte el
+  // nombre base con su tema: sin esto, mover un libro que debía renumerarse quedaba a medias).
+  const otras = sinNumero(nuevo) === sinNumero(viejo) ? [] : mismasNotas(vault, nuevo).filter((r) => r !== rel);
   if (otras.length) throw Object.assign(new Error(`Ya existe una nota llamada «${sinEmoji(nuevo)}»: ${otras[0]}.`), { codigo: 3 });
 
   // La nota principal de un área, un proyecto o un tema vive en una carpeta con su mismo nombre: cambian las dos.
