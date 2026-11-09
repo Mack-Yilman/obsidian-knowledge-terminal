@@ -1,5 +1,11 @@
 # Cambios
 
+## 0.9.1 — 2026-11-09
+
+- **`okt doctor` encuentra Obsidian instalado para todo el equipo** (`C:\Program Files\Obsidian`), no solo por usuario:
+  antes decía «no encontrado» y contaba un paso obligatorio pendiente. Lo anotó el registro de Mejoras OKT al instalar
+  la 0.9.0.
+
 ## 0.9.0 — 2026-11-09
 
 - **Numeración `NN │ ` de carpetas:** Obsidian las ordena por el número. Se aplica a áreas, proyectos y temas a cualquier

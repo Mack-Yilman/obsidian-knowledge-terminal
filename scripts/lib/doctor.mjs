@@ -21,9 +21,11 @@ import { necesitaMigrar } from './estructura.mjs';
 
 const plataforma = process.platform;
 
-function obsidianInstalado() {
+// env se recibe para poder probarla (en Windows, el entorno heredado repite PROGRAMFILES con otras mayúsculas).
+export function obsidianInstalado(env = process.env) {
   const rutas = {
-    win32: [join(process.env.LOCALAPPDATA || '', 'Programs', 'Obsidian', 'Obsidian.exe')],
+    // Por usuario (el instalador por defecto) o para todo el equipo (Program Files): las dos son comunes.
+    win32: [env.LOCALAPPDATA && join(env.LOCALAPPDATA, 'Programs', 'Obsidian', 'Obsidian.exe'), ...[env.ProgramFiles, env['ProgramFiles(x86)']].filter(Boolean).map((p) => join(p, 'Obsidian', 'Obsidian.exe'))],
     darwin: ['/Applications/Obsidian.app'],
     linux: ['/usr/bin/obsidian', '/opt/Obsidian/obsidian', join(homedir(), '.local', 'share', 'flatpak', 'app', 'md.obsidian.Obsidian')],
   }[plataforma] || [];
