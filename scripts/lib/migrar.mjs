@@ -83,7 +83,7 @@ function archivosConEnlaces(vault) {
   return [...listarNotas(vault), ...['AGENTS.md', 'CLAUDE.md'].filter((n) => existsSync(join(vault, n)))];
 }
 
-function reescribirVault(vault, nombres) {
+export function reescribirVault(vault, nombres) {
   let cambiados = 0;
   if (!nombres.size) return 0;
   for (const rel of archivosConEnlaces(vault)) {

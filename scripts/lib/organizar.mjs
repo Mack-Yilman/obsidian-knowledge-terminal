@@ -81,7 +81,7 @@ export function temaNuevo(vault, ruta, op = {}) {
     sobrescribir(join(vault, final), escribirFrontmatter({ ...datos, tipo: 'tema', actualizado: fechaISO() }, cuerpo));
     actualizarRegistros(vault, { [crece]: final }, {}, new Map());
     // Con numeración, la nota que pasa a ser tema toma su número (y sus enlaces se actualizan).
-    if (numeroDe(nombre) !== null && numeroDe(viejo) === null) final = renombrar(vault, final, conNumero(numeroDe(nombre), viejo)).datos.a;
+    if (numeroDe(nombre) !== null && numeroDe(viejo) === null) final = renombrar(vault, viejo, conNumero(numeroDe(nombre), viejo)).datos.a;
     return { texto: `«${viejo}» pasa a ser un tema: ${final}. Mueve ahí sus notas con okt mover.`, datos: { ruta: final, creada: true, crecio: true } };
   }
   const rel = `${dir}/${nombre}.md`;
@@ -115,7 +115,7 @@ export function mover(vault, ref, destinoPedido) {
   renameSync(join(vault, origen), join(vault, destino));
   actualizarRegistros(vault, conCarpeta ? {} : { [origen]: destino }, conCarpeta ? { [origen]: destino } : {}, new Map());
   let final = destino;
-  if (renumerar) final = dirname(renombrar(vault, `${destino}/${basename(origen)}.md`, conNumero(nuevoN, basename(origen))).datos.a);
+  if (renumerar) final = dirname(renombrar(vault, basename(origen), conNumero(nuevoN, basename(origen))).datos.a);
   return { texto: `Movido${datos.tipo === 'tema' ? ' el tema' : ''}: ${origen} → ${final}. Los enlaces siguen funcionando (Obsidian enlaza por nombre${renumerar ? '; el número cambió y los enlaces se actualizaron' : ''}).`, datos: { de: origen, a: final } };
 }
 

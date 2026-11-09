@@ -16,6 +16,7 @@ import { instalarAntigravity, instalarObsidianSkills } from './instalar.mjs';
 import { leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { temaNuevo, mover, procesar, brutoGuardar, brutoLimpiar } from './organizar.mjs';
 import { preparar as reorganizarPreparar, aplicar as reorganizarAplicar } from './reorganizar.mjs';
+import { numerar } from './numerar.mjs';
 import { preparar as redactarPreparar, indice as redactarIndice, verificar as redactarVerificar } from './redactar.mjs';
 import { sinEmoji } from './nombres.mjs';
 import { basename } from 'node:path';
@@ -61,6 +62,9 @@ Configuración
                                          (proyectos) o 💤 Inactivos (lo demás). Nada se borra
   reorganizar preparar [--carpeta "<área o proyecto>"]   Mapa compacto (árbol, resúmenes y enlaces) para rejerarquizar
   reorganizar aplicar <plan.json>        Aplica el plan aprobado (temas, mover, renombrar, archivar) en un solo commit
+  numerar [--carpeta X] [--orden <orden.json>] [--aplicar]
+                                         Pone «NN │ » a carpetas y notas principales; sin --orden solo numera las que no
+                                         tienen número. orden.json: {"<carpeta padre>": ["<hija 1>", "<hija 2>"]}
 
 Notas
   nota nueva <tipo> "<título>" [--carpeta "<área o proyecto>/<tema>"]
@@ -245,6 +249,11 @@ export const COMANDOS = {
       if (accion === 'preparar') return reorganizarPreparar(vault, op);
       if (accion === 'aplicar') return reorganizarAplicar(vault, pos.join(' '));
       throw Object.assign(new Error('Uso: okt reorganizar preparar [--carpeta "<área o proyecto>"] | reorganizar aplicar <plan.json>'), { codigo: 2 });
+    },
+  },
+  numerar: {
+    correr({ op, vault }) {
+      return numerar(vault, op);
     },
   },
   instalar: {
