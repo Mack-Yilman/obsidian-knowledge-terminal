@@ -8,7 +8,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { esVault, leerConfigVault } from './rutas.mjs';
-import { emojiInicial, empiezaConEmoji, sinEmoji } from './nombres.mjs';
+import { emojiInicial, empiezaConEmoji, sinEmoji, numeroDe, conNumero } from './nombres.mjs';
 
 // Versión 4 (OKT 0.7.0): las raíces se numeran de 00 a 05, y el Archivo se ordena por motivo.
 export const VERSION_ESTRUCTURA = 4;
@@ -95,12 +95,31 @@ export const EMOJI = {
 export const TEMATICOS = new Set(['nota', 'tema', 'proyecto', 'area', 'concepto', 'entidad', 'sintesis']);
 
 // «🩸 Anemia» → igual (temático); «Anemia» → «💡 Anemia»; en los tipos fijos el emoji siempre es el del tipo.
+// El número de orden («03 │ ») se conserva si viene.
 export function conEmoji(tipo, titulo) {
   const base = sinEmoji(titulo);
   if (!base) return titulo;
-  if (TEMATICOS.has(tipo) && empiezaConEmoji(titulo)) return `${emojiInicial(titulo)} ${base}`;
-  return EMOJI[tipo] ? `${EMOJI[tipo]} ${base}` : base;
+  const n = numeroDe(titulo);
+  const con = TEMATICOS.has(tipo) && empiezaConEmoji(titulo) ? `${emojiInicial(titulo)} ${base}` : EMOJI[tipo] ? `${EMOJI[tipo]} ${base}` : base;
+  return n === null ? con : conNumero(n, con);
 }
+
+// ---------- numeración de carpetas (OKT 0.9.0) ----------
+
+// Áreas, proyectos y temas llevan «NN │ » si el vault lo tiene activo (numerar_carpetas). El número es fijo: se
+// asigna al crear la carpeta (el siguiente libre entre sus hermanas) y solo cambia con okt numerar.
+export const numerarActivo = (vault) => Boolean(vault && leerConfigVault(vault).numerar_carpetas);
+
+export function siguienteNumero(vault, carpetaPadre) {
+  let max = 0;
+  try {
+    for (const e of readdirSync(join(vault, carpetaPadre), { withFileTypes: true })) if (e.isDirectory()) max = Math.max(max, numeroDe(e.name) ?? 0);
+  } catch {}
+  return max + 1;
+}
+
+// El nombre con su número, si el vault numera y aún no lo trae.
+export const numerarNombre = (vault, carpetaPadre, nombre) => (numerarActivo(vault) && numeroDe(nombre) === null ? conNumero(siguienteNumero(vault, carpetaPadre), nombre) : nombre);
 
 // ---------- nota diaria ----------
 

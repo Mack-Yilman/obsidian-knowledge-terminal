@@ -47,7 +47,8 @@ export function vaultNuevo(opciones = {}) {
   const vault = join(t.dir, 'cerebro');
   const configDir = join(t.dir, 'config');
   mkdirSync(vault, { recursive: true });
-  const r = okt(['init', '--aplicar', '--areas', opciones.areas ?? 'Medicina,Personal'], { cwd: vault, configDir });
+  // Las pruebas anteriores a la 0.9.0 usan carpetas sin número: la numeración se pide con { numerar: 'si' }.
+  const r = okt(['init', '--aplicar', '--areas', opciones.areas ?? 'Medicina,Personal', '--numerar', opciones.numerar ?? 'no'], { cwd: vault, configDir });
   if (r.codigo !== 0) throw new Error(`init falló: ${r.error}${r.salida}`);
   return { ...t, vault, configDir, okt: (args, o = {}) => okt(args, { cwd: vault, configDir, ...o }) };
 }

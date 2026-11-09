@@ -10,7 +10,7 @@ import { reemplazarBloque, leerBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO } from './fechas.mjs';
 import { iniciarGit, commit } from './git.mjs';
-import { limpiarNombre, sinEmoji } from './nombres.mjs';
+import { limpiarNombre, sinEmoji, numeroDe, conNumero } from './nombres.mjs';
 
 const PLANTILLA = join(RAIZ_PLUGIN, 'plantillas', 'vault');
 
@@ -87,6 +87,27 @@ function temasPedidos(texto, areas, proyectos) {
   });
 }
 
+// Numera los nombres de una carpeta en el orden pedido. Si ya hay una carpeta con ese nombre base (con o sin número),
+// se usa su nombre exacto; si no, el siguiente número libre entre lo que hay en disco y lo ya asignado.
+function numerarLista(vault, padre, nombres, porPadre = new Map()) {
+  let enDisco = [];
+  try {
+    enDisco = readdirSync(join(vault, padre), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  } catch {}
+  const asignados = porPadre.get(padre) || [];
+  porPadre.set(padre, asignados);
+  return nombres.map((n) => {
+    const igual = (x) => sinEmoji(x).toLowerCase() === sinEmoji(n).toLowerCase();
+    const previo = enDisco.find(igual) || asignados.find(igual);
+    if (previo) return previo;
+    if (numeroDe(n) !== null) return asignados.push(n), n;
+    const max = Math.max(0, ...[...enDisco, ...asignados].map((x) => numeroDe(x) ?? 0));
+    const final = conNumero(max + 1, n);
+    asignados.push(final);
+    return final;
+  });
+}
+
 export function planInit(vault, opciones = {}) {
   if (dentroDe(RAIZ_PLUGIN, vault) || dentroDe(vault, RAIZ_PLUGIN)) {
     throw new Error(`No crees el vault dentro de la carpeta del plugin ni alrededor de ella (${posix(RAIZ_PLUGIN)}). Abre tu agente en la carpeta de tus notas.`);
@@ -102,7 +123,29 @@ export function planInit(vault, opciones = {}) {
   for (const a of nuevas) if (!areas.some((x) => sinEmoji(x).toLowerCase() === sinEmoji(a).toLowerCase())) areas.push(a);
   const proyectos = proyectosPedidos(opciones.proyectos, areas);
   for (const p of proyectos) if (p.area && !areas.includes(p.area)) areas.push(p.area);
+  // Numeración «NN │ » (0.9.0): activa en los vaults nuevos salvo --numerar no; en uno existente, la que ya tenga.
+  const numerar = opciones.numerar === 'no' ? false : opciones.numerar ? true : previa.numerar_carpetas ?? !previa.version;
+  if (numerar) {
+    const enArea = numerarLista(vault, C.areas, areas);
+    areas.splice(0, areas.length, ...enArea);
+    const nombresP = numerarLista(vault, C.proyectos, proyectos.map((p) => p.nombre));
+    proyectos.forEach((p, i) => {
+      p.nombre = nombresP[i];
+      if (p.area) p.area = areas.find((a) => sinEmoji(a).toLowerCase() === sinEmoji(p.area).toLowerCase()) || p.area;
+    });
+  }
   const temas = temasPedidos(opciones.temas, areas, proyectos);
+  if (numerar) {
+    const porPadre = new Map(); // carpeta → nombres ya numerados en este init
+    for (const t of temas) {
+      let dir = t.raiz;
+      t.temas = t.temas.map((nombre) => {
+        const [final] = numerarLista(vault, dir, [nombre], porPadre);
+        dir = `${dir}/${final}`;
+        return final;
+      });
+    }
+  }
   const valores = { ...valoresAgents(vault), areas: areas.map((a) => `[[${a}]]`).join(', ') || 'aún ninguna (pide «agrega un área»)' };
   const acciones = [];
 
@@ -139,7 +182,7 @@ export function planInit(vault, opciones = {}) {
   if (!existsSync(join(vault, '.git'))) acciones.push({ tipo: 'git', ruta: '.git (local, sin remoto)' });
 
   const ocupada = existsSync(vault) && readdirSync(vault).some((n) => !n.startsWith('.') && n.toLowerCase() !== 'desktop.ini') && !existsSync(join(vault, '.cerebro'));
-  return { vault, areas, proyectos, valores, acciones, ocupada, perfil: opciones.perfil && opciones.perfil !== true ? String(opciones.perfil).trim() : previa.perfil || null };
+  return { vault, areas, proyectos, valores, acciones, ocupada, numerar, perfil: opciones.perfil && opciones.perfil !== true ? String(opciones.perfil).trim() : previa.perfil || null };
 }
 
 function leerJson(ruta) {
@@ -200,6 +243,7 @@ export function aplicarInit(plan) {
     frescura_dias: previa.frescura_dias ?? 90,
     delegar: previa.delegar ?? null,
     excluir_proyectos: previa.excluir_proyectos ?? [],
+    numerar_carpetas: Boolean(plan.numerar),
   });
   // El perfil puede haber llegado con este init: el bloque de AGENTS.md se regenera con él.
   actualizarAgents(vault, valores.cli);

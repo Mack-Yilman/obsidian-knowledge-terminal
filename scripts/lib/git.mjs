@@ -8,7 +8,9 @@ const activo = () => process.env.OKT_SIN_GIT !== '1';
 
 function git(vault, args) {
   // core.quotepath=false: sin él, git escapa los nombres con tildes o emojis («"\360\237…"»).
-  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd: vault, encoding: 'utf8' });
+  // core.longpaths=true: en Windows, una jerarquía profunda con nombres largos pasa de 260 caracteres y «git add»
+  // falla con «Filename too long» (pasó en el vault de Mack, 2026-11-09).
+  const r = spawnSync('git', ['-c', 'core.quotepath=false', '-c', 'core.longpaths=true', ...args], { cwd: vault, encoding: 'utf8' });
   // trimEnd y no trim: en «git status --porcelain» la primera línea de un archivo modificado empieza con espacio
   // (« M archivo»), y quitarlo cortaba el primer carácter del nombre en la ficha de sesión.
   return { ok: r.status === 0, salida: (r.stdout || '').replace(/\r/g, '').trimEnd(), error: (r.stderr || r.error?.message || '').trim() };
@@ -26,13 +28,17 @@ export function iniciarGit(vault) {
   // Identidad local mínima para que los commits funcionen aunque no haya una global.
   if (!git(vault, ['config', 'user.name']).salida) git(vault, ['config', 'user.name', 'OKT']);
   if (!git(vault, ['config', 'user.email']).salida) git(vault, ['config', 'user.email', 'okt@localhost']);
+  // También en el repo, para el git que use el usuario a mano (o Obsidian Git).
+  git(vault, ['config', 'core.longpaths', 'true']);
   return { creado: true };
 }
 
 export function commit(vault, mensaje) {
   if (!activo()) return { omitido: true };
   if (!existsSync(join(vault, '.git'))) return { sinRepo: true };
-  git(vault, ['add', '-A']);
+  const add = git(vault, ['add', '-A']);
+  // Sin esto, un «add» fallido (p. ej. una ruta demasiado larga) dejaba el commit sin hacer y sin avisar.
+  if (!add.ok) return { error: add.error.split('\n').filter((l) => !/^warning:/.test(l)).join('\n') || add.error };
   if (!git(vault, ['status', '--porcelain']).salida) return { sinCambios: true };
   const r = git(vault, ['commit', '-q', '-m', mensaje]);
   return r.ok ? { hecho: true, hash: git(vault, ['rev-parse', '--short', 'HEAD']).salida } : { error: r.error };

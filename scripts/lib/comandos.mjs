@@ -40,7 +40,7 @@ import {
 export const AYUDA = `okt: CLI de obsidian-knowledge-terminal (segundo cerebro en Obsidian)
 
 Configuración
-  init [--areas "A,B"] [--proyectos "P@Área,…"] [--temas "Área/Tema,…"] [--perfil "<a qué te dedicas>"] [--aplicar]
+  init [--areas "A,B"] [--proyectos "P@Área,…"] [--temas "Área/Tema,…"] [--perfil "<a qué te dedicas>"] [--numerar no] [--aplicar]
                                          Crea el vault en la carpeta actual con lo que se pidió (sin --aplicar: vista previa)
   doctor [--completo]                    Qué herramientas y pasos faltan (--completo: verifica sesiones)
   estado                                 Áreas, proyectos, bandeja, pendientes y última actividad
@@ -117,7 +117,7 @@ export const COMANDOS = {
   init: {
     vault: 'crear',
     correr({ op, vault }) {
-      const plan = planInit(vault, { areas: op.areas, proyectos: op.proyectos, temas: op.temas, perfil: op.perfil });
+      const plan = planInit(vault, { areas: op.areas, proyectos: op.proyectos, temas: op.temas, perfil: op.perfil, numerar: op.numerar });
       const aviso = plan.ocupada ? `\nAviso: la carpeta ya tiene archivos y no es un vault de OKT. Se agregará la estructura sin tocar lo existente.\n` : '';
       if (!op.aplicar) {
         return {

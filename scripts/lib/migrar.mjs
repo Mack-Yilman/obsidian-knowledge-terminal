@@ -13,7 +13,7 @@ import { join, dirname, basename } from 'node:path';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { leerConfigVault, guardarConfigVault, sobrescribir, posix, RAIZ_PLUGIN } from './rutas.mjs';
 import { C, C3, R, C2, R2, CARPETAS, CARPETAS2, EMOJI, ANTIGUAS, conEmoji, destinoArchivo, traducir, traducirV3, necesitaMigrar, versionDe, VERSION_ESTRUCTURA } from './estructura.mjs';
-import { empiezaConEmoji, sinEmoji, limpiarNombre, nombreValido } from './nombres.mjs';
+import { empiezaConEmoji, sinEmoji, limpiarNombre, nombreValido, numeroDe, conNumero } from './nombres.mjs';
 import { listarNotas, mismasNotas, esSistema } from './vault.mjs';
 import { actualizarAgents } from './init.mjs';
 import { cerrar, pendiente } from './sistema.mjs';
@@ -647,7 +647,9 @@ export function renombrar(vault, nota, nuevoPedido) {
   const rel = candidatas[0];
   if (esSistema(rel)) throw errorUso('Los archivos del sistema no se renombran.');
   const viejo = basename(rel, '.md');
-  const nuevo = limpiarNombre(String(nuevoPedido).replace(/\.md$/i, ''));
+  let nuevo = limpiarNombre(String(nuevoPedido).replace(/\.md$/i, ''));
+  // Una carpeta numerada conserva su número si el nombre nuevo no trae otro («03 │ 📂 Varios» → «03 │ 🧪 Laboratorio»).
+  if (basename(dirname(rel)) === viejo && numeroDe(viejo) !== null && numeroDe(nuevo) === null) nuevo = conNumero(numeroDe(viejo), nuevo);
   if (!sinEmoji(nuevo) || !nombreValido(nuevo)) throw errorUso(`Nombre no válido: «${nuevoPedido}».`);
   if (nuevo === viejo) return { texto: 'El nombre no cambia.', datos: { ruta: rel } };
   const otras = mismasNotas(vault, nuevo).filter((r) => r !== rel);
