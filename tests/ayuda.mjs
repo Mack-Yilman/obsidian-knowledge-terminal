@@ -8,9 +8,27 @@ import { fileURLToPath } from 'node:url';
 export const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const CLI = join(RAIZ, 'scripts', 'okt.mjs');
 
+// Una prueba que falla antes de su v.borrar() dejaba el vault en %TEMP% (había 111 de sesiones anteriores): lo que
+// quede se borra al salir del proceso de pruebas.
+const pendientes = new Set();
+process.once('exit', () => {
+  for (const d of pendientes) {
+    try {
+      rmSync(d, { recursive: true, force: true });
+    } catch {}
+  }
+});
+
 export function temporal(prefijo = 'okt-') {
   const dir = mkdtempSync(join(tmpdir(), prefijo));
-  return { dir, borrar: () => rmSync(dir, { recursive: true, force: true }) };
+  pendientes.add(dir);
+  return {
+    dir,
+    borrar: () => {
+      rmSync(dir, { recursive: true, force: true });
+      pendientes.delete(dir);
+    },
+  };
 }
 
 export function escribir(base, rel, texto) {
