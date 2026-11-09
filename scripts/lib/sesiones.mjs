@@ -8,11 +8,12 @@ import { join, resolve } from 'node:path';
 import { leerConfigGlobal, guardarConfigGlobal, esVault, dentroDe, CLI, posix } from './rutas.mjs';
 import { R, necesitaMigrar, AVISO_MIGRAR } from './estructura.mjs';
 import { leerBloque } from './bloques.mjs';
-import { commit } from './git.mjs';
+import { commit, guardarSinCerrar } from './git.mjs';
 import { actualizarAgents } from './init.mjs';
 import { bajar as bajarTelegram, leerConfigTelegram } from './telegram.mjs';
 import { lanzarSegundoPlano } from './importar-url.mjs';
 import { alTrabajar, sincronizarTodas, modoElegido } from './agentes.mjs';
+import { avisoInicio } from './jerarquia.mjs';
 
 const TOPE_TELEGRAM_MS = 10000; // el hook tiene 15 s: la sesión nunca espera más que esto
 const TOPE_CONTEXTO = 9500; // Claude Code recorta en silencio lo que pase de 10 000 caracteres.
@@ -67,17 +68,23 @@ function alAbrirVault(vault) {
     if (fichas.length || nuevas.length) aviso += `Memoria de los agentes: ${fichas.length} fichas de avance y ${nuevas.length} carpetas nuevas en la Bandeja.\n\n`;
   } catch {}
   if (!modoElegido(vault)) aviso += `${PREGUNTA_AGENTES}\n\n`;
+  // Solo si cambió algo (o como recordatorio semanal): dónde conviene ordenar de lo general a lo específico.
+  const jer = avisoInicio(vault);
+  if (jer) aviso += `${jer}\n\n`;
   return aviso;
 }
 
 // Contexto de inicio, igual para Claude Code y Antigravity: cabecera, lo que llegó de Telegram y hot.md.
-async function contextoInicio(vault) {
+async function contextoInicio(vault, { guardado } = {}) {
   // Con la estructura anterior no se baja Telegram: escribiría en carpetas nuevas junto a las viejas.
   const migrar = necesitaMigrar(vault);
   const avisos = migrar ? `${AVISO_MIGRAR} Propónselo al usuario antes de cualquier otra operación.\n\n` : (await lineaTelegram(vault)) + alAbrirVault(vault);
+  const avisoGuardado = guardado?.hecho
+    ? `Se guardaron ${guardado.cambios} cambios que no se habían cerrado (de una sesión anterior o de Obsidian) en el commit ${guardado.hash}. Revisa \`git show --stat ${guardado.hash}\`; si fue trabajo de un agente, anótalo con okt bitacora.\n\n`
+    : '';
   const rutaHot = existsSync(join(vault, R.hot)) ? join(vault, R.hot) : join(vault, '99-Sistema', 'hot.md');
   const hot = existsSync(rutaHot) ? leerBloque(readFileSync(rutaHot, 'utf8')) || '' : '';
-  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>".\n\n${avisos}## Contexto reciente (${posix(rutaHot.slice(vault.length + 1))})\n\n`;
+  const cab = `# Segundo cerebro OKT\n\nEstás en el vault ${posix(vault)}. Sigue AGENTS.md. CLI: node "${posix(CLI)}". Para buscar: okt buscar "<tema>". Al terminar una operación: okt cerrar <skill> "<qué>". Una preferencia o forma de trabajar del usuario se anota solo con su sí y con okt preferencia agregar "<texto>" --sobre flujo|formato|fuentes|herramientas (queda en AGENTS.md, que leen todos sus agentes): no en tu memoria propia. Si un comando de okt falla o improvisas un script, okt reportar.\n\n${avisoGuardado}${avisos}## Contexto reciente (${posix(rutaHot.slice(vault.length + 1))})\n\n`;
   const texto = cab + hot;
   if (texto.length <= TOPE_CONTEXTO) return texto;
   return `${cab}hot.md tiene ${hot.length} caracteres y NO se cargó aquí para evitar un recorte silencioso. Léelo completo con tu herramienta de lectura: ${posix(rutaHot)}`;
@@ -94,12 +101,17 @@ export async function hookInicio(entradaTexto) {
     const e = leerEntrada(entradaTexto);
     const vault = vaultGlobal();
     if (!vault) return '';
-    renovarRutaCli(vault);
     if (!e.cwd || !dentroDe(vault, e.cwd)) {
+      renovarRutaCli(vault);
       enOtraCarpeta(vault, e.cwd);
       return '';
     }
-    return await contextoInicio(vault);
+    let guardado;
+    try {
+      guardado = guardarSinCerrar(vault);
+    } catch {}
+    renovarRutaCli(vault);
+    return await contextoInicio(vault, { guardado });
   } catch {
     return '';
   }
@@ -134,10 +146,18 @@ export async function hookInicioAntigravity(entradaTexto) {
     const vault = vaultGlobal();
     if (!vault) return '{}';
     const carpetas = [...new Set([...[].concat(e.workspacePaths || []), e.cwd].filter(Boolean).map((c) => posix(resolve(c))))];
+    const enVault = carpetas.some((c) => dentroDe(vault, c));
+    // Antes que la memoria de los agentes, que hace su propio commit y se tragaría los cambios sin cerrar.
+    let guardado;
+    if (enVault) {
+      try {
+        guardado = guardarSinCerrar(vault);
+      } catch {}
+    }
     for (const c of carpetas) if (!dentroDe(vault, c)) enOtraCarpeta(vault, c);
-    if (!carpetas.some((c) => dentroDe(vault, c))) return '{}';
+    if (!enVault) return '{}';
     if (!primeraVez(vault, e.conversationId)) return '{}';
-    const texto = await contextoInicio(vault);
+    const texto = await contextoInicio(vault, { guardado });
     return texto ? JSON.stringify({ injectSteps: [{ systemMessage: { systemMessage: texto } }] }) : '{}';
   } catch {
     return '{}';

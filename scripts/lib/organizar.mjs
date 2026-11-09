@@ -6,17 +6,26 @@
 //   okt bruto guardar "<nota>"                           copia el original a Bruto antes de reescribirla
 //   okt bruto limpiar [--dias 90] [--aplicar]            borra los originales viejos (solo con --aplicar)
 // Nada se borra sin --aplicar, y los originales en bruto quedan enlazados desde la propiedad «bruto».
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, statSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, statSync, rmSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { listarNotas, leerNota, mismasNotas, esSistema } from './vault.mjs';
 import { sobrescribir, posix } from './rutas.mjs';
-import { C, R, conEmoji, ubicar } from './estructura.mjs';
-import { limpiarNombre, sinEmoji, nombreValido } from './nombres.mjs';
+import { C, R, conEmoji, ubicar, numerarActivo, numerarNombre, siguienteNumero } from './estructura.mjs';
+import { limpiarNombre, sinEmoji, nombreValido, numeroDe, conNumero } from './nombres.mjs';
 import { fechaISO, diasEntre } from './fechas.mjs';
 import { carpetaDeDestino, wiki } from './notas.mjs';
 import { textoPrincipal } from './init.mjs';
-import { actualizarRegistros } from './migrar.mjs';
+import { actualizarRegistros, renombrar } from './migrar.mjs';
+
+// Nombres de las subcarpetas de una carpeta.
+const hermanas = (vault, carpeta) => {
+  try {
+    return readdirSync(join(vault, carpeta), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  } catch {
+    return [];
+  }
+};
 
 const errorUso = (m, codigo = 2) => Object.assign(new Error(m), { codigo });
 const lista = (v) => (v && v !== true ? String(v).split(',').map((s) => s.trim().replace(/^\[\[|\]\]$/g, '')).filter(Boolean) : []);
@@ -44,9 +53,13 @@ const esPrincipal = (rel) => basename(dirname(rel)) === basename(rel, '.md');
 export function temaNuevo(vault, ruta, op = {}) {
   const partes = String(ruta || '').replace(/\\/g, '/').split('/').map((s) => s.trim()).filter(Boolean);
   if (partes.length < 2) throw errorUso('Uso: okt tema nuevo "<área o proyecto>/<tema>" (p. ej. "Medicina/🫀 Cardiología" o "Medicina/Cardiología/💔 Síndrome coronario agudo")');
-  const nombre = conEmoji('tema', limpiarNombre(partes.pop()));
-  if (!sinEmoji(nombre) || !nombreValido(nombre)) throw errorUso(`Nombre de tema no válido: «${nombre}».`);
+  const pedido = conEmoji('tema', limpiarNombre(partes.pop()));
+  if (!sinEmoji(pedido) || !nombreValido(pedido)) throw errorUso(`Nombre de tema no válido: «${pedido}».`);
   const padre = carpetaDeDestino(vault, partes.join('/'), { propia: true });
+  // Ya existe con o sin número: «Cardiología» encuentra «03 │ 🫀 Cardiología».
+  const existente = listarNotas(vault).find((r) => dirname(dirname(r)) === padre && esPrincipal(r) && sinEmoji(basename(r, '.md')).toLowerCase() === sinEmoji(pedido).toLowerCase());
+  if (existente) return { texto: `Ya existía: ${dirname(existente)}`, datos: { ruta: existente, creada: false } };
+  const nombre = numerarNombre(vault, padre, pedido);
   const dir = `${padre}/${nombre}`;
   if (existsSync(join(vault, dir))) return { texto: `Ya existía: ${dir}`, datos: { ruta: `${dir}/${nombre}.md`, creada: false } };
 
@@ -63,10 +76,12 @@ export function temaNuevo(vault, ruta, op = {}) {
     renameSync(join(vault, crece), join(vault, destino));
     // La carpeta toma el nombre exacto de la nota (con su emoji), para que siga siendo su nota principal.
     if (carpetaFinal !== dir) renameSync(join(vault, dir), join(vault, carpetaFinal));
-    const final = `${carpetaFinal}/${viejo}.md`;
+    let final = `${carpetaFinal}/${viejo}.md`;
     const { datos, cuerpo } = leerFrontmatter(readFileSync(join(vault, final), 'utf8'));
     sobrescribir(join(vault, final), escribirFrontmatter({ ...datos, tipo: 'tema', actualizado: fechaISO() }, cuerpo));
     actualizarRegistros(vault, { [crece]: final }, {}, new Map());
+    // Con numeración, la nota que pasa a ser tema toma su número (y sus enlaces se actualizan).
+    if (numeroDe(nombre) !== null && numeroDe(viejo) === null) final = renombrar(vault, viejo, conNumero(numeroDe(nombre), viejo)).datos.a;
     return { texto: `«${viejo}» pasa a ser un tema: ${final}. Mueve ahí sus notas con okt mover.`, datos: { ruta: final, creada: true, crecio: true } };
   }
   const rel = `${dir}/${nombre}.md`;
@@ -92,10 +107,16 @@ export function mover(vault, ref, destinoPedido) {
   const destino = `${carpeta}/${basename(origen)}`;
   if (destino === origen) return { texto: 'Ya está en esa carpeta.', datos: { de: origen, a: destino } };
   if (existsSync(join(vault, destino))) throw errorUso(`Ya existe ${destino}.`, 3);
+  // Un tema que llega sin número, o con uno que ya usa una hermana, toma el siguiente libre del destino.
+  const n = numeroDe(basename(origen));
+  const renumerar = conCarpeta && numerarActivo(vault) && (n === null || hermanas(vault, carpeta).some((h) => numeroDe(h) === n));
+  const nuevoN = renumerar ? siguienteNumero(vault, carpeta) : null;
   mkdirSync(join(vault, carpeta), { recursive: true });
   renameSync(join(vault, origen), join(vault, destino));
   actualizarRegistros(vault, conCarpeta ? {} : { [origen]: destino }, conCarpeta ? { [origen]: destino } : {}, new Map());
-  return { texto: `Movido${datos.tipo === 'tema' ? ' el tema' : ''}: ${origen} → ${destino}. Los enlaces siguen funcionando (Obsidian enlaza por nombre).`, datos: { de: origen, a: destino } };
+  let final = destino;
+  if (renumerar) final = dirname(renombrar(vault, basename(origen), conNumero(nuevoN, basename(origen))).datos.a);
+  return { texto: `Movido${datos.tipo === 'tema' ? ' el tema' : ''}: ${origen} → ${final}. Los enlaces siguen funcionando (Obsidian enlaza por nombre${renumerar ? '; el número cambió y los enlaces se actualizaron' : ''}).`, datos: { de: origen, a: final } };
 }
 
 // ---------- originales en bruto ----------

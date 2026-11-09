@@ -8,7 +8,9 @@ const activo = () => process.env.OKT_SIN_GIT !== '1';
 
 function git(vault, args) {
   // core.quotepath=false: sin él, git escapa los nombres con tildes o emojis («"\360\237…"»).
-  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd: vault, encoding: 'utf8' });
+  // core.longpaths=true: en Windows, una jerarquía profunda con nombres largos pasa de 260 caracteres y «git add»
+  // falla con «Filename too long» (pasó en el vault de Mack, 2026-11-09).
+  const r = spawnSync('git', ['-c', 'core.quotepath=false', '-c', 'core.longpaths=true', ...args], { cwd: vault, encoding: 'utf8' });
   // trimEnd y no trim: en «git status --porcelain» la primera línea de un archivo modificado empieza con espacio
   // (« M archivo»), y quitarlo cortaba el primer carácter del nombre en la ficha de sesión.
   return { ok: r.status === 0, salida: (r.stdout || '').replace(/\r/g, '').trimEnd(), error: (r.stderr || r.error?.message || '').trim() };
@@ -26,16 +28,45 @@ export function iniciarGit(vault) {
   // Identidad local mínima para que los commits funcionen aunque no haya una global.
   if (!git(vault, ['config', 'user.name']).salida) git(vault, ['config', 'user.name', 'OKT']);
   if (!git(vault, ['config', 'user.email']).salida) git(vault, ['config', 'user.email', 'okt@localhost']);
+  // También en el repo, para el git que use el usuario a mano (o Obsidian Git).
+  git(vault, ['config', 'core.longpaths', 'true']);
   return { creado: true };
 }
 
 export function commit(vault, mensaje) {
   if (!activo()) return { omitido: true };
   if (!existsSync(join(vault, '.git'))) return { sinRepo: true };
-  git(vault, ['add', '-A']);
+  if (!git(vault, ['config', 'user.name']).salida) git(vault, ['config', 'user.name', 'OKT']);
+  if (!git(vault, ['config', 'user.email']).salida) git(vault, ['config', 'user.email', 'okt@localhost']);
+  const add = git(vault, ['add', '-A']);
+  // Sin esto, un «add» fallido (p. ej. una ruta demasiado larga) dejaba el commit sin hacer y sin avisar.
+  if (!add.ok) return { error: add.error.split('\n').filter((l) => !/^warning:/.test(l)).join('\n') || add.error };
   if (!git(vault, ['status', '--porcelain']).salida) return { sinCambios: true };
   const r = git(vault, ['commit', '-q', '-m', mensaje]);
   return r.ok ? { hecho: true, hash: git(vault, ['rev-parse', '--short', 'HEAD']).salida } : { error: r.error };
+}
+
+export function guardarSinCerrar(vault) {
+  try {
+    if (!activo() || !hayGit() || !existsSync(join(vault, '.git'))) return { hecho: false };
+    const st = git(vault, ['status', '--porcelain', '-z']);
+    if (!st.ok || !st.salida) return { hecho: false };
+    const tokens = st.salida.split('\0').filter(Boolean);
+    if (!tokens.length) return { hecho: false };
+    const rutas = [];
+    for (let i = 0; i < tokens.length; i++) {
+      rutas.push(tokens[i].slice(3));
+      if (tokens[i].startsWith('R') || tokens[i].startsWith('C')) i++;
+    }
+    // Los registros de OKT y el estado de Obsidian cambian solos (la memoria de los agentes, la ventana): se guardan, pero
+    // sin avisar al agente, que si no recibiría el aviso en cada sesión.
+    const propios = rutas.filter((r) => !/^"?\.(cerebro|obsidian)\//.test(r));
+    const r = commit(vault, propios.length ? 'okt: cambios sin cerrar (sesión anterior u Obsidian)' : 'okt: registros de OKT y de Obsidian');
+    if (r.hecho && propios.length) return { hecho: true, cambios: propios.length, hash: r.hash };
+    return { hecho: false };
+  } catch {
+    return { hecho: false };
+  }
 }
 
 // Para la memoria de los agentes: los asuntos de los commits nuevos desde el último visto, por hash y no por fecha (con

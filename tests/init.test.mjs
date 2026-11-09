@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { temporal, okt, vaultNuevo, escribir, CLI } from './ayuda.mjs';
@@ -53,13 +53,29 @@ test('init crea lo que sale de la entrevista: áreas, proyectos con su área, te
   r = okt(['init', '--aplicar', '--areas', '🎨 Diseño,💰 Finanzas', '--proyectos', '🖌️ Portafolio 2026@Diseño,📈 Plan de ahorro@Finanzas', '--temas', 'Diseño/🔤 Tipografía/🅰️ Serifas', '--perfil', 'Diseñadora gráfica freelance'], { cwd: t.dir, configDir });
   assert.equal(r.codigo, 0, r.error);
   const leer = (rel) => readFileSync(join(t.dir, rel), 'utf8');
-  assert.match(leer('02 │ 🧭 Areas/🎨 Diseño/🎨 Diseño.md'), /tipo: area/);
-  const portafolio = leer('01 │ 🎯 Proyectos/🖌️ Portafolio 2026/🖌️ Portafolio 2026.md');
+  // Un vault nuevo numera sus carpetas (0.9.0): áreas, proyectos y temas en el orden de la entrevista.
+  const diseno = leer('02 │ 🧭 Areas/01 │ 🎨 Diseño/01 │ 🎨 Diseño.md');
+  assert.match(diseno, /tipo: area/);
+  assert.match(diseno, /aliases:\n {2}- Diseño\n/, 'el alias va sin número ni emoji');
+  assert.ok(existsSync(join(t.dir, '02 │ 🧭 Areas/02 │ 💰 Finanzas')));
+  const portafolio = leer('01 │ 🎯 Proyectos/01 │ 🖌️ Portafolio 2026/01 │ 🖌️ Portafolio 2026.md');
   assert.match(portafolio, /tipo: proyecto/);
-  assert.match(portafolio, /area: "\[\[🎨 Diseño\]\]"/);
-  assert.match(leer('02 │ 🧭 Areas/🎨 Diseño/🔤 Tipografía/🅰️ Serifas/🅰️ Serifas.md'), /tipo: tema/);
-  assert.match(leer('02 │ 🧭 Areas/🎨 Diseño/🔤 Tipografía/🔤 Tipografía.md'), /tipo: tema/);
+  assert.match(portafolio, /area: "\[\[01 │ 🎨 Diseño\]\]"/);
+  assert.ok(existsSync(join(t.dir, '01 │ 🎯 Proyectos/02 │ 📈 Plan de ahorro')));
+  assert.match(leer('02 │ 🧭 Areas/01 │ 🎨 Diseño/01 │ 🔤 Tipografía/01 │ 🅰️ Serifas/01 │ 🅰️ Serifas.md'), /tipo: tema/);
+  assert.match(leer('02 │ 🧭 Areas/01 │ 🎨 Diseño/01 │ 🔤 Tipografía/01 │ 🔤 Tipografía.md'), /tipo: tema/);
+  assert.match(leer('AGENTS.md'), /\[\[01 │ 🎨 Diseño\]\]/);
   assert.match(leer('AGENTS.md'), /Diseñadora gráfica freelance/);
+  assert.equal(JSON.parse(leer('.cerebro/config.json')).numerar_carpetas, true);
+  // Un tema nuevo toma el siguiente número entre sus hermanas, y «Diseño» encuentra «01 │ 🎨 Diseño».
+  r = okt(['tema', 'nuevo', 'Diseño/🖍️ Color'], { cwd: t.dir, configDir });
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(t.dir, '02 │ 🧭 Areas/01 │ 🎨 Diseño/02 │ 🖍️ Color/02 │ 🖍️ Color.md')));
+  // Repetir el init no duplica ni renumera.
+  r = okt(['init', '--aplicar', '--areas', 'Diseño,🏃 Deporte'], { cwd: t.dir, configDir });
+  assert.equal(r.codigo, 0, r.error);
+  assert.ok(existsSync(join(t.dir, '02 │ 🧭 Areas/03 │ 🏃 Deporte')));
+  assert.deepEqual(readdirSync(join(t.dir, '02 │ 🧭 Areas')).sort(), ['01 │ 🎨 Diseño', '02 │ 💰 Finanzas', '03 │ 🏃 Deporte']);
   // Un tema que no empieza por un área o un proyecto se rechaza sin crear nada.
   r = okt(['init', '--temas', 'Cocina/Postres'], { cwd: t.dir, configDir });
   assert.equal(r.codigo, 2);

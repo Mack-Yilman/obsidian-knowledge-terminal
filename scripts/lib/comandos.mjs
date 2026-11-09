@@ -16,6 +16,11 @@ import { instalarAntigravity, instalarObsidianSkills } from './instalar.mjs';
 import { leerConfigVault, guardarConfigVault, sobrescribir } from './rutas.mjs';
 import { temaNuevo, mover, procesar, brutoGuardar, brutoLimpiar } from './organizar.mjs';
 import { preparar as reorganizarPreparar, aplicar as reorganizarAplicar } from './reorganizar.mjs';
+import { numerar } from './numerar.mjs';
+import { jerarquia, descartar as jerarquiaDescartar } from './jerarquia.mjs';
+import { preparar as libroPreparar, aplicar as libroAplicar, verificar as libroVerificar, pendientes as libroPendientes } from './libro.mjs';
+import { registrar as registrarMejora, listar as mejorasListar, exportar as mejorasExportar, cerrar as mejorasCerrar } from './mejoras.mjs';
+import { agregar as prefAgregar, listar as prefListar, quitar as prefQuitar, reemplazar as prefReemplazar } from './preferencias.mjs';
 import { preparar as redactarPreparar, indice as redactarIndice, verificar as redactarVerificar } from './redactar.mjs';
 import { sinEmoji } from './nombres.mjs';
 import { basename } from 'node:path';
@@ -40,7 +45,7 @@ import {
 export const AYUDA = `okt: CLI de obsidian-knowledge-terminal (segundo cerebro en Obsidian)
 
 Configuración
-  init [--areas "A,B"] [--proyectos "P@Área,…"] [--temas "Área/Tema,…"] [--perfil "<a qué te dedicas>"] [--aplicar]
+  init [--areas "A,B"] [--proyectos "P@Área,…"] [--temas "Área/Tema,…"] [--perfil "<a qué te dedicas>"] [--numerar no] [--aplicar]
                                          Crea el vault en la carpeta actual con lo que se pidió (sin --aplicar: vista previa)
   doctor [--completo]                    Qué herramientas y pasos faltan (--completo: verifica sesiones)
   estado                                 Áreas, proyectos, bandeja, pendientes y última actividad
@@ -61,6 +66,12 @@ Configuración
                                          (proyectos) o 💤 Inactivos (lo demás). Nada se borra
   reorganizar preparar [--carpeta "<área o proyecto>"]   Mapa compacto (árbol, resúmenes y enlaces) para rejerarquizar
   reorganizar aplicar <plan.json>        Aplica el plan aprobado (temas, mover, renombrar, archivar) en un solo commit
+  numerar [--carpeta X] [--orden <orden.json>] [--aplicar]
+                                         Pone «NN │ » a carpetas y notas principales; sin --orden solo numera las que no
+                                         tienen número. orden.json: {"<carpeta padre>": ["<hija 1>", "<hija 2>"]}
+  jerarquia [--carpeta X] [--todos]      Carpetas que piden ordenarse de lo general a lo específico (notas sueltas,
+                                         ramas planas, notas que crecieron, temas casi vacíos), sin leer notas
+  jerarquia descartar <id>               No volver a proponer ese candidato
 
 Notas
   nota nueva <tipo> "<título>" [--carpeta "<área o proyecto>/<tema>"]
@@ -79,12 +90,24 @@ Notas
   renombrar "<nota>" "<nombre nuevo>"     Cambia el nombre (y el emoji) y actualiza los enlaces
   buscar "<texto>" [--carpeta --tipo --limite]
   adjuntar "<archivo>" [--origen pdf]    Copia un archivo a los adjuntos (Sistema) sin duplicar
+  libro preparar "<archivo>" --en "<área/rama>" [--titulo "<emoji> <Título>"] [--autor --publicado]
+                                         EPUB/PDF → tema, texto completo y ficha con índice (requiere todo-a-markdown)
+  libro aplicar "<Título>" --aceptar "p1,p3" [--excluir "<líneas>"]   Decide las propuestas de estructura
+  libro verificar "<Título>" | libro pendientes
 
 Sistema (las skills se comunican por aquí)
   bitacora <skill> "<texto>" [--notas "A,B"]
   pendiente agregar "<texto>" [--para usuario|ia] [--de <skill>] [--nota] | cerrar <n> | listar [--cerrados]
   indice | hot [--aprendizaje "<texto>"] | lint | commit "<mensaje>"
   cerrar <skill> "<texto>" [--notas "A,B"]   bitácora + índices + hot + commit
+
+Mejora continua
+  reportar error "<qué pasó>" [--skill s] [--comando c]   Un fallo de OKT (los del CLI se anotan solos)
+  reportar script <archivo> --para "<qué resuelve>"       Guarda un script improvisado para llevarlo al plugin
+  reportar idea "<texto>"                Algo que OKT debería hacer
+  mejoras [--todas] | mejoras exportar | mejoras cerrar <n> "<cómo>"   Lo anotado (05 │ ⚙️ Sistema/🛠️ Mejoras OKT)
+  preferencia agregar "<texto>" [--sobre flujo|formato|fuentes|herramientas|otro]   Cómo trabaja el usuario (con su sí)
+  preferencia listar | quitar <n> | reemplazar <n> "<texto>"   Bloque okt:preferencias de AGENTS.md
 
 Bandeja y sesiones
   bandeja preparar | bandeja archivar <rutas>
@@ -117,7 +140,7 @@ export const COMANDOS = {
   init: {
     vault: 'crear',
     correr({ op, vault }) {
-      const plan = planInit(vault, { areas: op.areas, proyectos: op.proyectos, temas: op.temas, perfil: op.perfil });
+      const plan = planInit(vault, { areas: op.areas, proyectos: op.proyectos, temas: op.temas, perfil: op.perfil, numerar: op.numerar });
       const aviso = plan.ocupada ? `\nAviso: la carpeta ya tiene archivos y no es un vault de OKT. Se agregará la estructura sin tocar lo existente.\n` : '';
       if (!op.aplicar) {
         return {
@@ -245,6 +268,55 @@ export const COMANDOS = {
       if (accion === 'preparar') return reorganizarPreparar(vault, op);
       if (accion === 'aplicar') return reorganizarAplicar(vault, pos.join(' '));
       throw Object.assign(new Error('Uso: okt reorganizar preparar [--carpeta "<área o proyecto>"] | reorganizar aplicar <plan.json>'), { codigo: 2 });
+    },
+  },
+  numerar: {
+    correr({ op, vault }) {
+      return numerar(vault, op);
+    },
+  },
+  jerarquia: {
+    correr({ pos, op, vault }) {
+      if (pos[0] === 'descartar') return jerarquiaDescartar(vault, pos[1]);
+      return jerarquia(vault, op);
+    },
+  },
+  libro: {
+    correr({ pos, op, vault }) {
+      const [accion, ...resto] = pos;
+      const ref = resto.join(' ');
+      if (accion === 'preparar') return libroPreparar(vault, ref, op);
+      if (accion === 'aplicar') return libroAplicar(vault, ref, op);
+      if (accion === 'verificar') return libroVerificar(vault, ref);
+      if (accion === 'pendientes') return libroPendientes(vault);
+      throw Object.assign(new Error('Uso: okt libro preparar "<archivo>" --en "<área/rama>" [--titulo "<emoji> <Título>"] | aplicar "<Título>" --aceptar "p1,p3" [--excluir "<líneas>"] | verificar "<Título>" | pendientes'), { codigo: 2 });
+    },
+  },
+  reportar: {
+    correr({ pos, op, vault }) {
+      const [tipo, ...resto] = pos;
+      if (tipo === 'script') return registrarMejora(vault, { tipo, archivo: resto.join(' '), texto: op.para, skill: op.skill, comando: op.comando });
+      if (tipo === 'error' || tipo === 'idea') return registrarMejora(vault, { tipo, texto: resto.join(' '), skill: op.skill, comando: op.comando });
+      throw Object.assign(new Error('Uso: okt reportar error "<qué pasó>" [--skill s] [--comando c] | reportar script <archivo> --para "<qué resuelve>" | reportar idea "<texto>"'), { codigo: 2 });
+    },
+  },
+  mejoras: {
+    correr({ pos, op, vault }) {
+      const [accion, n, ...resto] = pos;
+      if (!accion || accion === 'listar') return mejorasListar(vault, op);
+      if (accion === 'exportar') return mejorasExportar(vault);
+      if (accion === 'cerrar') return mejorasCerrar(vault, n, resto.join(' '));
+      throw Object.assign(new Error('Uso: okt mejoras [listar] [--todas] | mejoras exportar | mejoras cerrar <n> "<cómo se resolvió>"'), { codigo: 2 });
+    },
+  },
+  preferencia: {
+    correr({ pos, op, vault }) {
+      const [accion, ...resto] = pos;
+      if (!accion || accion === 'listar') return prefListar(vault);
+      if (accion === 'agregar') return prefAgregar(vault, resto.join(' '), op);
+      if (accion === 'quitar') return prefQuitar(vault, resto[0]);
+      if (accion === 'reemplazar') return prefReemplazar(vault, resto[0], resto.slice(1).join(' '));
+      throw Object.assign(new Error('Uso: okt preferencia agregar "<texto>" [--sobre flujo|formato|fuentes|herramientas|otro] | listar | quitar <n> | reemplazar <n> "<texto>"'), { codigo: 2 });
     },
   },
   instalar: {

@@ -70,7 +70,9 @@ nota. Ejemplos:
 5. **Una confirmación por lote, no por carpeta:** muestra la tabla «qué → dónde» con las carpetas nuevas marcadas 🆕
    y aplica todo con un solo sí.
 6. **Cada nivel debe ser una división real** (un módulo, una disciplina, un producto, una familia). Cuando el árbol ya no refleja cómo piensa el usuario, propón reorganizarlo (skill `mantener`,
-   «Reorganizar»).
+   «Reorganizar»). Al abrir el vault, un script revisa una vez al día la jerarquía (notas sueltas que piden temas,
+   ramas con demasiadas subcarpetas, notas que crecieron, temas casi vacíos) y avisa en una línea: propónselo al
+   usuario cuando termine lo que pidió, con `okt jerarquia`, y no muevas nada sin su sí.
 7. **Lo que toca dos áreas** vive en la que más le corresponde y se cita desde la otra (sección 3, «Citar entre
    áreas»). Una clase, un video o una reunión de varios temas queda **entera en una nota**, en la carpeta de su tema
    principal, y las notas de los otros temas la enlazan.
@@ -79,6 +81,13 @@ nota. Ejemplos:
    «para ti».
 9. **¿Proyecto o área?** Si termina, es un proyecto; si no termina, es un área. Lo que aprendiste en un proyecto
    puede quedarse en él o, si sirve más allá, pasar a su área.
+
+**Numeración (`numerar_carpetas` en `okt config`):** si el vault numera, cada área, proyecto y tema lleva `NN │ `
+antes del emoji (`01 │ 🩺 Medicina/01 │ 🩺 Medicina.md`), y Obsidian las muestra en ese orden. El CLI pone el número
+al crear la carpeta (el siguiente libre entre sus hermanas) y nunca lo cambia solo. Para reordenar, propón el orden
+lógico del dominio (Básicas → Clínicas → Quirúrgicas, no el alfabético) y, con el sí del usuario, `okt numerar --orden
+<orden.json> --aplicar`, que renumera y actualiza los enlaces. Las notas sueltas no llevan número. Un nombre con
+número sigue siendo «el mismo» sin él: `--carpeta "Medicina"` encuentra `01 │ 🩺 Medicina`.
 
 El separador de las carpetas es `│` (U+2502, «línea fina»), no la barra `|`, que Windows prohíbe en los nombres y
 que en Obsidian separa el alias de un enlace. `--carpeta` acepta la ruta desde un área o un proyecto, sin la carpeta
@@ -96,7 +105,10 @@ raíz ni los emojis: `--carpeta "Medicina/Cardiología"`, `--carpeta "Tesis"`, `
   - **Alias:** el CLI agrega el título sin emoji en `aliases`, para que la búsqueda de Obsidian lo encuentre.
   - **Para cambiar un nombre o su emoji:** `okt renombrar "<nota>" "<nombre nuevo>"`, que actualiza los enlaces.
 - **Caracteres prohibidos:** `— – : / \ ? * " < > | # ^ [ ]`. Se usa el guion ASCII `-`.
-- **Enlaces:** siempre `[[Nombre de la nota]]` o `[[Nombre#Sección]]`, sin rutas y **con el emoji**. Obsidian no
+- **Nombres cortos:** Windows corta las rutas en 260 caracteres y la jerarquía las alarga; `okt lint` avisa
+  (`ruta_larga`) desde 240. Prefiere títulos de menos de 60 caracteres.
+- **Enlaces:** siempre `[[Nombre de la nota]]` o `[[Nombre#Sección]]`, sin rutas y **con el emoji** (y con el número,
+  si la nota principal lo lleva: `[[01 │ 🩺 Medicina]]`). Obsidian no
   resuelve un enlace por el alias, así que `[[Infarto agudo de miocardio]]` sin el emoji queda roto (`okt lint`
   sugiere el nombre correcto). «💡 X» y «🫀 X» cuentan como la misma nota: el CLI no deja crear la segunda.
 - **Citar entre áreas:** el conocimiento de otra área se enlaza donde se menciona, en el texto, no solo en
@@ -198,6 +210,15 @@ importado (web, Notion, Drive). **Pasar a limpio** es editar las frases sin agre
 | `🗂️ indice.md` | El árbol del vault: áreas → ramas → grupos y proyectos, con cuántas notas tiene cada uno, y la Bandeja | `okt indice` (regenera también el índice de cada carpeta) |
 | `✅ pendientes.md` | «Para ti» (decisiones que la IA necesita del usuario) y «Para la IA» (lo que una skill hará después) | `okt pendiente agregar "…" --para usuario\|ia [--de <skill>]` y `okt pendiente cerrar <n>` |
 | `📜 bitacora.md` | Una línea por operación, la más nueva primero (las últimas 300; git guarda el resto) | `okt bitacora <skill> "<texto>" [--notas "A,B"]` |
+| `🛠️ Mejoras OKT.md` | Errores del plugin (los del CLI se anotan solos) y scripts que un agente improvisó porque OKT no lo hacía, para llevarlos al plugin | `okt reportar error "<qué pasó>" [--skill s] [--comando c]`, `okt reportar script <archivo> --para "<qué resuelve>"`, `okt reportar idea "<texto>"`; `okt mejoras [exportar \| cerrar <n> "<cómo>"]` |
+| `AGENTS.md` (raíz, bloque `okt:preferencias`) | Cómo trabaja el usuario: lo que repite o pide siempre. Todos los agentes lo leen al empezar | Solo con su sí: `okt preferencia agregar "<texto>" [--sobre flujo\|formato\|fuentes\|herramientas]`, `listar`, `quitar <n>`, `reemplazar <n> "<texto>"` |
+
+**Mejora continua.** Si un comando de `okt` falla, ya quedó anotado: agrega con `okt reportar error` lo que el
+mensaje no dice (qué intentabas). Si escribes un script porque OKT no hacía algo, guárdalo con `okt reportar script`
+antes de cerrar: así llega al plugin y la próxima vez no se gastan tokens en rehacerlo. Si el usuario repite una forma
+de trabajar o te la dice («siempre quiero…», «prefiero…»), pregúntale en una línea si la anotas como preferencia; nunca
+la anotes sin su sí. Y nunca edites a mano los archivos del plugin instalado: los cambios se pierden al actualizar
+(`okt doctor` los detecta).
 
 **Al terminar una operación que cambió notas:** `okt cerrar <skill> "<texto>" [--notas …]`, que hace bitácora,
 índices, hot y commit en un paso.

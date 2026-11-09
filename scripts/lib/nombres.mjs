@@ -12,11 +12,27 @@ export function nombreValido(nombre) {
 // Corta por caracteres completos: un .slice() puede partir un emoji en dos y dejar un nombre inválido.
 export const recortar = (texto, n) => Array.from(String(texto)).slice(0, n).join('');
 
-export const empiezaConEmoji = (nombre) => EMOJI_INICIAL.test(String(nombre));
+// Prefijo de orden de una carpeta y de su nota principal: «01 │ 🩺 Medicina» (U+2502, como las raíces). Va antes
+// del emoji para que Obsidian ordene por él. El nombre base (sinEmoji) no lo lleva: «Medicina» encuentra la carpeta.
+const NUMERO = /^(\d{2,3})[ \t]*│[ \t]*/;
 
-export const emojiInicial = (nombre) => (String(nombre).match(EMOJI_INICIAL)?.[0] || '').trim();
+export const numeroDe = (nombre) => {
+  const m = String(nombre).match(NUMERO);
+  return m ? Number(m[1]) : null;
+};
 
-export const sinEmoji = (nombre) => String(nombre).replace(EMOJI_INICIAL, '').trim();
+export const sinNumero = (nombre) => String(nombre).replace(NUMERO, '');
+
+export const formatoNumero = (n) => String(n).padStart(2, '0');
+
+// «🫀 Cardiología» → «03 │ 🫀 Cardiología»; reemplaza un número anterior.
+export const conNumero = (n, nombre) => `${formatoNumero(n)} │ ${sinNumero(nombre).trim()}`;
+
+export const empiezaConEmoji = (nombre) => EMOJI_INICIAL.test(sinNumero(nombre));
+
+export const emojiInicial = (nombre) => (sinNumero(nombre).match(EMOJI_INICIAL)?.[0] || '').trim();
+
+export const sinEmoji = (nombre) => sinNumero(String(nombre).trim()).replace(EMOJI_INICIAL, '').trim();
 
 export function limpiarNombre(nombre) {
   const limpio = nombre

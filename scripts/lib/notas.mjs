@@ -7,7 +7,7 @@ import { ahora, fechaISO, semanaISO } from './fechas.mjs';
 import { limpiarNombre, sinEmoji } from './nombres.mjs';
 import { mismasNotas } from './vault.mjs';
 import { sobrescribir } from './rutas.mjs';
-import { C, conEmoji, resolverCarpeta, tituloDiario, ubicar, dentroDeLaEstructura } from './estructura.mjs';
+import { C, conEmoji, resolverCarpeta, tituloDiario, ubicar, dentroDeLaEstructura, numerarNombre } from './estructura.mjs';
 
 // Tipos de la versión 2 que se aceptan como alias de nota.
 export const ALIAS_TIPOS = { concepto: 'nota', entidad: 'nota', sintesis: 'nota' };
@@ -64,12 +64,15 @@ export function notaNueva(vault, tipoPedido, tituloPedido, op = {}) {
   const sinUbicar = def.enCarpeta && !op.carpeta;
   const tipoNota = sinUbicar && tipoReal === 'nota' ? 'captura' : def.tipo || tipoReal;
   const emojiTipo = tipoNota === 'captura' && op.origen ? op.origen : tipoNota === 'captura' ? 'captura' : tipoPedido === 'articulo' ? 'articulo' : tipoReal;
-  const titulo = conEmoji(emojiTipo, limpio);
+  let titulo = conEmoji(emojiTipo, limpio);
   let carpeta;
   if (def.enCarpeta && op.carpeta) carpeta = carpetaDeDestino(vault, op.carpeta, { propia: def.propia });
   else if (op.carpeta) carpeta = resolverCarpeta(vault, op.carpeta);
   else carpeta = sinUbicar ? C.bandeja : def.carpeta;
-  if (def.propia) carpeta = `${carpeta}/${titulo}`;
+  if (def.propia) {
+    titulo = numerarNombre(vault, carpeta, titulo);
+    carpeta = `${carpeta}/${titulo}`;
+  }
   const rel = `${carpeta}/${titulo}.md`;
 
   // «💡 Anemia» y «🩸 Anemia» son la misma nota: se compara sin el emoji.

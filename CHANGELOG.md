@@ -1,5 +1,46 @@
 # Cambios
 
+## 0.9.0 — 2026-11-09
+
+- **Numeración `NN │ ` de carpetas:** Obsidian las ordena por el número. Se aplica a áreas, proyectos y temas a cualquier
+  nivel, y a su nota principal. Un vault nuevo numera por defecto (`okt init --numerar no` para evitarlo). El número es
+  fijo: lo asigna el CLI al crear la carpeta (el siguiente libre entre sus hermanas) y nunca cambia solo. `okt numerar`
+  numera lo pendiente; `okt numerar --orden orden.json --aplicar` reordena con el orden lógico que propone la IA y
+  confirma el usuario (renombra carpetas y notas principales y actualiza los enlaces en un commit que se deshace con
+  `git revert`). `--carpeta "Medicina"` sigue encontrando `01 │ 🩺 Medicina`. `okt renombrar` conserva el número, `okt
+  mover` da el siguiente libre si choca y avisa si alguna ruta pasaría de 240 caracteres.
+- **Jerarquía de lo general a lo específico:** `okt jerarquia` detecta sin leer notas dónde conviene ordenar: notas
+  sueltas (≥4 en una carpeta), ramas planas (≥8 subcarpetas), notas que crecieron (≥5 `##` y ≥1 500 palabras; pasan a ser
+  tema) y temas casi vacíos (1 sola nota). Al abrir el vault, el hook avisa en una línea solo si cambió algo (o una vez
+  por semana); el agente propone la tabla y aplica con un sí (skill `mantener`). `okt jerarquia descartar <id>` descarta
+  un candidato para no volver a verlo. También se reportan en `okt lint` y nada se mueve solo.
+- **`okt libro` (procesar libros completos):** requiere la CLI `todo-a-markdown`. `okt libro preparar "<archivo>" --en
+  "<área/rama>" --titulo "<emoji> <Título>"` crea el tema, convierte, pule, sanea, guarda imágenes con el prefijo del
+  libro, escribe el texto completo y la ficha con un índice de capítulos con anclas verificadas, y mueve el original a
+  `📥 Bruto`. Si la conversión propone cambios de estructura, el agente los decide con las muestras mediante `okt libro
+  aplicar "<Título>" --aceptar "p1,p3"`. El agente redacta el TL;DR, los puntos clave y las aplicaciones, y `okt libro
+  verificar "<Título>"` lo comprueba. `okt libro pendientes` lista los libros a medias.
+- **Mejoras OKT (mejora continua):** la nota `05 │ ⚙️ Sistema/🛠️ Mejoras OKT` junta los fallos del CLI (se anotan solos,
+  sin duplicarse) y lo que reportan los agentes con `okt reportar error|script|idea`. Los scripts improvisados se
+  guardan en `.cerebro/improvisados/` para llevarlos al plugin. Se gestiona con `okt mejoras`, `okt mejoras exportar`
+  (resumen con los scripts) y `okt mejoras cerrar <n> "<cómo>"`.
+- **Preferencias del usuario:** cuando repites una forma de trabajar, el agente pregunta si la anota; con tu sí, `okt
+  preferencia agregar "<texto>" --sobre flujo|formato|fuentes|herramientas`. Van al bloque `okt:preferencias` de
+  `AGENTS.md`, que todos los agentes leen al iniciar (con un tope de 40, consolidadas en la revisión semanal). Se
+  administran con `okt preferencia listar|quitar|reemplazar`.
+- **Lint ampliado:** nuevas comprobaciones para `ancla_rota` (`[[nota#Encabezado]]` o `#^bloque` inexistente, sugiriendo el
+  más cercano), `imagen_en_enlace` (`![[…]]` dentro de un enlace), `ruta_larga` (más de 240 caracteres; Windows corta en
+  260) y `sin_numero`.
+- **Red de seguridad de commits:** al abrir el vault, si quedaron cambios sin commit de una sesión anterior o de
+  Obsidian, el hook crea el commit «okt: cambios sin cerrar» e informa su hash. Git se configura con `core.longpaths`.
+- **`okt doctor` detecta parches:** compara la copia instalada con sus huellas (`scripts/huellas.json`, `npm run
+  huellas`) y avisa si un agente la editó a mano (cambios que se perderían al actualizar).
+- **Correcciones:** renombrar o numerar desde otra copia del plugin (p. ej. la de Antigravity) ya no cambia la ruta del CLI
+  que `AGENTS.md` da a los agentes (usa la configurada); y un `git add` fallido (una ruta demasiado larga) ya no deja el
+  commit sin hacer en silencio.
+- **Para quien desarrolla OKT:** ejecutar `npm run huellas` tras modificar `scripts/`, `skills/`, `references/` o
+  `plantillas/` (requerido por una prueba automatizada).
+
 ## 0.8.0 — 2026-10-31
 
 - **`redactar` tiene tres perfiles** y escribe de corrido, sin pedir aprobación del texto: el original queda antes en

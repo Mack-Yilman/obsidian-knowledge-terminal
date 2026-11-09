@@ -27,10 +27,15 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 | «Dale forma a mis ideas» | **Nota propia:** reescribe claro lo que escribiste sin orden, le da estructura y agrega `🔗 Conexiones` con tus demás notas |
 | «Organiza mi área de Medicina» | Agrupa sus notas de lo general a lo específico: Medicina → Cardiología → Síndrome coronario agudo → Infarto. Lo general va en la nota principal de cada carpeta, y una carpeta nueva se crea desde 2 notas del mismo tema (o 1, si es algo con identidad propia, como un producto) |
 | «Reorganiza mi cerebro» / «reorganiza mi área de …» | Prepara un mapa compacto, propone la nueva jerarquía en una tabla y la aplica con tu sí (crea temas, mueve, renombra o archiva en un solo commit) |
+| «Numera mis carpetas» / «numera las carpetas» | Numera áreas, proyectos y temas con `NN │ ` para ordenarlos visualmente, o reordena con el orden que confirmes |
+| «Revisa la jerarquía» | Detecta notas sueltas, ramas planas o notas que crecieron y propone cómo organizarlas de lo general a lo específico |
 | «Guarda este PDF» / «guarda este enlace» | Copia el original, crea su ficha y te ofrece compilarlo en tus notas |
+| «Procesa este libro: …» / «procesa un libro» | Convierte un EPUB o PDF (con `todo-a-markdown`), crea su tema, texto completo, índice verificado y ficha con TL;DR |
 | «Importa esta base de Notion» / «trae este documento de Drive» | Lista lo que hay, tú eliges qué, y lo trae sin tocar el original |
 | «Pregúntale a mi cuaderno de la tesis…» / «crea una infografía del cuaderno X» | Usa NotebookLM y guarda el resultado en una nota |
 | «¿Qué sé de anemia?» / «¿qué tengo en Finanzas?» | Responde con tus notas, citando cada una con `[[enlace]]` |
+| «¿Qué sabes de cómo trabajo?» | Consulta tus preferencias aprendidas en el bloque `okt:preferencias` de `AGENTS.md` (flujo, formato, herramientas) |
+| «¿Qué mejoras tiene OKT?» | Revisa los fallos anotados por el CLI, scripts improvisados e ideas registradas en `05 │ ⚙️ Sistema/🛠️ Mejoras OKT` |
 | «Revisión semanal» / «revisa mi vault» | Arma la semana y revisa enlaces rotos, notas sueltas o sin enlaces y datos vencidos |
 
 Nada se importa ni se procesa solo, y nada se borra sin tu sí: lo terminado va al archivo.
@@ -40,22 +45,25 @@ Nada se importa ni se procesa solo, y nada se borra sin tu sí: lo terminado va 
 ```text
 00 │ 📥 Bandeja/            todo lo que entra, sin procesar (📝 notas, 📲 Telegram, 🗒️ Notion, 💻 sesiones…)
 01 │ 🎯 Proyectos/          lo que termina: una carpeta por proyecto
-   🎓 Tesis/
-      🎓 Tesis.md          nota principal: objetivo, próximos pasos y el índice de su contenido
+   01 │ 🎓 Tesis/
+      01 │ 🎓 Tesis.md       nota principal: objetivo, próximos pasos y el índice de su contenido
 02 │ 🧭 Areas/              lo continuo: una carpeta por área, con temas anidados sin límite
-   🩺 Medicina/
-      🩺 Medicina.md       nota principal: sus proyectos y el índice de su contenido
-      🫀 Cardiología/
-         💔 Síndrome coronario agudo/
-            🫀 Infarto agudo de miocardio.md
-            📄 Guía ESC 2023.md      las fuentes van junto a lo que alimentan
+   01 │ 🩺 Medicina/
+      01 │ 🩺 Medicina.md    nota principal: sus proyectos y el índice de su contenido
+      02 │ 🩺 Clínicas/
+         01 │ 🫀 Cardiología/
+            01 │ 💔 Síndrome coronario agudo/
+               🫀 Infarto agudo de miocardio.md
+               📄 Guía ESC 2023.md   las fuentes van junto a lo que alimentan
 03 │ 📅 Diario/             📅 2026-10-22.md (o 📅 22∕10∕26.md) y revisiones 🗓️ 2026-W43.md
 04 │ 🗄️ Archivo/            por motivo: 🗑️ Descartes · ✅ Terminados · 💤 Inactivos · 📥 Bruto
-05 │ ⚙️ Sistema/            🔥 hot · ✅ pendientes · 📜 bitácora · 🗂️ índice · 📎 adjuntos · 🧱 plantillas
+05 │ ⚙️ Sistema/            🔥 hot · ✅ pendientes · 🛠️ Mejoras OKT · 📜 bitácora · 🗂️ índice · 📎 adjuntos
 AGENTS.md                 reglas del vault para cualquier agente
 ```
 
-- **Todo es carpeta:** cada área, proyecto y tema tiene una nota principal del mismo nombre con el índice
+- **Numeración `NN │ `:** áreas, proyectos y temas a cualquier nivel (y su nota principal) llevan un prefijo numérico
+  fijo para que Obsidian los ordene; el CLI lo asigna al crearlos y nunca cambia solo (`okt numerar` numera o reordena).
+- **Todo es carpeta:** cada área, proyecto y tema tiene una nota principal con su mismo número y nombre con el índice
   automático de lo que contiene. Así la jerarquía se navega por enlaces, y el grafo de Obsidian la muestra.
   Los temas se anidan sin límite de niveles. Para citar o enlazar entre áreas puedes usar `[[Nota]]` en el texto,
   `[[Nota#Sección]]`, enlaces a párrafos con `[[Nota#^id]]` y transclusiones con `![[Nota#Sección]]`. Para no ver
@@ -90,9 +98,10 @@ AGENTS.md                 reglas del vault para cualquier agente
 Comprueba con `node --version` (debe decir v20 o más) y `git --version`. Si acabas de instalarlos, cierra y vuelve
 a abrir la terminal.
 
-**Herramientas opcionales (para importar enlaces sin gastar tokens):**
+**Herramientas opcionales (para importar enlaces y procesar libros sin gastar tokens):**
 - **Defuddle** (páginas web completas en Markdown con imágenes): `npm install -g defuddle`
 - **yt-dlp** (subtítulos de YouTube sin descargar el video; usa Node): `uv tool install yt-dlp`
+- **todo-a-markdown** (para procesar libros EPUB y PDF con `okt libro`)
 
 ### 2. Instalar el plugin en Claude Code
 
@@ -144,6 +153,7 @@ no lo edites desde la web de Drive ni desde otra PC a la vez. El vault **no** se
 | Google Docs y Drive | `npm install -g @googleworkspace/cli` | `gws auth login` |
 | Páginas web (Defuddle) | `npm install -g defuddle` | — |
 | YouTube (yt-dlp) | `uv tool install yt-dlp` | — |
+| Libros (todo-a-markdown) | CLI `todo-a-markdown` | — |
 
 La guía de NotebookLM está en [skills/notebooklm/references/instalacion.md](skills/notebooklm/references/instalacion.md).
 
@@ -243,6 +253,23 @@ Comandos principales de importación y reorganización:
 - `okt reorganizar preparar [--carpeta "<área o proyecto>"]`: genera un mapa compacto (el árbol y, por nota, su tipo, su resumen y sus enlaces de entrada y salida, sin el texto) para que la IA proponga la jerarquía nueva gastando pocos tokens.
 - `okt reorganizar aplicar <plan.json>`: valida el plan entero antes de tocar nada (si algo no cuadra, no cambia nada), aplica en orden las operaciones `tema`, `mover`, `renombrar` y `archivar`, hace un solo commit y responde con el comando `git revert` para deshacerlo.
 
+Comandos de numeración, jerarquía, libros y mejora continua:
+- `okt numerar [--carpeta X] [--orden <orden.json>] [--aplicar]`: pone «NN │ » a carpetas y notas principales (o numera
+  las que faltan; con `--orden` reordena según el orden acordado).
+- `okt jerarquia [--carpeta X] [--todos]`: detecta carpetas que piden ordenarse de lo general a lo específico (notas
+  sueltas, ramas planas, notas que crecieron o temas casi vacíos) sin leer notas. Con `okt jerarquia descartar <id>`
+  descarta un candidato para no volver a verlo.
+- `okt libro preparar "<archivo>" --en "<área/rama>" [--titulo "<emoji> <Título>"]`: procesa un EPUB o PDF con
+  `todo-a-markdown`, creando el tema, texto completo, imágenes y ficha con índice verificado. `okt libro aplicar
+  "<Título>" --aceptar "p1,p3"` aplica las decisiones de estructura; `okt libro verificar "<Título>"` y `okt libro
+  pendientes` supervisan el avance.
+- `okt mejoras [--todas] | mejoras exportar | mejoras cerrar <n> "<cómo>"`: consulta, exporta o cierra incidencias y
+  scripts registrados en `05 │ ⚙️ Sistema/🛠️ Mejoras OKT`.
+- `okt preferencia agregar "<texto>" [--sobre flujo|formato|fuentes|herramientas|otro]`: guarda una preferencia de trabajo
+  en `AGENTS.md`. `okt preferencia listar | quitar <n> | reemplazar <n> "<texto>"` para revisarlas o editarlas.
+- `okt doctor [--completo]`: revisa el estado del vault, dependencias y alerta si el plugin instalado fue editado a mano
+  comparando sus huellas.
+
 `--carpeta` acepta la ruta desde un área o un proyecto, sin la carpeta raíz ni los emojis (`"Medicina/Cardiología"`,
 `"Tesis"`), así no tienes que escribir `│` ni emojis.
 
@@ -310,6 +337,12 @@ En Claude Code, el plugin trae dos hooks que **no usan el modelo**:
   tiene). Lo que llega en otro idioma lleva la propiedad `idioma` y, al procesar la Bandeja, la IA escribe la nota en
   español y deja el original en `📥 Bruto`. En Claude Code, con `okt config poner delegar agy`, esa traducción la hace
   Gemini Flash (Antigravity) y no gasta tu cuota de Claude; sin agy, o en Antigravity, la hace el mismo agente.
+- **Red de seguridad de commits:** al abrir el vault, si quedaron cambios sin commit de una sesión previa o de
+  Obsidian, el hook crea automáticamente el commit «okt: cambios sin cerrar» e informa el hash. Git usa `core.longpaths`.
+- **Aviso de jerarquía:** al iniciar, el hook detecta en una sola línea si hay notas sueltas, ramas planas o notas
+  crecidas para pasar a tema (`okt jerarquia`), solo si algo cambió o una vez por semana. Nada se mueve sin tu sí.
+- **Fallos del CLI anotados solos:** cualquier error al ejecutar el CLI se anota automáticamente en la nota
+  `05 │ ⚙️ Sistema/🛠️ Mejoras OKT` sin duplicarse, listo para su revisión en Mejoras OKT.
 - **Al iniciar y al cerrar** una sesión en otra carpeta, sincroniza la **memoria de su agente** (ver abajo).
 
 En **Antigravity**, los hooks de inicio (App y CLI) y la tarea del IDE hacen lo mismo (sección «Antigravity»).
@@ -353,6 +386,18 @@ el `CLAUDE.md` del vault importa; la memoria compartida, en la carpeta del siste
 `✅ pendientes.md`, `🗂️ indice.md`). Cada operación termina con `okt cerrar`, que hace un commit en el git local.
 Lo que guarda Claude lo encuentra Antigravity, y al revés.
 
+## Mejora continua
+
+OKT aprende cómo trabajas y registra incidencias mientras lo usas:
+- **🛠️ Mejoras OKT (`05 │ ⚙️ Sistema/🛠️ Mejoras OKT`):** los errores del CLI se anotan solos sin duplicarse. Además,
+  los agentes reportan fallos, ideas o scripts improvisados guardados en `.cerebro/improvisados/` (`okt reportar
+  error|script|idea`). Se revisan con `okt mejoras`, se extraen con `okt mejoras exportar` y se resuelven con `okt
+  mejoras cerrar <n> "<cómo>"`.
+- **Preferencias del usuario:** cuando repites una forma de trabajar, el agente propone recordarla; con tu confirmación,
+  la registra con `okt preferencia agregar "<texto>" --sobre flujo|formato|fuentes|herramientas`. Van al bloque
+  `okt:preferencias` de `AGENTS.md` (hasta 40, consolidadas en la revisión semanal) para que todos los agentes las lean al
+  iniciar. Se gestionan con `okt preferencia listar|quitar|reemplazar`.
+
 ## Privacidad
 
 - **El vault es tuyo y vive en tu PC:** OKT no filtra ni rechaza lo que guardes. Lo que pongas ahí lo ves tú (y tu
@@ -374,6 +419,8 @@ Lo que guarda Claude lo encuentra Antigravity, y al revés.
 | En Antigravity no aparece el aviso de Telegram ni el resumen | Repite `okt instalar antigravity --aplicar`; en el IDE, permite las tareas automáticas; `okt doctor` lo comprueba |
 | Telegram: «El Worker rechazó el token» | Repite `okt telegram config --url … --token …` con el `OKT_TOKEN` del Worker |
 | Un enlace `[[Anemia]]` sale roto | La nota se llama con su emoji (`[[🩸 Anemia]]`); `okt lint` sugiere el nombre correcto |
+| Rutas largas en Windows (`ruta_larga`) | Acorta nombres de carpetas o notas intermedias, o activa `LongPathsEnabled` en el registro de Windows; Git usa `core.longpaths` |
+| Un agente editó el plugin instalado (`okt doctor`) | Esos cambios se pierden al actualizar: regístralos con `okt reportar script <archivo> --para "<qué arreglaba>"` (quedan en `.cerebro/improvisados/` para llevarlos al plugin) y actualiza el plugin |
 | EPERM al escribir en Windows | Ya está resuelto desde la 0.1.1 (archivos ocultos de Obsidian); si vuelve a pasar, abre un issue |
 
 ## Proyectos relacionados

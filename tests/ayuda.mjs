@@ -8,9 +8,27 @@ import { fileURLToPath } from 'node:url';
 export const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const CLI = join(RAIZ, 'scripts', 'okt.mjs');
 
+// Una prueba que falla antes de su v.borrar() dejaba el vault en %TEMP% (había 111 de sesiones anteriores): lo que
+// quede se borra al salir del proceso de pruebas.
+const pendientes = new Set();
+process.once('exit', () => {
+  for (const d of pendientes) {
+    try {
+      rmSync(d, { recursive: true, force: true });
+    } catch {}
+  }
+});
+
 export function temporal(prefijo = 'okt-') {
   const dir = mkdtempSync(join(tmpdir(), prefijo));
-  return { dir, borrar: () => rmSync(dir, { recursive: true, force: true }) };
+  pendientes.add(dir);
+  return {
+    dir,
+    borrar: () => {
+      rmSync(dir, { recursive: true, force: true });
+      pendientes.delete(dir);
+    },
+  };
 }
 
 export function escribir(base, rel, texto) {
@@ -47,7 +65,8 @@ export function vaultNuevo(opciones = {}) {
   const vault = join(t.dir, 'cerebro');
   const configDir = join(t.dir, 'config');
   mkdirSync(vault, { recursive: true });
-  const r = okt(['init', '--aplicar', '--areas', opciones.areas ?? 'Medicina,Personal'], { cwd: vault, configDir });
+  // Las pruebas anteriores a la 0.9.0 usan carpetas sin número: la numeración se pide con { numerar: 'si' }.
+  const r = okt(['init', '--aplicar', '--areas', opciones.areas ?? 'Medicina,Personal', '--numerar', opciones.numerar ?? 'no'], { cwd: vault, configDir });
   if (r.codigo !== 0) throw new Error(`init falló: ${r.error}${r.salida}`);
   return { ...t, vault, configDir, okt: (args, o = {}) => okt(args, { cwd: vault, configDir, ...o }) };
 }

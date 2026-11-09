@@ -5,12 +5,13 @@ import { resolve } from 'node:path';
 import { resolverVault, buscarVaultArriba, posix } from './lib/rutas.mjs';
 import { COMANDOS, AYUDA } from './lib/comandos.mjs';
 import { necesitaMigrar, AVISO_MIGRAR } from './lib/estructura.mjs';
+import { registrarFalloCli } from './lib/mejoras.mjs';
 
 // Comandos que escriben en el vault: con una estructura anterior se detienen hasta migrar, para no dejar carpetas
 // nuevas junto a las viejas. telegram se revisa aparte (config no toca el vault).
-const ESCRIBEN = new Set(['init', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'agentes', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar', 'tema', 'mover', 'procesar', 'bruto', 'redactar', 'reorganizar']);
+const ESCRIBEN = new Set(['init', 'numerar', 'reportar', 'mejoras', 'preferencia', 'libro', 'jerarquia', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'agentes', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'commit', 'renombrar', 'tema', 'mover', 'procesar', 'bruto', 'redactar', 'reorganizar']);
 
-const BOOLEANOS = new Set(['aplicar', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'reintentar', 'nuevo', 'completo']);
+const BOOLEANOS = new Set(['aplicar', 'todas', 'todos', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'reintentar', 'nuevo', 'completo']);
 
 export function parsear(argv) {
   const pos = [];
@@ -54,6 +55,8 @@ async function main() {
     process.stderr.write(`${AVISO_MIGRAR}\n`);
     return 2;
   }
+  // El comando consume pos: el subcomando se guarda antes, para anotar «okt tema nuevo» si falla.
+  const sub = /^[a-z]+$/.test(pos[0] || '') ? pos[0] : '';
   try {
     const r = await cmd.correr({ pos, op, vault, posix });
     if (r === undefined) return 0;
@@ -63,6 +66,10 @@ async function main() {
     return r.codigo ?? 0;
   } catch (e) {
     process.stderr.write(`${e.message}\n`);
+    // Mejora continua: los fallos internos (1) y los de uso (2, suelen ser una skill que explica mal un comando) quedan
+    // en Mejoras OKT. Un choque (3, «ya existe») es una respuesta normal y no se anota.
+    // En un vault sin migrar no se escribe: la nota de Mejoras quedaría junto a las carpetas viejas.
+    if ((e.codigo ?? 1) !== 3 && !['reportar', 'mejoras', 'hook'].includes(nombre) && !(vault && necesitaMigrar(vault))) registrarFalloCli(vault, { comando: [nombre, sub].filter(Boolean).join(' '), mensaje: e.message.split('\n')[0] });
     return e.codigo ?? 1;
   }
 }

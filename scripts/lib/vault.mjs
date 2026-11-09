@@ -47,15 +47,114 @@ export function leerNota(vault, rel) {
 
 export const esSistema = (rel) => rel.startsWith(`${C.sistema}/`);
 
+// Limpia bloques de código preservando saltos de línea para mantener números de línea.
+function limpiarCodigo(texto) {
+  return String(texto || '')
+    .replace(/```[\s\S]*?```/g, (m) => m.replace(/[^\r\n]/g, ' '))
+    .replace(/`[^`\r\n]*`/g, (m) => ' '.repeat(m.length));
+}
+
+// Desglosa el contenido interior de un enlace [[...]] respetando enlaces incrustados anidados ![[...]]
+function desglosarEnlace(contenido) {
+  let profundidad = 0;
+  let idxBarra = -1;
+  for (let i = 0; i < contenido.length; i++) {
+    if (contenido.startsWith('[[', i)) {
+      profundidad++;
+      i++;
+    } else if (contenido.startsWith(']]', i)) {
+      profundidad--;
+      i++;
+    } else if (profundidad === 0 && contenido[i] === '|' && idxBarra === -1) {
+      idxBarra = i;
+      break;
+    }
+  }
+  const ref = idxBarra === -1 ? contenido : contenido.slice(0, idxBarra);
+  const etiqueta = idxBarra === -1 ? '' : contenido.slice(idxBarra + 1);
+
+  // Buscar '#' en ref fuera de enlaces anidados
+  profundidad = 0;
+  const hashes = [];
+  for (let i = 0; i < ref.length; i++) {
+    if (ref.startsWith('[[', i)) {
+      profundidad++;
+      i++;
+    } else if (ref.startsWith(']]', i)) {
+      profundidad--;
+      i++;
+    } else if (profundidad === 0 && ref[i] === '#') {
+      hashes.push(i);
+    }
+  }
+
+  let destino = '';
+  let ancla = null;
+  const tieneAncla = hashes.length > 0;
+
+  if (tieneAncla) {
+    destino = ref.slice(0, hashes[0]).trim();
+    ancla = ref.slice(hashes[hashes.length - 1] + 1).trim();
+  } else {
+    destino = ref.trim();
+  }
+
+  return { destino, ancla, tieneAncla, etiqueta, ref };
+}
+
+// Número de línea de cada posición, contando solo los saltos desde la anterior (un libro tiene miles de enlaces:
+// contar desde el inicio cada vez era cuadrático). Las posiciones llegan en orden creciente.
+function contadorDeLineas(texto) {
+  let pos = 0;
+  let linea = 1;
+  return (indice) => {
+    for (; pos < indice; pos++) if (texto.charCodeAt(pos) === 10) linea++;
+    return linea;
+  };
+}
+
 // Enlaces [[destino#sección|alias]] y ![[adjunto]] fuera de bloques de código.
 export function extraerEnlaces(texto) {
-  const sinCodigo = texto.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
+  const sinCodigo = limpiarCodigo(texto);
   const enlaces = [];
-  for (const m of sinCodigo.matchAll(/(!?)\[\[([^\]\n]+?)\]\]/g)) {
-    const destino = m[2].split('|')[0].split('#')[0].trim();
-    if (destino) enlaces.push({ destino, incrustado: m[1] === '!' });
+  const lineaDe = contadorDeLineas(sinCodigo);
+  for (const m of sinCodigo.matchAll(/(!?)\[\[((?:!?\[\[[^\]\r\n]+\]\]|[^\]\r\n])+)\]\]/g)) {
+    const { destino, ancla, etiqueta } = desglosarEnlace(m[2]);
+    if (destino) {
+      const linea = lineaDe(m.index);
+      enlaces.push({
+        destino,
+        incrustado: m[1] === '!',
+        ancla: ancla ?? '',
+        etiqueta,
+        crudo: m[0],
+        linea,
+      });
+    }
   }
   return enlaces;
+}
+
+// Enlaces con ancla (#sección o #^id), incluidos los de la misma nota ([[#Sección]]).
+export function extraerAnclas(texto) {
+  const sinCodigo = limpiarCodigo(texto);
+  const anclas = [];
+  const lineaDe = contadorDeLineas(sinCodigo);
+  for (const m of sinCodigo.matchAll(/(!?)\[\[((?:!?\[\[[^\]\r\n]+\]\]|[^\]\r\n])+)\]\]/g)) {
+    const { destino, ancla, tieneAncla, etiqueta } = desglosarEnlace(m[2]);
+    if (tieneAncla && ancla !== null) {
+      const linea = lineaDe(m.index);
+      anclas.push({
+        destino,
+        ancla,
+        bloque: ancla.startsWith('^'),
+        etiqueta,
+        crudo: m[0],
+        linea,
+      });
+    }
+  }
+  return anclas;
 }
 
 // Mapa nombre → rutas, para resolver enlaces como Obsidian (por nombre de archivo).
