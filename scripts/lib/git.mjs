@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 const activo = () => process.env.OKT_SIN_GIT !== '1';
 
-function git(vault, args) {
+export function git(vault, args) {
   // core.quotepath=false: sin él, git escapa los nombres con tildes o emojis («"\360\237…"»).
   // core.longpaths=true: en Windows, una jerarquía profunda con nombres largos pasa de 260 caracteres y «git add»
   // falla con «Filename too long» (pasó en el vault de Mack, 2026-11-09).
@@ -44,6 +44,14 @@ export function commit(vault, mensaje) {
   if (!git(vault, ['status', '--porcelain']).salida) return { sinCambios: true };
   const r = git(vault, ['commit', '-q', '-m', mensaje]);
   return r.ok ? { hecho: true, hash: git(vault, ['rev-parse', '--short', 'HEAD']).salida } : { error: r.error };
+}
+
+// Compacta los objetos sueltos cuando git lo cree necesario (miles de objetos o muchos packs). El vault de Mack llegó a
+// 3 784 objetos sueltos sin un solo pack (2026-11-19): nada llamaba a gc. Barato cuando no hay nada que hacer.
+export function compactar(vault) {
+  if (!activo() || !existsSync(join(vault, '.git'))) return { omitido: true };
+  // autoDetach=false: en segundo plano dejaba .git bloqueado para el siguiente comando (revisión de Argon).
+  return git(vault, ['-c', 'gc.autoDetach=false', 'gc', '--auto', '--quiet']);
 }
 
 export function guardarSinCerrar(vault) {

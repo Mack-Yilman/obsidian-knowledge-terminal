@@ -19,6 +19,8 @@ import { preparar as reorganizarPreparar, aplicar as reorganizarAplicar } from '
 import { numerar } from './numerar.mjs';
 import { jerarquia, descartar as jerarquiaDescartar } from './jerarquia.mjs';
 import { preparar as libroPreparar, aplicar as libroAplicar, verificar as libroVerificar, pendientes as libroPendientes } from './libro.mjs';
+import { informe as espacioInforme, preparar as espacioPreparar, aplicar as espacioAplicar } from './espacio.mjs';
+import { ignorar as gitIgnorar, purgar as gitPurgar } from './espacio-git.mjs';
 import { registrar as registrarMejora, listar as mejorasListar, exportar as mejorasExportar, cerrar as mejorasCerrar } from './mejoras.mjs';
 import { agregar as prefAgregar, listar as prefListar, quitar as prefQuitar, reemplazar as prefReemplazar } from './preferencias.mjs';
 import { preparar as redactarPreparar, indice as redactarIndice, verificar as redactarVerificar } from './redactar.mjs';
@@ -94,6 +96,14 @@ Notas
                                          EPUB/PDF → tema, texto completo y ficha con índice (requiere todo-a-markdown)
   libro aplicar "<Título>" --aceptar "p1,p3" [--excluir "<líneas>"]   Decide las propuestas de estructura
   libro verificar "<Título>" | libro pendientes
+
+Espacio (git versiona texto e imágenes livianas; audio, video, PDF, libros y modelos quedan en disco y en Drive)
+  espacio [--breve]                      Cuánto pesa el vault y su .git, por tipo y carpeta; imágenes duplicadas,
+                                         pequeñas, grandes y huérfanas; binarios que git rastrea. No toca nada
+  espacio limpiar preparar [--carpeta X] Lote (.cerebro/cache/espacio/lote.json) para que la IA revise y el usuario apruebe
+  espacio limpiar aplicar <lote.json>    Unifica duplicados, quita lo aprobado y lo manda a .trash/okt-<fecha>/
+  espacio git ignorar [--aplicar]        Bloque okt:binarios en .gitignore y deja de rastrearlos (siguen en disco)
+  espacio git purgar [--aplicar]         Quita los binarios de todo el historial (respaldo previo en ~/okt-respaldos)
 
 Sistema (las skills se comunican por aquí)
   bitacora <skill> "<texto>" [--notas "A,B"]
@@ -290,6 +300,17 @@ export const COMANDOS = {
       if (accion === 'verificar') return libroVerificar(vault, ref);
       if (accion === 'pendientes') return libroPendientes(vault);
       throw Object.assign(new Error('Uso: okt libro preparar "<archivo>" --en "<área/rama>" [--titulo "<emoji> <Título>"] | aplicar "<Título>" --aceptar "p1,p3" [--excluir "<líneas>"] | verificar "<Título>" | pendientes'), { codigo: 2 });
+    },
+  },
+  espacio: {
+    correr({ pos, op, vault }) {
+      const [grupo, accion, ...resto] = pos;
+      if (!grupo) return espacioInforme(vault, op);
+      if (grupo === 'limpiar' && accion === 'preparar') return espacioPreparar(vault, op);
+      if (grupo === 'limpiar' && accion === 'aplicar') return espacioAplicar(vault, resto.join(' '));
+      if (grupo === 'git' && accion === 'ignorar') return gitIgnorar(vault, op);
+      if (grupo === 'git' && accion === 'purgar') return gitPurgar(vault, op);
+      throw Object.assign(new Error('Uso: okt espacio [--breve] | limpiar preparar [--carpeta X] | limpiar aplicar <lote.json> | git ignorar [--aplicar] | git purgar [--aplicar]'), { codigo: 2 });
     },
   },
   reportar: {

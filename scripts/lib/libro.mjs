@@ -4,7 +4,7 @@
 //   verificar(vault, titulo)
 //   pendientes(vault)
 //   sanear(md) -> { texto, cambios }
-import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, rmSync, readdirSync, copyFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, rmSync, readdirSync, copyFileSync, statSync } from 'node:fs';
 import { join, dirname, basename, extname, resolve, isAbsolute, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { resolverBinario, ejecutar, jsonDe } from './binarios.mjs';
@@ -16,6 +16,8 @@ import { leerFrontmatter, escribirFrontmatter } from './frontmatter.mjs';
 import { sobrescribir, dentroDe, posix } from './rutas.mjs';
 import { fechaISO } from './fechas.mjs';
 import { listarNotas, extraerEnlaces } from './vault.mjs';
+import { unificarDuplicados } from './espacio.mjs';
+import { reescribirEnlaces } from './migrar.mjs';
 
 const EXTENSIONES = new Set(['.epub', '.pdf', '.docx', '.mobi', '.azw3', '.fb2']);
 
@@ -185,9 +187,15 @@ function terminar(vault, estado) {
     }
   }
 
+  // 1b. Unifica duplicados solo entre las imágenes incrustadas de este libro y reescribe sus enlaces en el cuerpo.
+  const rutasImgLibro = [...new Set(incrustados.map((e) => `${estado.adjuntos}/${basename(e.destino)}`))].filter((r) => existsSync(join(vault, r)));
+  const { quitados: duplicadosUnificados, nombres: nombresUnificados } = unificarDuplicados(vault, rutasImgLibro, []);
+  const cuerpoConImagenes = nombresUnificados.size ? reescribirEnlaces(cuerpoConvertido, nombresUnificados) : cuerpoConvertido;
+  const hayPequenas = rutasImgLibro.some((r) => existsSync(join(vault, r)) && statSync(join(vault, r)).size < 20480);
+
   // 2. Saneamiento propio de OKT.
   // Primero se bajan las imágenes de los encabezados: así una llamada [19] queda al final y sanear la quita.
-  const { texto: cuerpoSaneadoBase, cambios: cambiosSanear } = sanear(separarImagenesDeEncabezados(cuerpoConvertido));
+  const { texto: cuerpoSaneadoBase, cambios: cambiosSanear } = sanear(separarImagenesDeEncabezados(cuerpoConImagenes));
   const cuerpoFinal = cuerpoSaneadoBase.replace(/^\n+/, '');
 
   // 3. Escribe en la carpeta del tema 📖 <Título> - Texto completo.md.
@@ -282,7 +290,7 @@ function terminar(vault, estado) {
   const muestras = encabezados.slice(0, 5);
   const texto = [
     `Libro preparado: «${tituloBase}»`,
-    `- Palabras: ${palabras} · Capítulos (##): ${encabezados.length} · Imágenes: ${totalImagenes} (${imagenesMovidas} movidas a adjuntos)`,
+    `- Palabras: ${palabras} · Capítulos (##): ${encabezados.length} · Imágenes: ${totalImagenes} (${imagenesMovidas} movidas a adjuntos${duplicadosUnificados ? `, ${duplicadosUnificados} duplicadas unificadas` : ''})`,
     `- Avisos de conversión: ${avisos.length ? avisos.join('; ') : 'ninguno'}`,
     `- Cambios de pulir: ${JSON.stringify(estado.pulir?.cambios || {})} · Cambios de sanear: ${JSON.stringify(cambiosSanear)}`,
     `- Muestra de encabezados (hasta 5): ${muestras.join(' | ') || 'ninguno'}`,
@@ -290,6 +298,7 @@ function terminar(vault, estado) {
     `- Ficha: ${relFicha}`,
     `- Texto completo: ${relTexto}`,
     `- ${avisoOriginal}`,
+    ...(hayPequenas ? [`📍 okt espacio limpiar preparar --carpeta "${estado.adjuntos}"`] : []),
     `Siguiente paso: lee el índice de la ficha y los primeros párrafos de 3 o 4 capítulos (no el libro entero), escribe el TL;DR, los puntos clave y las aplicaciones en lugar de cada <!-- okt:llm … -->, completa el resumen y ejecuta okt libro verificar "${tituloBase}"`,
   ].join('\n');
 

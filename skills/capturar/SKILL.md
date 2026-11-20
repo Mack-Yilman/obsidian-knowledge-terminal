@@ -1,6 +1,6 @@
 ---
 name: capturar
-description: Guarda conocimiento en el segundo cerebro de Obsidian (OKT), en la Bandeja o directo en el área, proyecto o tema que diga el usuario, e importa, solo cuando el usuario lo pide, desde Notion, Google Docs o Drive. Úsala cuando diga «guarda esto en mi cerebro», «anota esta idea», «nota rápida», «guarda esto en Cardiología / en mi proyecto X», «guarda este PDF / artículo / paper / enlace / video de YouTube», «procesa este libro», «guarda este EPUB», «agrega a mi diario», «guarda lo que hicimos en esta sesión», «pásalo a Obsidian», «importa esta página (o base) de Notion», «trae mis apuntes de Notion», «importa este documento de Drive o Google Docs». Para NotebookLM usa la skill notebooklm.
+description: Guarda conocimiento en el segundo cerebro de Obsidian (OKT) en la Bandeja o donde diga el usuario, e importa a pedido desde Notion, Docs o Drive. Úsala cuando diga «guarda esto en mi cerebro», «anota esta idea», «nota rápida», «guarda esto en Cardiología», «guarda este PDF / artículo / enlace / video de YouTube», «procesa este libro», «agrega a mi diario», «pásalo a Obsidian», «trae mis apuntes de Notion» o «importa este documento de Drive». Para NotebookLM usa la skill notebooklm.
 ---
 
 # Capturar e importar

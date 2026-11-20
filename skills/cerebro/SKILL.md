@@ -1,6 +1,6 @@
 ---
 name: cerebro
-description: Guía y gestor del segundo cerebro en Obsidian (OKT). Configura el vault la primera vez con una entrevista breve (a qué se dedica el usuario, sus áreas, sus proyectos y sus temas) y crea las carpetas; además crea, renombra y archiva áreas, proyectos y temas, conecta Obsidian, Drive, NotebookLM, Notion, Antigravity y Telegram, anota cómo trabaja el usuario (preferencias), muestra el estado y dice el siguiente paso. Úsala SIEMPRE que el usuario diga «configura mi segundo cerebro», «crea mi vault», «instala OKT», «crea un proyecto», «agrega un área», «crea el tema X en Y», «organiza mis áreas», «conecta Notion/Drive/NotebookLM/Telegram», «vincula esta carpeta», «instala OKT en Antigravity», «recuerda que prefiero…», «anota como preferencia…», «qué sabes de cómo trabajo», «qué mejoras tiene OKT», «qué puedo hacer con mi cerebro», «por dónde empiezo», «cómo va mi cerebro», «qué tengo pendiente», «revisa la configuración», «migra mi vault», o pregunte cómo usar OKT u Obsidian con IA.
+description: Guía y gestor del segundo cerebro en Obsidian (OKT). Configura el vault, crea áreas, proyectos y temas, conecta servicios, anota preferencias (con okt, no en tu memoria propia) y dice el siguiente paso. Úsala cuando diga «configura mi segundo cerebro», «instala OKT», «crea un proyecto», «agrega un área», «crea el tema X en Y», «conecta Notion/Drive/Telegram», «anota como preferencia…», «qué sabes de cómo trabajo», «por dónde empiezo», «cómo va mi cerebro» o «qué tengo pendiente».
 ---
 
 # Cerebro: guía y gestor de OKT

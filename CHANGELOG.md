@@ -1,5 +1,35 @@
 # Cambios
 
+## 0.10.0 — 2026-11-20
+
+- **Diagnóstico de espacio del vault y su `.git`:** `okt espacio [--breve]` informa cuánto pesa el vault y su historial de
+  git, desglosado por tipo y carpeta. Detecta imágenes duplicadas, pequeñas, grandes y huérfanas (dentro de
+  `05 │ ⚙️ Sistema/📎 adjuntos`), además de los binarios que git está rastreando. Es solo informativo: no modifica nada.
+  En un vault real medido, de 3,1 GB totales, 1,5 GB correspondían a `.git` (audios de NotebookLM y modelos de voz) y
+  336 imágenes de libros duplicadas.
+- **Limpieza asistida de adjuntos y unificación de duplicados:** `okt espacio limpiar preparar` genera un lote
+  (`.cerebro/cache/espacio/lote.json`) para que la IA lo revise y el usuario apruebe. La IA examina las imágenes
+  pequeñas: los logos y adornos se descartan, mientras que portadas, tablas y gráficos se conservan; las portadas sin
+  enlazar no se borran, sino que se propone incrustarlas en la ficha del libro. `okt espacio limpiar aplicar` unifica
+  duplicados (redirigiendo los enlaces a la copia conservada) y mueve lo aprobado a `.trash/okt-<fecha>/` con su
+  `manifiesto.json` para restaurar. Si el lote contiene algún error, no toca nada.
+- **Git deja de versionar binarios pesados (`okt espacio git ignorar` y `purgar`):** git está pensado para notas de texto y
+  su historial; versionar binarios casi invariables duplica el peso innecesariamente. `okt espacio git ignorar [--aplicar]`
+  añade el bloque `# okt:binarios` a `.gitignore` para dejar de rastrear audio, video, PDF, EPUB, MOBI, AZW3, modelos
+  `.onnx` y comprimidos (los archivos siguen en disco y los respalda la nube; los vaults nuevos ya incluyen el bloque).
+  Para limpiar el historial previo, `okt espacio git purgar [--aplicar]` elimina esos binarios de todos los commits usando
+  `git filter-repo` (`uv tool install git-filter-repo`), tras crear un respaldo completo previo (`git bundle` en
+  `~/okt-respaldos/`), exigiendo Obsidian cerrado y Drive en pausa (`--drive-pausado`). Las notas y su historia se
+  conservan; desaparecen solo los commits que tocaban únicamente binarios. En el ensayo sobre una copia del vault real,
+  `.git` pasó de 1,5 GB a 257 MB (4,6 min) y las 972 imágenes incrustadas siguieron resolviendo.
+- **`okt libro` unifica imágenes duplicadas:** al importar un libro, detecta y unifica automáticamente las imágenes
+  repetidas que contiene y, si quedan imágenes pequeñas tras el proceso, propone revisarlas para mantener limpio el vault.
+- **Mantenimiento automático de git y comprobación de dependencias:** `okt cerrar` compacta git cuando hace falta
+  ejecutando `git gc --auto`. Asimismo, `okt doctor` ahora avisa si falta la herramienta opcional `git-filter-repo` para
+  purgar el historial.
+- **Descripciones de skills acortadas (≤ 500 caracteres):** las descripciones de las 6 skills se redujeron para no
+  superar dicho límite, ya que con textos más largos Claude Code mostraba skills sin descripción y no se activaban.
+
 ## 0.9.2 — 2026-11-09
 
 - **Al actualizar el plugin, tus ediciones pendientes ya no se mezclan con el commit de la ruta del CLI.** Si abrías tu

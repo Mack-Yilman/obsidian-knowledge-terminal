@@ -21,6 +21,13 @@ if (args[0] === 'pulir') {
   const imgRenombrada = join(dirAdj, nombreImg);
   if (existsSync(imgOriginal)) renameSync(imgOriginal, imgRenombrada);
   texto = texto.replace(`![](${stem}_adjuntos/00001.jpeg)`, `![[${nombreImg}]]`);
+  if (/^duplicadas$/m.test(texto)) {
+    const img2Original = join(dirAdj, '00002.jpeg');
+    const nombreImg2 = `${title} - 00002.jpeg`;
+    if (existsSync(imgRenombrada)) writeFileSync(img2Original, readFileSync(imgRenombrada));
+    if (existsSync(img2Original)) renameSync(img2Original, join(dirAdj, nombreImg2));
+    texto = texto.replace(/^duplicadas$/m, `![[${nombreImg2}]]`);
+  }
 
   const rutaAplicar = opcion(args, '--aplicar');
   if (rutaAplicar) {
@@ -138,6 +145,9 @@ const lineasMd = [
 
 if (!sinPropuestas) {
   lineasMd.push('', '**CAPÍTULO 4**', '', 'Texto del cuarto capítulo detectado en un párrafo.');
+}
+if (/^duplicadas$/m.test(origenTexto)) {
+  lineasMd.push('', 'duplicadas');
 }
 
 const salidaMd = join(dirSalida, `${stem}.md`);
