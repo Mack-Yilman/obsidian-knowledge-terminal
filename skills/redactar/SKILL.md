@@ -1,6 +1,6 @@
 ---
 name: redactar
-description: Convierte en bruto en notas claras del segundo cerebro de Obsidian (OKT), con tres perfiles - clase o video de un expositor (índice y temas en una misma página, sin resumir), reunión (acuerdos, tareas y puntos abiertos arriba y el desarrollo por temas) e ideas propias (las reescribe claras, les da estructura y las conecta con sus demás notas). Guarda el original en bruto antes de escribir. También solo ordena una nota sin tocar sus frases, y traduce al español. Úsala cuando el usuario diga «pasa a limpio esta nota», «ordena esta transcripción», «haz apuntes de esta clase o de este video», «ordena esta reunión», «haz el acta de esta reunión», «qué se acordó en esta transcripción», «dale forma a mis ideas», «estructura lo que escribí», «conecta esta idea con mis notas», «mejora la redacción», «dale formato», «arregla lo que transcribió la voz» o «tradúcela».
+description: Convierte lo escrito en bruto en notas claras del segundo cerebro de Obsidian (OKT) con tres perfiles (clase o video, reunión e ideas propias), guardando antes el original; también solo ordena o traduce. Úsala cuando diga «pasa a limpio esta nota», «ordena esta transcripción», «haz apuntes de esta clase o de este video», «haz el acta de esta reunión», «qué se acordó en esta transcripción», «dale forma a mis ideas», «mejora la redacción», «arregla lo que transcribió la voz» o «tradúcela».
 ---
 
 # Redactar: de bruto a texto que se entiende

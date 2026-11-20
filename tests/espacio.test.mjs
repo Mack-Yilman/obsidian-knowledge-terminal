@@ -149,6 +149,24 @@ test('espacio limpiar: una huérfana fuera de adjuntos no se propone, y un nombr
   assert.ok(!lote.huerfanas.some((x) => x.endsWith('original.pdf')), 'lo de Bruto no es huérfano');
   assert.deepEqual(lote.duplicados, [], 'el nombre ambiguo no se unifica');
   assert.ok(!lote.huerfanas.some((x) => x.endsWith('tabla.png')), 'un enlace en tabla con \\| cuenta como referencia');
+
+  // Un lote editado a mano que quita un nombre repetido en otra carpeta también se rechaza al aplicar.
+  const ruta = escribir(v.dir, 'ambiguo.json', JSON.stringify({ duplicados: [], huerfanas: [], revisar: [], quitar: [`${LIBRO}/Fisiología - figura copia larga.png`], webp: [] }));
+  const a = v.okt(['espacio', 'limpiar', 'aplicar', ruta]);
+  assert.equal(a.codigo, 2);
+  assert.match(a.error, /no se tocó nada[\s\S]*otra carpeta/);
+  v.borrar();
+});
+
+test('espacio limpiar preparar: una portada sin enlazar no es huérfana; se propone incrustarla en la ficha', () => {
+  const v = conImagenes();
+  writeFileSync(escribir(v.vault, `${LIBRO}/Fisiología - cover.jpeg`, ''), bytes(60000, 13));
+  const r = v.okt(['espacio', 'limpiar', 'preparar']);
+  assert.equal(r.codigo, 0, r.error);
+  const lote = JSON.parse(leer(v, '.cerebro/cache/espacio/lote.json'));
+  assert.ok(!lote.huerfanas.some((x) => /cover/.test(x)));
+  assert.deepEqual(lote.portadas, [`${LIBRO}/Fisiología - cover.jpeg`]);
+  assert.match(r.salida, /portada/i);
   v.borrar();
 });
 

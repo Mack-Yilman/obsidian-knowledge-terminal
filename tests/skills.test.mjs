@@ -16,7 +16,20 @@ test('las 6 skills existen con name igual a su carpeta y una description útil',
   for (const s of SKILLS) {
     const { datos } = leerFrontmatter(leerSkill(s));
     assert.equal(datos.name, s);
-    assert.ok(datos.description.length > 150 && datos.description.length <= 1024, `${s}: description de ${datos.description.length}`);
+    // ≤ 500: con descripciones de ~1 000 caracteres Claude Code mostró skills sin descripción (no se activan).
+    assert.ok(datos.description.length > 150 && datos.description.length <= 500, `${s}: description de ${datos.description.length}`);
+  }
+});
+
+test('ninguna frase de activación («…») se repite en dos skills: cada pedido tiene una sola dueña', () => {
+  const dueña = new Map();
+  for (const s of SKILLS) {
+    const { datos } = leerFrontmatter(leerSkill(s));
+    for (const [, frase] of datos.description.matchAll(/«([^»]+)»/g)) {
+      const clave = frase.trim().toLowerCase();
+      assert.ok(!dueña.has(clave) || dueña.get(clave) === s, `«${frase}» está en ${dueña.get(clave)} y en ${s}`);
+      dueña.set(clave, s);
+    }
   }
 });
 

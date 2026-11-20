@@ -1,6 +1,6 @@
 ---
 name: consultar
-description: Responde con las notas del segundo cerebro de Obsidian (OKT), citando cada afirmación con [[nota]] y leyendo lo mínimo: primero el árbol del vault y el índice del tema, luego la búsqueda. Úsala cuando el usuario pregunte «¿qué sé de…?», «busca en mi cerebro», «¿qué tengo sobre…?», «¿qué tengo en mi área de…?», «¿dónde anoté…?», «encuentra la nota de…», «resume lo que tengo de…», «compara lo que anoté sobre X y Y», «según mis notas…» o pida una respuesta basada en su vault de Obsidian.
+description: Responde con las notas del segundo cerebro de Obsidian (OKT), citando cada afirmación con [[nota]] y leyendo lo mínimo. Úsala cuando el usuario pregunte «¿qué sé de…?», «busca en mi cerebro», «¿qué tengo sobre…?», «¿qué tengo en mi área de…?», «¿dónde anoté…?», «encuentra la nota de…», «resume lo que tengo de…», «compara lo que anoté sobre X y Y», «según mis notas…» o pida una respuesta basada en su vault de Obsidian.
 ---
 
 # Consultar

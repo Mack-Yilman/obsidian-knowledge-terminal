@@ -7,6 +7,7 @@ import { ejecutar, resolverBinario, jsonDe } from './binarios.mjs';
 import { leerConfigVault, posix, RAIZ_PLUGIN } from './rutas.mjs';
 import { dirSkillsAgy, dirPluginAgy, dirAgyConfig, deConfianza, SKILL_OBSIDIAN, ETIQUETA_TAREA } from './instalar.mjs';
 import { calcularHuellas } from '../huellas.mjs';
+import { hayFilterRepo } from './espacio-git.mjs';
 
 // Plugins de Claude Code instalados (~/.claude/plugins/installed_plugins.json; OKT_CLAUDE_PLUGINS para las pruebas).
 function pluginClaude(id) {
@@ -128,6 +129,10 @@ export function doctor(vault, op = {}) {
   const respaldo = cfg.respaldo;
   add('Respaldo', 'Google Drive para escritorio', driveInstalado(), driveInstalado() ? 'instalado' : 'no encontrado', 'Instálalo desde https://www.google.com/drive/download/ (o usa otro respaldo).', true);
   add('Respaldo', 'Respaldo confirmado', Boolean(respaldo), respaldo || 'sin confirmar', 'En Drive: Preferencias → Mi PC → Agregar carpeta → elige el vault → «Hacer copia de seguridad en Google Drive». Luego: okt config poner respaldo drive', true);
+
+  // Solo para «okt espacio git purgar» (quitar los binarios del historial): por eso es opcional.
+  const filterRepo = hayFilterRepo();
+  add('Respaldo', 'git filter-repo (purgar binarios del historial)', filterRepo, filterRepo ? 'instalado' : 'no instalado', 'uv tool install git-filter-repo', true);
 
   const conectores = [
     { bin: 'nlm', nombre: 'NotebookLM (nlm)', como: 'uv tool install notebooklm-mcp-cli && nlm login', auth: ['login', '--check'] },

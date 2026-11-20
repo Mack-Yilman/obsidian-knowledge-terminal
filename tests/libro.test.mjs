@@ -223,3 +223,19 @@ test('vault numerado crea 01 │ … y soporta título con ñ, tildes y emoji te
 
   v.borrar();
 });
+
+test('un libro con imágenes duplicadas las unifica al terminar y conserva una sola copia', () => {
+  const v = vaultNuevo();
+  escribir(v.vault, '00 │ 📥 Bandeja/Libro Duplicado.epub', 'title: Libro Duplicado\nsin-propuestas\nduplicadas\n');
+
+  const r = preparar(v.vault, '00 │ 📥 Bandeja/Libro Duplicado.epub', { en: 'Medicina' });
+  assert.equal(r.datos.estado, 'ok');
+
+  const carpetaAdj = '05 │ ⚙️ Sistema/📎 adjuntos/📖 libros/Libro Duplicado';
+  assert.deepEqual(readdirSync(join(v.vault, carpetaAdj)), ['Libro Duplicado - 00001.jpeg']);
+
+  const texto = leer(v, r.datos.textoCompleto);
+  assert.equal((texto.match(/!\[\[Libro Duplicado - 00001\.jpeg\]\]/g) || []).length, 2);
+
+  v.borrar();
+});

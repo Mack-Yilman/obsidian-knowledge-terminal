@@ -1,6 +1,6 @@
 ---
 name: notebooklm
-description: Conecta los cuadernos de NotebookLM con el segundo cerebro de Obsidian (OKT), siempre a pedido. Lista cuadernos, vincula una carpeta del vault con un cuaderno, trae sus notas, le hace preguntas (la respuesta se guarda como nota) y crea contenidos de Studio (infografía, presentación, resumen de audio, video, mapa mental, informe, tabla de datos), los descarga y los incrusta en Obsidian. Úsala cuando el usuario mencione NotebookLM o un cuaderno: «pregúntale a mi cuaderno…», «trae las notas del cuaderno», «crea una infografía / presentación / audio / mapa mental del cuaderno…», «descarga la infografía», «vincula esta carpeta con el cuaderno…», «cómo instalo NotebookLM».
+description: Conecta cuadernos de NotebookLM con el segundo cerebro de Obsidian (OKT), siempre a pedido. Consulta sus fuentes con citas, trae sus notas y genera y descarga contenidos de Studio. Úsala al mencionar NotebookLM o un cuaderno, por ejemplo «pregúntale a mi cuaderno…», «trae las notas del cuaderno», «crea una infografía / presentación / audio / mapa mental del cuaderno…», «descarga la infografía», «vincula esta carpeta con el cuaderno…» o «cómo instalo NotebookLM».
 ---
 
 # NotebookLM

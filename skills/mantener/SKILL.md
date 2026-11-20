@@ -1,6 +1,6 @@
 ---
 name: mantener
-description: Mantiene y organiza el segundo cerebro de Obsidian (OKT). Procesa la bandeja por lotes (notas, Telegram, enlaces, transcripciones, importados y avances de los agentes) pasándola a notas claras y enlazadas en su área, proyecto o tema; organiza y reorganiza el conocimiento de lo general a lo específico, numera las carpetas, compila fuentes, propone Insights para el CLAUDE.md de cada proyecto, hace la revisión semanal, revisa el vault (enlaces y anclas rotos, notas sueltas, datos vencidos, contradicciones), renombra, mueve y archiva. Úsala cuando el usuario diga «procesa mi bandeja», «ordena mi cerebro», «organiza mi área de…», «reorganiza mi cerebro», «revisa la jerarquía», «agrupa estas notas», «numera mis carpetas», «mueve esta nota a…», «baja lo de Telegram», «compila esta fuente», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «qué está desactualizado», «busca contradicciones», «renombra esta nota», «archiva este proyecto», «borra los originales viejos» o «qué aprendieron mis agentes».
+description: Mantiene y organiza el segundo cerebro de Obsidian (OKT). Procesa la bandeja, reorganiza de lo general a lo específico, revisa el vault y libera espacio. Úsala cuando diga «procesa mi bandeja», «baja lo de Telegram», «organiza mi área de…», «reorganiza mi cerebro», «numera mis carpetas», «revisión semanal», «revisa mi vault», «hay enlaces rotos», «renombra o mueve esta nota», «archiva este proyecto», «qué aprendieron mis agentes», «limpia mi vault», «libera espacio» o «cuánto pesa mi cerebro».
 ---
 
 # Mantener
@@ -116,7 +116,7 @@ Para «numera mis carpetas», «ordena mis carpetas» o «pon números a…» (c
 - **Pendientes:** los abiertos, primero los «para ti».
 - **Próxima semana:** pregúntale al usuario 1 o 2 prioridades y anótalas en los proyectos.
 
-Si la bandeja no está vacía, ofrece procesarla. Si `okt jerarquia` trae candidatos, ofrece reorganizarlos. Si `okt mejoras` tiene errores o scripts abiertos, menciónalos en una línea (son para mejorar el plugin). Si el bloque de preferencias de `AGENTS.md` pasa de 30 líneas, propón consolidar las repetidas (`okt preferencia reemplazar` y `quitar`, con su sí). Cierra con `okt cerrar`.
+Si la bandeja no está vacía, ofrece procesarla. Si `okt jerarquia` trae candidatos, ofrece reorganizarlos. Corre `okt espacio --breve`: si señala duplicadas, huérfanas o binarios en git, ofrece «Liberar espacio». Si `okt mejoras` tiene errores o scripts abiertos, menciónalos en una línea (son para mejorar el plugin). Si el bloque de preferencias de `AGENTS.md` pasa de 30 líneas, propón consolidar las repetidas (`okt preferencia reemplazar` y `quitar`, con su sí). Cierra con `okt cerrar`.
 
 ## Revisar el vault
 
@@ -139,6 +139,10 @@ Si la bandeja no está vacía, ofrece procesarla. Si `okt jerarquia` trae candid
 | `notas_sueltas`, `rama_plana`, `nota_crecio`, `tema_casi_vacio` | Son de la jerarquía: sigue «Reorganizar el conocimiento» desde el paso 0 |
 
 **Contradicciones de fondo** (lo que el lint no ve): solo si el usuario lo pide, y sobre un tema acotado. Lee las notas con `okt buscar` y señala qué choca y dónde.
+
+## Liberar espacio
+
+Cuando pida «limpia mi vault», «libera espacio» o «cuánto pesa mi cerebro», o lo sugiera la revisión semanal: sigue `<raíz>/skills/mantener/references/almacenamiento.md`. Si no lo encuentras, detente y dilo: no limpies sin el protocolo. En corto: `okt espacio` (informe) → `okt espacio limpiar preparar` → **mira tú cada imagen de `revisar`** y decide (logos y adornos se van; portadas, tablas y gráficos se quedan) → resumen al usuario → con su sí, `okt espacio limpiar aplicar <lote>`. Git solo guarda el texto y las imágenes: `okt espacio git ignorar` y `okt espacio git purgar` se hacen una vez, con su sí, Obsidian cerrado y la nube en pausa.
 
 ## Renombrar, mover y archivar
 

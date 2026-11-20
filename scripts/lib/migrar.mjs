@@ -70,9 +70,11 @@ export function reescribirEnlaces(texto, nombres) {
       i % 2
         ? parte
         : parte.replace(/(!?\[\[)([^\]\n|#]+)((?:[#|][^\]\n]*)?\]\])/g, (m, abre, destino, resto) => {
-            const ultimo = destino.trim().replace(/\.md$/i, '').split('/').pop();
+            const barraEscapada = destino.endsWith('\\') ? '\\' : '';
+            const destinoLimpio = barraEscapada ? destino.slice(0, -1) : destino;
+            const ultimo = destinoLimpio.trim().replace(/\.md$/i, '').split('/').pop();
             const nuevo = nombres.get(ultimo.toLowerCase());
-            return nuevo ? `${abre}${nuevo}${resto}` : m;
+            return nuevo ? `${abre}${nuevo}${barraEscapada}${resto}` : m;
           }),
     )
     .join('');
