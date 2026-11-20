@@ -1,5 +1,5 @@
 // okt espacio: análisis de tamaño del vault, detección de duplicados/huérfanas/pequeñas y limpieza segura a .trash.
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, renameSync, copyFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, renameSync, copyFileSync, rmSync, realpathSync } from 'node:fs';
 import { join, relative, basename, extname, isAbsolute } from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -21,6 +21,8 @@ const UMBRAL_REVISAR = 20 * 1024;
 const UMBRAL_GRANDE = 2 * 1024 * 1024;
 
 const ES_PORTADA = /(^|[\s_-])(cover\d*|portada|cubierta)\.[a-z]+$/i;
+// NFC: un EPUB puede traer nombres en NFD y la nota enlazarlos en NFC.
+const clave = (nombre) => String(nombre).normalize('NFC').toLowerCase();
 const extDe = (ruta) => extname(ruta).toLowerCase().slice(1);
 const esImagen = (ruta) => IMAGENES.has(extDe(ruta));
 const mb = (b) => `${(b / 1048576).toLocaleString('es-PE', { maximumFractionDigits: 1 })} MB`;
@@ -105,7 +107,7 @@ function enlazadaDesdeNotas(vault, nombre, archivosNotas) {
     }
     const enlaces = extraerEnlaces(texto);
     const coincide = enlaces.some((e) => {
-      const dest = basename(e.destino.replace(/\\$/, '')).toLowerCase();
+      const dest = clave(basename(e.destino.replace(/\\$/, '')));
       return vars.has(dest);
     });
     if (coincide || (!f.rel.toLowerCase().endsWith('.md') && [...vars].some((v) => texto.toLowerCase().includes(v)))) {
@@ -117,7 +119,16 @@ function enlazadaDesdeNotas(vault, nombre, archivosNotas) {
 
 function agruparDuplicados(archivosImagenes) {
   const porHash = new Map();
+  const fisicos = new Set();
   for (const f of archivosImagenes) {
+    let real;
+    try {
+      real = realpathSync.native(f.abs).toLowerCase();
+    } catch {
+      continue;
+    }
+    if (fisicos.has(real)) continue;
+    fisicos.add(real);
     let h;
     try {
       h = sha256(f.abs);
@@ -236,7 +247,7 @@ export function preparar(vault, op = {}) {
   const archivos = recorrerVault(vault);
   const conteoNombres = new Map();
   for (const f of archivos) {
-    const n = basename(f.rel).toLowerCase();
+    const n = clave(basename(f.rel));
     conteoNombres.set(n, (conteoNombres.get(n) || 0) + 1);
   }
 
@@ -248,7 +259,7 @@ export function preparar(vault, op = {}) {
   const duplicados = [];
   const enDuplicados = new Set();
   for (const g of gruposCrudos) {
-    const ambiguo = g.quitar.some((q) => (conteoNombres.get(basename(q.rel).toLowerCase()) || 0) > 1);
+    const ambiguo = (conteoNombres.get(clave(basename(g.conservar.rel))) || 0) > 1 || g.quitar.some((q) => (conteoNombres.get(clave(basename(q.rel))) || 0) > 1);
     if (ambiguo) continue;
     duplicados.push({ conservar: g.conservar.rel, quitar: g.quitar.map((q) => q.rel) });
     enDuplicados.add(g.conservar.rel);
@@ -304,8 +315,9 @@ function validarRutaLote(vault, ruta, vistos) {
   if (!existsSync(abs) || !statSync(abs).isFile()) return `no existe: ${ruta}`;
   const ext = extDe(r);
   if (PROHIBIDAS.has(ext) || (!esImagen(r) && !esBinario(r))) return `tipo de archivo no permitido: ${ruta}`;
-  if (vistos.has(r)) return `ruta repetida en el lote: ${ruta}`;
-  vistos.add(r);
+  const k = clave(r);
+  if (vistos.has(k)) return `ruta repetida en el lote: ${ruta}`;
+  vistos.add(k);
   return null;
 }
 
@@ -367,11 +379,11 @@ function validarLote(vault, lote) {
   }
 
   // Lo que se quita se busca por nombre en las notas: un homónimo en otra carpeta perdería sus enlaces.
-  const porQuitarse = [...duplicados.flatMap((g) => (Array.isArray(g?.quitar) ? g.quitar : [])), ...quitar, ...webp].filter((r) => typeof r === 'string');
+  const porQuitarse = [...duplicados.flatMap((g) => [g?.conservar, ...(Array.isArray(g?.quitar) ? g.quitar : [])]), ...quitar, ...webp].filter((r) => typeof r === 'string');
   if (porQuitarse.length) {
     const conteo = new Map();
-    for (const f of recorrerVault(vault)) conteo.set(basename(f.rel).toLowerCase(), (conteo.get(basename(f.rel).toLowerCase()) || 0) + 1);
-    for (const r of porQuitarse) if ((conteo.get(basename(posix(r.trim())).toLowerCase()) || 0) > 1) errores.push(`el nombre de ${r} se repite en otra carpeta del vault: renómbralo antes`);
+    for (const f of recorrerVault(vault)) conteo.set(clave(basename(f.rel)), (conteo.get(clave(basename(f.rel))) || 0) + 1);
+    for (const r of porQuitarse) if ((conteo.get(clave(basename(posix(r.trim())))) || 0) > 1) errores.push(`el nombre de ${r} se repite en otra carpeta del vault: renómbralo antes`);
   }
 
   if (errores.length) {
@@ -392,7 +404,7 @@ function quitarReferenciasEnTexto(texto, nombresQuitar) {
         let cambio = false;
         const nueva = linea.replace(/(!?)\[\[([^\]\n|#]+)(?:#[^\]\n|]*)?(?:(\\?\|)([^\]\n]*))?\]\]/g, (m, excl, dest, sep, alias) => {
           const limpio = dest.replace(/\\$/, '').trim();
-          const base = basename(limpio).toLowerCase();
+          const base = clave(basename(limpio));
           if (!nombresQuitar.has(base)) return m;
           cambio = true;
           if (excl === '!') return '';
@@ -456,6 +468,7 @@ function crearPapelera(vault) {
     }
     manifiesto[nombre] = r;
     liberado += bytes;
+    sobrescribir(absManifiesto, `${JSON.stringify(manifiesto, null, 2)}\n`);
   };
 
   const guardar = () => {
@@ -480,7 +493,8 @@ export function aplicar(vault, archivo) {
   if (!archivo) throw errorUso('Uso: okt espacio limpiar aplicar <lote.json> (no se tocó nada).');
   let loteCrudo;
   try {
-    loteCrudo = JSON.parse(readFileSync(String(archivo), 'utf8'));
+    const ruta = isAbsolute(String(archivo)) || existsSync(String(archivo)) ? String(archivo) : join(vault, String(archivo));
+    loteCrudo = JSON.parse(readFileSync(ruta, 'utf8'));
   } catch (e) {
     throw errorUso(`No pude leer el lote «${archivo}» (no se tocó nada): ${e.message}`);
   }
@@ -497,7 +511,7 @@ export function aplicar(vault, archivo) {
     const cons = basename(posix(g.conservar.trim()));
     for (const q of g.quitar || []) {
       const r = posix(q.trim());
-      mapaDup.set(basename(r).toLowerCase(), cons);
+      mapaDup.set(clave(basename(r)), cons);
       papelera.mover(r);
     }
   }
@@ -505,7 +519,7 @@ export function aplicar(vault, archivo) {
 
   // 2. Quitar: eliminar incrustaciones/enlaces y mover a la papelera.
   if (quitar.length) {
-    const nombresQuitar = new Set(quitar.map((q) => basename(posix(q.trim())).toLowerCase()));
+    const nombresQuitar = new Set(quitar.map((q) => clave(basename(posix(q.trim())))));
     for (const f of archivosNotas) {
       const texto = readFileSync(f.abs, 'utf8');
       const nuevo = quitarReferenciasEnTexto(texto, nombresQuitar);
@@ -529,7 +543,7 @@ export function aplicar(vault, archivo) {
     const res = spawnSync('ffmpeg', ['-nostdin', '-n', '-i', absPng, '-quality', '90', absWebp], { encoding: 'utf8' });
     if (res.status === 0 && existsSync(absWebp)) {
       if (statSync(absWebp).size < sizePng) {
-        mapaWebp.set(basename(r).toLowerCase(), basename(relWebp));
+        mapaWebp.set(clave(basename(r)), basename(relWebp));
         papelera.mover(r);
         convertidos++;
       } else {
@@ -571,8 +585,8 @@ export function unificarDuplicados(vault, rutasImagenes, notasRel = []) {
   const existentes = [];
   for (const rel of rutasImagenes || []) {
     const r = posix(String(rel));
-    if (vistas.has(r)) continue;
-    vistas.add(r);
+    if (vistas.has(clave(r))) continue;
+    vistas.add(clave(r));
     const abs = join(vault, r);
     if (existsSync(abs) && statSync(abs).isFile()) existentes.push({ rel: r, abs });
   }
@@ -583,7 +597,7 @@ export function unificarDuplicados(vault, rutasImagenes, notasRel = []) {
   for (const g of grupos) {
     const cons = basename(g.conservar.rel);
     for (const q of g.quitar) {
-      nombres.set(basename(q.rel).toLowerCase(), cons);
+      nombres.set(clave(basename(q.rel)), cons);
       aBorrar.push(q);
     }
   }

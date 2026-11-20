@@ -90,13 +90,15 @@ export function ignorar(vault, op = {}) {
     return { texto, datos: { rastreados: rastreados.length, bytes: total, bloque: nuevo !== actual } };
   }
   if (!falta) return { texto: 'Git ya ignora los binarios y no rastrea ninguno.', datos: { rastreados: 0 } };
-  commit(vault, 'okt: antes de dejar de rastrear los binarios');
+  // El .gitignore va antes del commit previo: si no, su «git add -A» metería en git los binarios nuevos sin rastrear.
   sobrescribir(rutaIgnore, nuevo);
+  commit(vault, 'okt: antes de dejar de rastrear los binarios');
   if (rastreados.length) {
     // Por archivo y no por la línea de comandos: en Windows, miles de rutas pasan el límite de 32 mil caracteres.
     const archivo = join(vault, '.git', 'okt-ignorar.txt');
     writeFileSync(archivo, `${rastreados.map((x) => x.ruta).join('\0')}\0`);
-    const r = git(vault, ['rm', '-r', '--cached', '-q', '--ignore-unmatch', `--pathspec-from-file=${archivo}`, '--pathspec-file-nul']);
+    // --literal-pathspecs: «Clase [1].m4a» no es un glob.
+    const r = git(vault, ['--literal-pathspecs', 'rm', '-r', '--cached', '-q', '--ignore-unmatch', `--pathspec-from-file=${archivo}`, '--pathspec-file-nul']);
     rmSync(archivo, { force: true });
     if (!r.ok) throw errorUso(`git rm --cached falló: ${r.error}`, 1);
   }
@@ -150,6 +152,10 @@ export function purgar(vault, op = {}) {
   const rutas = binariosEnHistorial(vault);
   const antes = tamanoGit(vault);
   if (!rutas.length) return { texto: `El historial no guarda binarios. .git: ${mb(antes || 0)}.`, datos: { rutas: 0, antes } };
+  // filter-repo lee «regex:», «glob:» y «literal:» al inicio de una línea como patrón, y un salto de línea parte la
+  // ruta en dos: «regex:.*.md|x.pdf» (válido en Linux) purgaría todas las notas. Esos nombres se rechazan.
+  const raras = rutas.filter((r) => /[\r\n]/.test(r) || /^(regex|glob|literal):/i.test(r));
+  if (raras.length) throw errorUso(`Hay binarios con nombres que filter-repo leería como patrón; renómbralos antes de purgar:\n${raras.map((r) => `- ${JSON.stringify(r)}`).join('\n')}`);
   if (!op.aplicar) {
     return {
       texto: `El historial guarda ${rutas.length} binarios; .git pesa ${mb(antes || 0)}. La purga reescribe todos los commits sin ellos (las notas y su historia se conservan) y deja antes un respaldo completo en ~/okt-respaldos.\nAntes: cierra Obsidian y pausa Google Drive.\n${rutas.slice(0, 10).map((r) => `- ${r}`).join('\n')}${rutas.length > 10 ? `\n- … y ${rutas.length - 10} más` : ''}\n\n📍 okt espacio git purgar --aplicar`,
@@ -163,8 +169,12 @@ export function purgar(vault, op = {}) {
   // Un respaldo dentro del vault entraría al siguiente commit (git add -A) y duplicaría el .git.
   const rel = relative(resolve(vault), dir);
   if (!rel || (!rel.startsWith('..') && !isAbsolute(rel))) throw errorUso(`El respaldo no puede ir dentro del vault (${dir}).`);
+  const ignore = join(vault, '.gitignore');
+  if (!existsSync(ignore) || !readFileSync(ignore, 'utf8').includes(MARCA)) throw errorUso('El .gitignore no tiene el bloque okt:binarios: primero okt espacio git ignorar --aplicar');
   const previo = commit(vault, 'okt: antes de purgar el historial');
   if (previo.error) throw errorUso(`Git: ${previo.error}`, 1);
+  // filter-repo borra del disco lo que quita de HEAD: si el commit previo metió un binario, se detiene aquí.
+  if (binariosRastreados(vault).length) throw errorUso('Git volvió a rastrear binarios: corre okt espacio git ignorar --aplicar antes de purgar. No se reescribió nada.');
   mkdirSync(dir, { recursive: true });
   const bundle = join(dir, `${basename(vault).replace(/[^\p{L}\p{N}_-]+/gu, '-')}-${fechaISO(d)}-${dos(d.getHours())}${dos(d.getMinutes())}.bundle`);
   const b = git(vault, ['bundle', 'create', bundle, '--all']);

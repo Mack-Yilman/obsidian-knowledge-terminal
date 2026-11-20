@@ -267,6 +267,8 @@ Comandos de numeración, jerarquía, libros y mejora continua:
   scripts registrados en `05 │ ⚙️ Sistema/🛠️ Mejoras OKT`.
 - `okt preferencia agregar "<texto>" [--sobre flujo|formato|fuentes|herramientas|otro]`: guarda una preferencia de trabajo
   en `AGENTS.md`. `okt preferencia listar | quitar <n> | reemplazar <n> "<texto>"` para revisarlas o editarlas.
+- `okt espacio [--breve] | espacio limpiar | espacio git ignorar | git purgar`: informa el peso del vault y su `.git`,
+  unifica duplicados, limpia imágenes tras revisión y evita versionar binarios pesados en git.
 - `okt doctor [--completo]`: revisa el estado del vault, dependencias y alerta si el plugin instalado fue editado a mano
   comparando sus huellas.
 
@@ -323,6 +325,28 @@ vault permanece siempre en la PC y baja el contenido a pedido o al empezar a tra
 El vault es una carpeta local con un **git local, sin remoto**: cada operación de la IA queda en un commit y se
 puede deshacer. Para el respaldo, agrega la carpeta en **Google Drive para escritorio** (Preferencias → Mi PC →
 Agregar carpeta → «Hacer copia de seguridad»), o usa otro servicio. El vault no se sube a GitHub.
+
+## Espacio y almacenamiento
+
+El vault crece sobre todo por binarios (audio, video, PDF, libros, modelos). Para mantenerlo liviano, git solo versiona
+lo que cambia:
+
+| Tipo | En git | Dónde queda el respaldo |
+|---|---|---|
+| Notas `.md`, `.canvas`, `.base`, configuración | Sí | git local y nube |
+| Imágenes (`.png`, `.jpg`, `.webp`, `.svg`…) | Sí | git local y nube |
+| Audio, video, PDF, EPUB, MOBI, modelos `.onnx`, comprimidos | **No** (`# okt:binarios`) | Disco y nube del usuario |
+
+Puedes pedir a la IA «cuánto pesa mi cerebro», «limpia mi vault» o «libera espacio». La IA revisa las imágenes pequeñas
+(descarta adornos y conserva portadas y gráficos) y espera tu aprobación antes de mover nada a la papelera.
+
+```bash
+okt espacio                                  # informe de peso, duplicados y binarios rastreados
+okt espacio limpiar preparar                 # genera el lote de imágenes para revisión de la IA
+okt espacio limpiar aplicar <lote.json>      # unifica duplicados y mueve lo aprobado a .trash/
+okt espacio git ignorar --aplicar            # deja de versionar binarios pesados en git (siguen en disco)
+okt espacio git purgar --aplicar             # quita binarios del historial previo (con respaldo ~/okt-respaldos/)
+```
 
 ## Automatización (sin gastar tokens)
 
@@ -422,6 +446,7 @@ OKT aprende cómo trabajas y registra incidencias mientras lo usas:
 | Rutas largas en Windows (`ruta_larga`) | Acorta nombres de carpetas o notas intermedias, o activa `LongPathsEnabled` en el registro de Windows; Git usa `core.longpaths` |
 | Un agente editó el plugin instalado (`okt doctor`) | Esos cambios se pierden al actualizar: regístralos con `okt reportar script <archivo> --para "<qué arreglaba>"` (quedan en `.cerebro/improvisados/` para llevarlos al plugin) y actualiza el plugin |
 | EPERM al escribir en Windows | Ya está resuelto desde la 0.1.1 (archivos ocultos de Obsidian); si vuelve a pasar, abre un issue |
+| Mi vault pesa mucho / el `.git` es enorme | `okt espacio` (o pide «limpia mi vault» / «cuánto pesa mi cerebro»); diagnostica el espacio, unifica duplicados y purga binarios de git |
 
 ## Proyectos relacionados
 

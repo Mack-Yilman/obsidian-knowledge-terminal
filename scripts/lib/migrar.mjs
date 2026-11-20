@@ -73,7 +73,7 @@ export function reescribirEnlaces(texto, nombres) {
             const barraEscapada = destino.endsWith('\\') ? '\\' : '';
             const destinoLimpio = barraEscapada ? destino.slice(0, -1) : destino;
             const ultimo = destinoLimpio.trim().replace(/\.md$/i, '').split('/').pop();
-            const nuevo = nombres.get(ultimo.toLowerCase());
+            const nuevo = nombres.get(ultimo.toLowerCase()) || nombres.get(ultimo.normalize('NFC').toLowerCase());
             return nuevo ? `${abre}${nuevo}${barraEscapada}${resto}` : m;
           }),
     )

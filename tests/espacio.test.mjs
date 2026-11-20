@@ -170,6 +170,19 @@ test('espacio limpiar preparar: una portada sin enlazar no es huérfana; se prop
   v.borrar();
 });
 
+test('revisión final: la misma imagen escrita con otra capitalización no es su duplicado, y el lote se lee relativo al vault', () => {
+  const v = conImagenes();
+  const figura = `${LIBRO}/Fisiología - tabla.png`;
+  const r = unificarDuplicados(v.vault, [figura, figura.toUpperCase().replace('05 │ ⚙️ SISTEMA', '05 │ ⚙️ Sistema')], []);
+  assert.equal(r.quitados, 0);
+  assert.ok(existsSync(join(v.vault, figura)), 'el único archivo físico sigue en disco');
+
+  v.okt(['espacio', 'limpiar', 'preparar']);
+  const a = v.okt(['espacio', 'limpiar', 'aplicar', '.cerebro/cache/espacio/lote.json'], { cwd: v.dir });
+  assert.equal(a.codigo, 0, a.error);
+  v.borrar();
+});
+
 function conGit() {
   const v = vaultNuevo();
   git(v.vault, 'init', '-q', '-b', 'main');
@@ -194,8 +207,11 @@ test('espacio git ignorar: vista previa sin cambios; con --aplicar agrega el blo
   assert.match(r.salida, /🎧 clase\.m4a/);
   assert.doesNotMatch(readFileSync(join(v.vault, '.gitignore'), 'utf8'), /okt:binarios/, 'la vista previa no escribe');
 
+  // Un binario nuevo sin rastrear, con corchetes en el nombre: no debe entrar a git por el commit previo.
+  writeFileSync(escribir(v.vault, `${TEMA}/Clase [1].mp3`, ''), bytes(3000, 6));
   r = v.okt(['espacio', 'git', 'ignorar', '--aplicar'], { env: CON_GIT });
   assert.equal(r.codigo, 0, r.error);
+  assert.equal(git(v.vault, 'log', '--all', '--name-only', '--pretty=format:', '--', `${TEMA}/Clase [1].mp3`).stdout.trim(), '', 'nunca entró al historial');
   r = v.okt(['espacio', 'git', 'ignorar', '--aplicar'], { env: CON_GIT });
   assert.equal(r.codigo, 0, r.error);
   const ignore = readFileSync(join(v.vault, '.gitignore'), 'utf8');
@@ -239,7 +255,10 @@ test('espacio git purgar: exige ignorar antes y Obsidian cerrado; respalda, quit
   r = v.okt(['espacio', 'git', 'purgar', '--aplicar'], { env });
   assert.equal(r.codigo, 0, r.error);
   assert.doesNotMatch(git(v.vault, 'log', '--all', '--name-only', '--pretty=format:').stdout, /\.m4a|\.onnx/);
-  assert.equal(git(v.vault, 'rev-list', '--count', 'HEAD').stdout.trim(), commits, 'conserva los commits');
+  // filter-repo quita los commits que solo tocaban binarios (quedan vacíos); los de las notas se conservan.
+  assert.ok(Number(git(v.vault, 'rev-list', '--count', 'HEAD').stdout.trim()) >= Number(commits) - 1);
+  const asuntos = git(v.vault, 'log', '--pretty=%s').stdout;
+  for (const s of ['inicial con binarios', 'segunda', 'registros']) assert.match(asuntos, new RegExp(s), `conserva el commit «${s}»`);
   assert.match(git(v.vault, 'log', '-p', '--', `${TEMA}/🫀 Infarto.md`).stdout, /Troponina/, 'conserva la historia de las notas');
   assert.ok(existsSync(join(v.vault, `${TEMA}/🎧 clase.m4a`)), 'el audio sigue en disco');
   assert.ok(existsSync(join(v.vault, '.obsidian/plugins/voz/piper/models/es.onnx')));
