@@ -7,7 +7,7 @@ import { leerBloque, reemplazarBloque } from './bloques.mjs';
 import { listarNotas, leerNota, esSistema, esArchivado } from './vault.mjs';
 import { fechaISO, horaCorta } from './fechas.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
-import { commit } from './git.mjs';
+import { commit, compactar } from './git.mjs';
 import { sobrescribir } from './rutas.mjs';
 import { C, R, ubicar } from './estructura.mjs';
 import { sinEmoji } from './nombres.mjs';
@@ -292,6 +292,7 @@ export function cerrar(vault, skill, texto, op = {}) {
   indice(vault);
   hot(vault, op);
   const c = commit(vault, `okt ${skill}: ${texto}`.slice(0, 200));
+  if (c.hecho) compactar(vault);
   const git = c.hecho ? ' Commit hecho.' : c.error ? ` Git: ${c.error}` : '';
   return { texto: `${b.texto}\nÍndice y hot actualizados.${git}`, datos: { linea: b.datos.linea, commit: c } };
 }
