@@ -69,6 +69,7 @@ test('ninguna skill, el contrato ni las plantillas del vault conservan la estruc
     ...SKILLS.map((s) => join('skills', s, 'SKILL.md')),
     ...SKILLS.flatMap((s) => (existsSync(join(RAIZ, 'skills', s, 'references')) ? readdirSync(join(RAIZ, 'skills', s, 'references')).map((f) => join('skills', s, 'references', f)) : [])),
     join('references', 'contrato-vault.md'),
+    join('references', 'contrato-estudio.md'),
     join('plantillas', 'vault', 'AGENTS.md.tmpl'),
   ];
   const prohibidos = [/📚 Fuentes\/📎/, /Bandeja\/(📝 notas|📦 importados|📲 telegram|💻 sesiones)/, /💡 conceptos|🏷️ entidades|🧩 sintesis/, /nota nueva (concepto|entidad|sintesis)/, /pacientes?/i, /\bDNI\b/, /--forzar/, /datos_sensibles/, /\b(10|20|50|90|99) │/];
