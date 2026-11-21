@@ -74,7 +74,9 @@ else if (a === 'notebook' && b === 'create') {
   console.log(JSON.stringify({ content, title: f.ref, source_type: audio ? 'audio' : f.tipo, url: null, char_count: content.length }));
 } else if (a === 'source' && b === 'list') {
   cuaderno(c1);
-  console.log(JSON.stringify([{ id: 's1', title: 'Guía de prueba', type: 'web', url: 'https://example.org/guia', status: 2 }]));
+  // Como el real: una fuente subida con --file se titula con el nombre del archivo.
+  const subidas = estudio.fuentes.filter((f) => f.cuaderno === c1).map((f) => ({ id: f.id, title: f.ref.split(/[\\/]/).pop(), type: f.tipo, url: null, status: 2 }));
+  console.log(JSON.stringify([{ id: 's1', title: 'Guía de prueba', type: 'web', url: 'https://example.org/guia', status: 2 }, ...subidas]));
 } else if (b === 'create') {
   cuaderno(c1);
   if (!args.includes('--confirm')) fallar('Aborted: confirmation required');

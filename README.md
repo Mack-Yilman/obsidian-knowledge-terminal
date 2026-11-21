@@ -23,6 +23,8 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 | «Procesa mi bandeja» | Te muestra una tabla de qué va dónde, marca dudas y propone carpetas, áreas o proyectos nuevos (🆕). Con un solo sí, pasa a limpio cada cosa con su perfil, la ubica y la enlaza; los originales quedan en `📥 Bruto` |
 | «Pasa a limpio esta nota» | Lo mismo con una sola nota, según lo que sea (abajo) |
 | «Haz apuntes de esta clase» / «ordena este video» | **Clase o video:** índice y temas numerados en una misma página, sin resumir |
+| «Sube la grabación de mi clase» / «transcribe mi clase» | Sube audio y diapositivas a NotebookLM (`okt clase preparar`), descarga la transcripción en `🎓 <tema>` y la deja lista para pasar a limpio con la skill redactar (perfil clase: lámina incrustada `![[diapos.pdf#page=N]]`, preguntas plegadas y procedencia 🟢🟡⚠️) |
+| «Crea un quiz / flashcards de esta clase» | Genera el recurso en NotebookLM Studio (`okt clase recurso`) y lo añade a `## 🧪 Recursos de estudio` de la nota como callout interactivo plegable |
 | «Ordena esta reunión» | **Reunión:** acuerdos, tareas y puntos abiertos arriba y el desarrollo por temas; nunca inventa quién habló |
 | «Dale forma a mis ideas» | **Nota propia:** reescribe claro lo que escribiste sin orden, le da estructura y agrega `🔗 Conexiones` con tus demás notas |
 | «Organiza mi área de Medicina» | Agrupa sus notas de lo general a lo específico: Medicina → Cardiología → Síndrome coronario agudo → Infarto. Lo general va en la nota principal de cada carpeta, y una carpeta nueva se crea desde 2 notas del mismo tema (o 1, si es algo con identidad propia, como un producto) |
@@ -252,6 +254,21 @@ Comandos principales de importación y reorganización:
 - `okt importar enlaces [--reintentar]`: completa en su lugar las capturas de la Bandeja que solo traen un enlace (las que llegan de Telegram). Si una falla, queda con la propiedad `importar_error` y no se reintenta sola; `--reintentar` la vuelve a intentar.
 - `okt reorganizar preparar [--carpeta "<área o proyecto>"]`: genera un mapa compacto (el árbol y, por nota, su tipo, su resumen y sus enlaces de entrada y salida, sin el texto) para que la IA proponga la jerarquía nueva gastando pocos tokens.
 - `okt reorganizar aplicar <plan.json>`: valida el plan entero antes de tocar nada (si algo no cuadra, no cambia nada), aplica en orden las operaciones `tema`, `mover`, `renombrar` y `archivar`, hace un solo commit y responde con el comando `git revert` para deshacerlo.
+
+Comandos de clases grabadas y NotebookLM:
+- `okt clase preparar "<curso>" --audio <archivo> [--diapos <pdf>] [--video <url>] [--tema "<nombre>"]`: usa el cuaderno
+  de NotebookLM vinculado a la carpeta del curso (o crea uno con su nombre y lo vincula), sube audio, diapositivas y
+  video como fuentes, baja la transcripción a la nota `🎓 <tema>` en la carpeta del curso (con las propiedades `curso`,
+  `notebooklm` y `diapositivas`), guarda el original en `📥 Bruto` y la deja lista para pasarla a limpio con la skill
+  `redactar` (perfil clase). El audio no se copia al vault; el PDF va a los adjuntos (git no lo versiona). Límites de
+  NotebookLM: 200 MB y 500 000 palabras por fuente. La skill `capturar` manda las grabaciones de clase a este comando.
+- `okt clase recurso "<nota>" <tipo>`: crea en NotebookLM Studio un recurso (`quiz`, `flashcards`, `infografia`, `audio`,
+  `presentacion`…) con el cuaderno de la clase y lo agrega a la sección `## 🧪 Recursos de estudio` de la nota. Studio
+  suma `quiz` (`--cantidad`, `--dificultad 1-5`) y `flashcards` (`--dificultad easy|medium|hard`): se bajan en JSON y
+  quedan como callouts plegables de Obsidian (la respuesta se ve al abrirlos), porque el markdown de `nlm` 0.15.7 sale
+  roto. Si la generación tarda, indica cómo retomarla con `--id`.
+- `okt notebooklm cuaderno crear "<título>" [--vincular <carpeta>]` y `okt notebooklm fuente agregar <archivo|url>`:
+  crea cuadernos vinculados a carpetas del vault y sube fuentes directamente.
 
 Comandos de numeración, jerarquía, libros y mejora continua:
 - `okt numerar [--carpeta X] [--orden <orden.json>] [--aplicar]`: pone «NN │ » a carpetas y notas principales (o numera

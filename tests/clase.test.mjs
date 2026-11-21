@@ -152,6 +152,35 @@ test('clase preparar: con el cuaderno ya vinculado lo reutiliza; un video de You
   v.borrar();
 });
 
+test('clase preparar repetida: reutiliza la fuente ya subida y no pisa la nota de esa clase', () => {
+  const v = preparar();
+  v.run(['nota', 'nueva', 'proyecto', 'Fisiología']);
+  let r = v.run(['clase', 'preparar', 'Fisiología', '--audio', v.audio, '--diapos', v.diapos, '--tema', 'Ciclo cardiaco']);
+  assert.equal(r.codigo, 0, r.error);
+  const rel = `${CURSO}/🎓 Ciclo cardiaco.md`;
+  escribir(v.vault, rel, leer(v, rel).replace(/vamos a repasar[\s\S]*?<!-- okt:fin -->/, 'APUNTES LIMPIOS'));
+  r = v.run(['clase', 'preparar', 'Fisiología', '--audio', v.audio, '--diapos', v.diapos, '--tema', 'Ciclo cardiaco']);
+  assert.equal(r.codigo, 2);
+  assert.match(r.error, /ya está en .*🎓 Ciclo cardiaco/);
+  assert.match(leer(v, rel), /APUNTES LIMPIOS/);
+  // Ni el audio ni las diapositivas se suben otra vez: NotebookLM ya los tenía con ese nombre.
+  assert.equal(nlm(v, 'source', 'add').length, 2);
+  v.borrar();
+});
+
+test('clase preparar: una transcripción vacía falla sin crear la nota', () => {
+  const v = preparar();
+  const d = JSON.parse(readFileSync(join(v.dir, 'fake.json'), 'utf8'));
+  d.notebooklm.transcripcion = '   ';
+  escribir(v.dir, 'fake.json', JSON.stringify(d));
+  v.run(['nota', 'nueva', 'proyecto', 'Fisiología']);
+  const r = v.run(['clase', 'preparar', 'Fisiología', '--audio', v.audio, '--tema', 'Vacía']);
+  assert.notEqual(r.codigo, 0);
+  assert.match(r.error, /transcripción/);
+  assert.ok(!existsSync(join(v.vault, `${CURSO}/🎓 Vacía.md`)));
+  v.borrar();
+});
+
 test('notebooklm vincular por id guarda el título del cuaderno, no el id', () => {
   const v = preparar();
   v.run(['nota', 'nueva', 'proyecto', 'Fisiología']);
@@ -192,6 +221,19 @@ test('clase recurso: incrusta flashcards e infografía en «🧪 Recursos de est
   assert.ok(!readdirSync(join(v.vault, '00 │ 📥 Bandeja')).some((n) => n.startsWith('🤖')));
   // Usa el cuaderno de la propiedad notebooklm de la nota.
   assert.ok(nlm(v, 'flashcards', 'create')[0].args.includes('00000000-0000-0000-0000-000000000001'));
+  v.borrar();
+});
+
+test('clase recurso: si la sección no es la última, el recurso entra en ella; un informe baja sus encabezados', () => {
+  const v = preparar();
+  v.run(['nota', 'nueva', 'proyecto', 'Fisiología']);
+  v.run(['clase', 'preparar', 'Fisiología', '--audio', v.audio, '--tema', 'Ciclo cardiaco']);
+  const rel = `${CURSO}/🎓 Ciclo cardiaco.md`;
+  escribir(v.vault, rel, `${leer(v, rel)}\n## 🧪 Recursos de estudio\n\n## Relacionado\n\n- [[Otra]]\n`);
+  const r = v.run(['clase', 'recurso', 'Ciclo cardiaco', 'informe']);
+  assert.equal(r.codigo, 0, r.error);
+  const nota = leer(v, rel);
+  assert.match(nota, /## 🧪 Recursos de estudio\n\n### Informe \(2026-10-22\)\n\n#### Informe\n\nTexto del informe\.[\s\S]*\n## Relacionado\n\n- \[\[Otra\]\]/);
   v.borrar();
 });
 

@@ -11,7 +11,7 @@ import { registrarFalloCli } from './lib/mejoras.mjs';
 // nuevas junto a las viejas. telegram se revisa aparte (config no toca el vault).
 const ESCRIBEN = new Set(['init', 'espacio', 'numerar', 'reportar', 'mejoras', 'preferencia', 'libro', 'jerarquia', 'nota', 'bitacora', 'pendiente', 'indice', 'hot', 'cerrar', 'agentes', 'bandeja', 'adjuntar', 'archivar', 'importar', 'notebooklm', 'clase', 'commit', 'renombrar', 'tema', 'mover', 'procesar', 'bruto', 'redactar', 'reorganizar']);
 
-const BOOLEANOS = new Set(['aplicar', 'breve', 'drive-pausado', 'todas', 'todos', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'reintentar', 'nuevo', 'completo']);
+const BOOLEANOS = new Set(['aplicar', 'drive', 'breve', 'drive-pausado', 'todas', 'todos', 'json', 'todo', 'ayuda', 'help', 'forzar', 'cerrados', 'seco', 'silencioso', 'reintentar', 'nuevo', 'completo']);
 
 export function parsear(argv) {
   const pos = [];

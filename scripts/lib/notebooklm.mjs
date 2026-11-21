@@ -108,7 +108,7 @@ export function fuenteAgregar(vault, ref, op = {}) {
   let valor;
   if (op.drive) {
     flag = '--drive';
-    valor = typeof op.drive === 'string' ? op.drive : ref;
+    valor = ref;
   } else if (/^https?:\/\//i.test(ref)) {
     flag = /(?:youtube\.com|youtu\.be)/i.test(ref) ? '--youtube' : '--url';
     valor = ref;
@@ -119,6 +119,12 @@ export function fuenteAgregar(vault, ref, op = {}) {
     valor = abs;
   }
   const c = op._cuaderno || resolverCuaderno(vault, op);
+  // Un reintento no vuelve a subir el mismo archivo: NotebookLM titula la fuente con el nombre del archivo.
+  if (flag === '--file' && !op.titulo) {
+    const lista = jsonDe(nlm(['source', 'list', c.id, '--json'])) || [];
+    const previa = (Array.isArray(lista) ? lista : lista.sources || []).find((s) => s.title === basename(valor));
+    if (previa) return { texto: `Ya estaba en «${c.titulo}»: ${previa.title} (${previa.id})`, datos: { source_id: previa.id, title: previa.title, cuaderno: c, reutilizada: true } };
+  }
   const esperar = Number(op.esperar ?? 1800);
   const args = ['source', 'add', c.id, flag, valor, '--wait', '--wait-timeout', String(esperar), '--json'];
   if (op.titulo) args.push('--title', String(op.titulo));
@@ -131,7 +137,9 @@ export function fuenteAgregar(vault, ref, op = {}) {
 
 export function fuenteContenido(sourceId) {
   const j = jsonDe(nlm(['source', 'content', sourceId, '--json'])) || {};
-  return String(j.content ?? '');
+  const texto = String(j.content ?? '').trim();
+  if (!texto) throw new Error(`NotebookLM no devolvió la transcripción de la fuente ${sourceId} (¿audio sin voz o aún en proceso?).`);
+  return texto;
 }
 
 // Una subcarpeta por cuaderno dentro de los adjuntos de NotebookLM.
@@ -250,13 +258,14 @@ export function quizAMarkdown(j) {
     .map((q, i) => {
       const opts = q.answerOptions || [];
       const letras = opts.map((_, idx) => String.fromCharCode(97 + idx));
-      const bloqueOpts = [`**${i + 1}. ${q.question}**`, ...opts.map((o, idx) => `- ${letras[idx]}) ${o.text}`)].join('\n');
+      // Un salto de línea dentro de la pregunta o de una opción rompería la negrita y la lista.
+      const linea = (t) => String(t ?? '').replace(/\s*\r?\n\s*/g, ' ').trim();
+      const bloqueOpts = [`**${i + 1}. ${linea(q.question)}**`, ...opts.map((o, idx) => `- ${letras[idx]}) ${linea(o.text)}`)].join('\n');
       const partes = [bloqueOpts];
       if (q.hint) partes.push(`> [!tip]- Pista\n> ${String(q.hint).replace(/\r?\n/g, '\n> ')}`);
-      const corrIdx = opts.findIndex((o) => o.isCorrect);
-      if (corrIdx >= 0) {
-        const corr = opts[corrIdx];
-        const resp = `${letras[corrIdx]}) ${corr.text}${corr.rationale ? ` — ${corr.rationale}` : ''}`;
+      const correctas = opts.map((o, idx) => ({ o, idx })).filter(({ o }) => o.isCorrect);
+      if (correctas.length) {
+        const resp = correctas.map(({ o, idx }) => `${letras[idx]}) ${linea(o.text)}${o.rationale ? ` — ${o.rationale}` : ''}`).join('\n');
         partes.push(`> [!success]- Respuesta\n> ${resp.replace(/\r?\n/g, '\n> ')}`);
       }
       return partes.join('\n\n');

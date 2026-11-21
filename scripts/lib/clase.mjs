@@ -3,7 +3,8 @@
 //   okt clase recurso "<nota>" <tipo> [--id <id>]
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';
-import { errorUso, escribirImportada } from './importacion.mjs';
+import { errorUso, escribirImportada, leerRegistro } from './importacion.mjs';
+import { leerConfigVault } from './rutas.mjs';
 import { resolverCarpeta } from './estructura.mjs';
 import { sinEmoji } from './nombres.mjs';
 import { fechaISO } from './fechas.mjs';
@@ -35,15 +36,19 @@ export async function preparar(vault, cursoRef, op = {}) {
   try {
     c = resolverCuaderno(vault, { carpeta: curso });
   } catch {
-    c = cuadernoCrear(vault, sinEmoji(basename(curso)), { vincular: curso }).datos;
+    c = cuadernoCrear(vault, sinEmoji(basename(curso)) || basename(curso), { vincular: curso }).datos;
   }
 
+  const sube = { _cuaderno: c, ...(op.esperar ? { esperar: op.esperar } : {}) };
   let fuenteAudio = null;
   let fuenteVideo = null;
-  if (op.audio) fuenteAudio = fuenteAgregar(vault, op.audio, { _cuaderno: c }).datos;
-  if (op.diapos) fuenteAgregar(vault, op.diapos, { _cuaderno: c });
-  if (op.video) fuenteVideo = fuenteAgregar(vault, op.video, { _cuaderno: c }).datos;
+  if (op.audio) fuenteAudio = fuenteAgregar(vault, op.audio, sube).datos;
+  if (op.diapos) fuenteAgregar(vault, op.diapos, sube);
+  if (op.video) fuenteVideo = fuenteAgregar(vault, op.video, sube).datos;
   const fuentePrincipal = fuenteAudio || fuenteVideo;
+  // La misma grabación ya tiene su nota (quizá ya pasada a limpio): reimportar la pisaría con la transcripción cruda.
+  const previa = leerRegistro(vault)[`notebooklm:clase:${fuentePrincipal.source_id}`];
+  if (previa && existsSync(join(vault, previa.ruta))) throw errorUso(`Esta clase ya está en ${previa.ruta}. Si quieres otra nota, borra o renombra esa primero.`);
   const transcripcion = fuenteContenido(fuentePrincipal.source_id);
 
   const pdf = op.diapos ? adjuntar(vault, op.diapos, { origen: 'pdf' }).datos : null;
@@ -82,7 +87,9 @@ export async function recurso(vault, notaRef, tipo, op = {}) {
   const { datos: fm, cuerpo } = leerFrontmatter(readFileSync(abs, 'utf8'));
   if (!fm.notebooklm) throw errorUso(`La nota «${basename(rel, '.md')}» no tiene propiedad notebooklm.`);
 
-  const c = { id: fm.notebooklm, titulo: sinEmoji(basename(rel, '.md')) };
+  // El título del cuaderno (si está vinculado) da la carpeta de adjuntos: no cambia si la nota se mueve o se renombra.
+  const vinculado = Object.values(leerConfigVault(vault).cuadernos || {}).find((x) => x.id === fm.notebooklm);
+  const c = { id: fm.notebooklm, titulo: vinculado?.titulo || sinEmoji(basename(rel, '.md')) };
   const r = op.id
     ? nlmDescargar(vault, tipo, { ...op, _cuaderno: c, _sinNota: true })
     : await nlmCrear(vault, tipo, { ...op, _cuaderno: c, _sinNota: true });
@@ -96,12 +103,18 @@ export async function recurso(vault, notaRef, tipo, op = {}) {
   }
 
   const tituloTipo = `${tipo[0].toUpperCase()}${tipo.slice(1)}`;
-  const bloque = `### ${tituloTipo} (${fechaISO()})\n\n${r.datos.convertido}`;
-  const tieneSeccion = /^## 🧪 Recursos de estudio\s*$/m.test(cuerpo);
+  // Un informe trae sus propios # y ##: bajan a #### para no salir de la sección.
+  const convertido = tipo === 'informe' ? r.datos.convertido.replace(/^#{1,3} /gm, '#### ') : r.datos.convertido;
+  const bloque = `### ${tituloTipo} (${fechaISO()})\n\n${convertido}`;
   const cuerpoBase = cuerpo.replace(/\s+$/, '');
-  const cuerpoNuevo = tieneSeccion
-    ? `${cuerpoBase}\n\n${bloque}\n`
-    : `${cuerpoBase}\n\n## 🧪 Recursos de estudio\n\n${bloque}\n`;
+  const m = /^## 🧪 Recursos de estudio[ \t]*$/m.exec(cuerpoBase);
+  // Si la sección existe y no es la última, el recurso va antes del ## que la sigue.
+  const siguiente = m ? cuerpoBase.slice(m.index + m[0].length).search(/^## /m) : -1;
+  const cuerpoNuevo = !m
+    ? `${cuerpoBase}\n\n## 🧪 Recursos de estudio\n\n${bloque}\n`
+    : siguiente < 0
+      ? `${cuerpoBase}\n\n${bloque}\n`
+      : `${cuerpoBase.slice(0, m.index + m[0].length + siguiente).replace(/\s+$/, '')}\n\n${bloque}\n\n${cuerpoBase.slice(m.index + m[0].length + siguiente)}\n`;
   sobrescribir(abs, escribirFrontmatter(fm, cuerpoNuevo));
   return {
     texto: `Recurso agregado a ${rel}: ${tituloTipo}.`,
