@@ -413,7 +413,17 @@ function programarIntercalado(dia, ctx, restante) {
   if (vistos.length < 3) return 0;
   if (huboIntercaladoReciente(dia.fecha, ctx.historial, ctx.generados, dia.bloques)) return 0;
 
-  const top3 = ordenarPorPrioridad(vistos, ctx.errores14).slice(0, 3);
+  // Rota: primero los que menos salieron en intercalados (historial y ventana); a igual uso, por prioridad.
+  const usos = new Map();
+  for (const d of [...ctx.historial, ...ctx.generados]) {
+    for (const b of d.bloques) if (b.herramienta === 'banqueo' && Array.isArray(b.temas)) for (const id of b.temas) usos.set(id, (usos.get(id) ?? 0) + 1);
+  }
+  const porPrioridad = ordenarPorPrioridad(vistos, ctx.errores14);
+  const top3 = porPrioridad
+    .map((t, i) => ({ t, i, u: usos.get(t.id) ?? 0 }))
+    .sort((a, b) => a.u - b.u || a.i - b.i)
+    .slice(0, 3)
+    .map((x) => x.t);
   dia.bloques.push({
     accion: `Banqueo intercalado: 20 preguntas mezcladas de ${top3[0].titulo}, ${top3[1].titulo} y ${top3[2].titulo}`,
     herramienta: 'banqueo',

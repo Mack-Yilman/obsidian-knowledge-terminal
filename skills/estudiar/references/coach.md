@@ -42,9 +42,10 @@ Para cada tema, la pregunta del recuerdo libre, la `canonica` y la rúbrica se e
 Se hace con los temas de `okt estudio repasos` (los que aún se salvan van primero) o con el que pida el usuario. Es
 mejor intercalar temas distintos que repetir uno.
 
-### 3.1 Preparar el tema (solo la primera vez)
+### 3.1 Preparar el tema (solo la primera vez, antes de preguntar)
 
-Si `okt estudio calificar preparar` responde que el tema no tiene pregunta, canónica o rúbrica:
+Antes de dar la pregunta, mira el tema en `okt estudio tema listar --json`. Si le falta `pregunta`, `canonica` o
+`rubrica`:
 
 1. Lee su nota del vault (`okt buscar "<tema>"`) y escribe:
    - **pregunta:** una consigna abierta que se responda en 2–4 minutos («Explica la fisiopatología, la clínica y el
@@ -52,7 +53,8 @@ Si `okt estudio calificar preparar` responde que el tema no tiene pregunta, can�
    - **canonica:** la respuesta de referencia, con el mecanismo, en 3–6 frases, fiel a sus notas; verifica en PubMed o
      Perplexity lo dudoso o lo que pudo cambiar en las guías;
    - **rubrica:** 3 o 4 criterios, cada uno algo que la pregunta pide **explícitamente** y la canónica explica.
-2. Muéstraselo en 5 líneas y, con su sí, `okt estudio tema editar <id> --pregunta "…" --canonica "…" --rubrica "a|b|c"`.
+2. Guárdalo con `okt estudio tema editar <tema-id> --pregunta "…" --canonica "…" --rubrica "a|b|c"` **sin mostrarle
+   la canónica ni la rúbrica** (serían la respuesta). Después del repaso puede leerlas y pedir cambios.
 
 ### 3.2 El turno del usuario
 
@@ -61,7 +63,8 @@ Si `okt estudio calificar preparar` responde que el tema no tiene pregunta, can�
 3. Apenas termine, la **confianza**: «¿Qué tan seguro estás? 90 segurísimo · 70 bastante · 50 medio · 25 adivinando»
    (u omitir). Antes de esto, ni un comentario sobre su respuesta: ni «muy bien», ni «casi».
 4. Guarda su respuesta **literal** en un archivo temporal fuera del vault y
-   `okt estudio calificar preparar --tema <id> --respuesta <archivo> [--confianza N]`.
+   `okt estudio calificar preparar --tema <tema-id> --respuesta <archivo> [--confianza N]`. Devuelve el id del paquete
+   (`cal-…`) y su carpeta.
 
 ### 3.3 El evaluador ciego
 
@@ -88,7 +91,13 @@ Texto para el evaluador (cópialo tal cual):
 > "recordado|parcial|fallado","criterios":[{"criterio":"…","cumple":true,"nota":"…"}],"errores":[],
 > "pregunta_incompleta":[],"comentario":"<una frase accionable, sin elogios>","evaluador":"agy|subagente|agente"}`.
 
-Guarda el recibo en un archivo temporal fuera del vault y `okt estudio calificar aplicar <id> --recibo <archivo>`.
+Guarda el recibo en un archivo temporal fuera del vault y `okt estudio calificar aplicar <paquete-id> --recibo <archivo>`
+(el id `cal-…` que devolvió `calificar preparar`).
+
+**Si algo falla:** si agy o el subagente no responde o falla, pasa a la siguiente opción de la lista. Si
+`calificar aplicar` rechaza el recibo por su formato, corrige solo la estructura del JSON (nunca la calificación) y
+vuelve a aplicarlo; si sigue fallando, `okt reportar error` y dile al usuario que su respuesta quedó guardada en el
+paquete para calificarla después.
 
 ### 3.4 Después del recibo
 
@@ -96,7 +105,8 @@ Guarda el recibo en un archivo temporal fuera del vault y `okt estudio calificar
 - **Fallado con confianza ≥ 70** (error con alta seguridad): detente en ese tema. Contrasta su idea con la correcta,
   pide que lo explique otra vez con sus palabras desde el mecanismo y registra el error
   (`okt estudio registrar error --tema <id> [--tipo <ID>]`). Estos son los errores que más conviene corregir.
-- **Fallado o parcial sin la idea central:** recuperación hasta el criterio. Re-enseña la brecha en 3–5 frases, pasa a
+  Esa re-explicación inmediata es formativa y no se califica; la nueva calificación llega con el reintento de abajo.
+- **Fallado:** recuperación hasta el criterio. Re-enseña la brecha en 3–5 frases, pasa a
   **otro** tema y al terminarlo vuelve a preguntar el primero (máximo 3 vueltas). Los reintentos del mismo día se
   califican igual a ciegas, quedan como reintento y no mueven el calendario.
 - `pregunta_incompleta` no vacía: explica que la falla fue de la pregunta y corrígela (`okt estudio tema editar`).

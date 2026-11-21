@@ -148,7 +148,7 @@ Estudio (tutor: metas, plan diario, repasos FSRS y calificación a ciegas; datos
   estudio meta agregar "<título>" --tipo examen|continuo [--fecha AAAA-MM-DD] [--temario "Tema:peso,…"] | meta listar | meta cerrar <id>
   estudio perfil [--minutos-laborable N] [--minutos-fin N] [--remnote N] [--dias-libres "f1,f2"] [--retencion 0.9] [--cuestionario "1b,3a,…"]
   estudio tema agregar "<título>" | tema editar <id> [--meta <id>] [--nota "[[…]]"] [--pregunta] [--canonica] [--rubrica "a|b|c"] | tema retirar <id> | tema listar
-  estudio registrar sesion --minutos N --actividad <tipo> [--tema <id>] | examen "<nombre>" --aciertos A --total N [--por-tema "id:a/n,…"]
+  estudio registrar sesion --minutos N --actividad <tipo> [--tema <id>] | examen "<nombre>" --aciertos A --total N [--por-tema "id:a/n,…"] [--fuente]
   estudio registrar error --tema <id> [--tipo C-CON-03] [--pregunta "…"] [--flashcard remnote|pegar|no] | checkin <bloque> hecho|saltado
   estudio repasos [--max N]              Temas vencidos (FSRS), los que aún se salvan primero
   estudio calificar preparar --tema <id> --respuesta <archivo> [--confianza 90|70|50|25] | calificar aplicar <id> --recibo <archivo>

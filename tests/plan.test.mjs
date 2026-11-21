@@ -80,6 +80,8 @@ test('banqueo intercalado con 3 temas vistos y sin simulacro a más de 8 semanas
   const inter = bloques(plan).filter((b) => b.herramienta === 'banqueo' && b.temas);
   assert.ok(inter.length >= 1, 'falta el banqueo intercalado');
   for (const b of inter) assert.equal(b.temas.length, 3);
+  // Rota: con más de 3 temas vistos, el siguiente intercalado no repite los mismos tres.
+  for (let i = 1; i < inter.length; i++) assert.notDeepEqual([...inter[i].temas].sort(), [...inter[i - 1].temas].sort(), `${inter[i].fecha} repite el intercalado anterior`);
   assert.equal(bloques(plan).filter((b) => b.herramienta === 'simulacro').length, 0);
 });
 
