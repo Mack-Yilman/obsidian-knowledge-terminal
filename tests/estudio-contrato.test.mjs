@@ -29,7 +29,8 @@ test('las muestras inválidas fallan con un mensaje que dice dónde', () => {
     ['temas', (d) => (d.temas['Mal Id'] = d.temas.neumonia), /Mal Id/],
     ['recibo', (d) => (d.calificacion = 'bien'), /calificacion/],
     ['recibo', (d) => (d.evaluador = 'gemini-4-hydrogen'), /evaluador/],
-    ['paquete', (d) => (d.confianza = 80), /confianza/],
+    ['paquete', (d) => delete d.canonica, /canonica/],
+    ['evento', (d) => (d.total = -1), /total/],
     ['plan', (d) => (d.dias[0].bloques[0].herramienta = 'anki'), /herramienta/],
     ['evento', (d) => (d.tipo = 'charla'), /tipo de evento/],
   ];
@@ -40,8 +41,8 @@ test('las muestras inválidas fallan con un mensaje que dice dónde', () => {
     assert.ok(errores.length > 0, `${tipo}: debió fallar (${patron})`);
     assert.match(errores.join('\n'), patron);
   }
-  // El paquete ciego no lleva nada más que lo del contrato: un campo de más del diálogo no se cuela por la validación.
-  assert.deepEqual(Object.keys(de('paquete')).sort(), ['concepto', 'confianza', 'id', 'pregunta', 'respuesta', 'rubrica', 'version']);
+  // El paquete ciego no lleva nada más que lo del contrato; tampoco la confianza, que sesgaría al evaluador.
+  assert.deepEqual(Object.keys(de('paquete')).sort(), ['canonica', 'concepto', 'id', 'pregunta', 'respuesta', 'rubrica', 'version']);
 });
 
 test('error: tipo_error sigue el patrón C-XXX-NN y es opcional', () => {
@@ -63,7 +64,7 @@ test('guardar valida antes de escribir y agregarEvento numera los ids del día',
     guardar(t.dir, 'metas', metas);
     assert.deepEqual(leer(t.dir, 'metas'), metas);
     const a = agregarEvento(t.dir, { tipo: 'sesion', minutos: 90, actividad: 'lectura' });
-    const b = agregarEvento(t.dir, { tipo: 'checkin', bloque: '2026-12-22-1', estado: 'hecho', origen: 'telegram' });
+    const b = agregarEvento(t.dir, { tipo: 'checkin', bloque: '2026-12-22-1', estado: 'hecho', herramienta: 'remnote', minutos: 20, origen: 'telegram' });
     assert.equal(a.id, 'ev-20261222-0001');
     assert.equal(b.id, 'ev-20261222-0002');
     assert.match(a.ts, /^2026-12-22T20:15:00[+-]\d{2}:\d{2}$/);

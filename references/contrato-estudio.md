@@ -27,7 +27,7 @@ Una prueba (`tests/estudio-contrato.test.mjs`) valida cada ejemplo de abajo cont
 | `metas[].tipo` | `examen` \| `continuo` | Examen con fecha, o aprendizaje sin fecha (un curso, una rotación) |
 | `metas[].fecha` | fecha | Día del examen. Solo en `examen` |
 | `metas[].inicio` | fecha | Desde cuándo se estudia para ella |
-| `metas[].temario` | lista | `{tema, peso}`: id del tema y su peso relativo (> 0). No hace falta que sumen 1 |
+| `metas[].temario` | lista | `{tema, peso}`: id del tema y su peso relativo (> 0). No hace falta que sumen 1. Un tema que no figura en el temario de la meta guía pesa 1 |
 | `metas[].activa` | sí/no | `false` al cerrarla |
 
 ```json okt:metas
@@ -90,7 +90,8 @@ Un objeto `temas` cuyas claves son los ids.
 | `nota` | texto | Enlace a la nota del vault, `[[…]]` (opcional) |
 | `metas` | lista | Ids de las metas que lo incluyen |
 | `pregunta` | texto | Consigna del recuerdo libre («Explica fisiopatología, clínica y manejo inicial») |
-| `rubrica` | lista | Criterios que una buena respuesta debe cumplir; cada uno, algo que la `pregunta` pide |
+| `canonica` | texto | La respuesta de referencia, con el mecanismo: contra ella se juzga cada criterio |
+| `rubrica` | lista | Criterios que una buena respuesta debe cumplir; cada uno, algo que la `pregunta` pide y que la `canonica` explica |
 | `fsrs` | objeto o `null` | `null` mientras es nuevo; si no, `estabilidad`, `dificultad`, `repasos`, `lapsos`, `ultimo`, `vence` (sección 4) |
 | `aciertos`, `preguntas` | enteros | Acumulado de los banqueos y simulacros en ese tema |
 | `contrasta_con` | lista | Ids de temas que se confunden con este (diagnóstico diferencial) |
@@ -105,6 +106,7 @@ Un objeto `temas` cuyas claves son los ids.
       "nota": "[[🫀 Insuficiencia cardiaca]]",
       "metas": ["encaps-2027-i"],
       "pregunta": "Explica la fisiopatología, la clínica y el manejo inicial de la insuficiencia cardiaca",
+      "canonica": "El corazón no mantiene un gasto adecuado sin elevar sus presiones de llenado, por falla de la contracción (sistólica, FE reducida) o del llenado (diastólica, FE conservada). La clínica nace de dos ejes: congestión (disnea, ortopnea, edemas, crepitantes) y bajo gasto (fatiga, hipotensión, oliguria). En la congestión, el diurético de asa (furosemida) alivia los síntomas.",
       "rubrica": ["Disfunción sistólica frente a diastólica", "Congestión y bajo gasto como ejes de la clínica", "Diurético de asa en la congestión"],
       "fsrs": { "estabilidad": 2.3065, "dificultad": 2.1181, "repasos": 1, "lapsos": 0, "ultimo": "2026-12-22", "vence": "2026-12-25" },
       "aciertos": 7,
@@ -116,6 +118,7 @@ Un objeto `temas` cuyas claves son los ids.
       "titulo": "Neumonía adquirida en la comunidad",
       "metas": ["encaps-2027-i"],
       "pregunta": "",
+      "canonica": "",
       "rubrica": [],
       "fsrs": null,
       "aciertos": 0,
@@ -139,8 +142,8 @@ Una línea JSON por evento, con `id` (`ev-AAAAMMDD-NNNN`), `ts`, `tipo` y los ca
 | `sesion` | `minutos`, `tema?`, `actividad` (`lectura`, `clase`, `banqueo`, `repaso`, `remnote`, `notebooklm`, `otro`) | Tiempo estudiado (`/estudie 90 Cardio`) |
 | `examen` | `nombre`, `aciertos`, `total`, `por_tema?` (`{id: {aciertos, total}}`), `fuente?` | Banqueo, simulacro, quiz de NotebookLM (`/simulacro 72/100`) |
 | `error` | `tema`, `tipo_error?`, `pregunta?`, `flashcard?` (`remnote` \| `pegar` \| `no`) | Un error de banqueo que merece tarjeta. `tipo_error` sigue el patrón `C-XXX-NN` de la taxonomía de 14 tipos de la skill `clinical-logic-mentor` (se cita el id, no se copia la taxonomía) |
-| `repaso` | `tema`, `paquete`, `confianza`, `recibo` (sección 5) | Un recuerdo libre calificado a ciegas |
-| `checkin` | `bloque`, `estado` (`hecho` \| `saltado`) | Lo que el usuario marcó del plan (✅/⏭️ en Telegram o en el chat) |
+| `repaso` | `tema`, `paquete`, `confianza`, `recibo` (sección 5), `reintento` | Un recuerdo libre calificado a ciegas. `reintento: true` si el tema ya se repasó ese día: queda registrado, pero no mueve FSRS |
+| `checkin` | `bloque`, `estado` (`hecho` \| `saltado`), `herramienta`, `tema?`, `minutos` | Lo que el usuario marcó del plan (✅/⏭️ en Telegram o en el chat), con los datos del bloque para no depender del plan |
 
 ```json okt:evento
 { "id": "ev-20261222-0001", "ts": "2026-12-22T20:15:00-05:00", "tipo": "examen", "origen": "telegram", "nombre": "Simulacro 1", "aciertos": 72, "total": 100, "por_tema": { "insuficiencia-cardiaca": { "aciertos": 7, "total": 10 } } }
@@ -151,7 +154,7 @@ Una línea JSON por evento, con `id` (`ev-AAAAMMDD-NNNN`), `ts`, `tipo` y los ca
 ```
 
 ```json okt:evento
-{ "id": "ev-20261222-0003", "ts": "2026-12-22T21:00:00-05:00", "tipo": "checkin", "origen": "telegram", "bloque": "2026-12-22-2", "estado": "saltado" }
+{ "id": "ev-20261222-0003", "ts": "2026-12-22T21:00:00-05:00", "tipo": "checkin", "origen": "telegram", "bloque": "2026-12-22-2", "estado": "saltado", "herramienta": "repaso", "tema": "insuficiencia-cardiaca", "minutos": 3 }
 ```
 
 ## 4. FSRS y notas
@@ -165,15 +168,19 @@ Una línea JSON por evento, con `id` (`ev-AAAAMMDD-NNNN`), `ts`, `tipo` y los ca
 
 | `calificacion` | Nota FSRS | Cuándo |
 |---|---|---|
-| `recordado` | 4 (`easy`) | Cumple todos los criterios, sin errores, **y** confianza ≥ 70 |
-| `recordado` | 3 (`good`) | Cumple todos los criterios en los demás casos |
-| `parcial` | 2 (`hard`) | Está la idea central pero faltan criterios |
+| `recordado` | 4 (`easy`) | Cumple todos los criterios **y** confianza ≥ 70 |
+| `recordado` | 3 (`good`) | Cumple todos los criterios, con confianza < 70 o sin confianza |
+| `parcial` | 2 (`hard`) | Está la idea central pero faltan criterios, o hay algún error en `errores` |
 | `fallado` | 1 (`again`) | Falta la idea central, está mal o «no sé». Suma un lapso |
+
+Un recibo `recordado` con `errores` no vacío se aplica como `parcial` (el CLI lo baja y lo avisa).
 
 - **Confianza:** el usuario elige 90, 70, 50 o 25 (o la omite: `null`) **antes** de cualquier comentario sobre su
   respuesta. Nunca se estima por el tono.
-- **Reintentos** del mismo tema en la misma sesión (recuperación hasta el criterio) se registran como `sesion` con
-  `actividad: repaso`, no como `repaso`: no mueven FSRS.
+- **Reintentos** del mismo tema el mismo día (recuperación hasta el criterio): `calificar aplicar` los registra como
+  `repaso` con `reintento: true` y no mueve FSRS. Solo el primer repaso del día cuenta.
+- **Orden de los vencidos** (`okt estudio repasos` y el plan): primero los que aún se salvan (R ≥ 0,65), por
+  peso × (1 − R) de mayor a menor; después, como máximo 2 de los ya olvidados (R < 0,65), por peso.
 
 ## 5. Paquete ciego y recibo
 
@@ -181,6 +188,9 @@ El evaluador (agy, un subagente o, en Antigravity, un agente sin contexto) **sol
 las pistas ni de la opinión del tutor.
 
 - **Paquete:** `.cerebro/cache/estudio/calificar/<id>/paquete.json`, que escribe `okt estudio calificar preparar`.
+  Esa carpeta solo contiene el paquete (el evaluador puede trabajar dentro de ella). La confianza **no** va en el
+  paquete, para no sesgar al evaluador: el CLI la guarda aparte, en `.cerebro/cache/estudio/calificar/<id>.json`
+  (`{tema, confianza, preparado}`), y la cruza al aplicar el recibo.
 
 ```json okt:paquete
 {
@@ -188,11 +198,15 @@ las pistas ni de la opinión del tutor.
   "id": "cal-20261222-0001",
   "concepto": "Insuficiencia cardiaca",
   "pregunta": "Explica la fisiopatología, la clínica y el manejo inicial de la insuficiencia cardiaca",
+  "canonica": "El corazón no mantiene un gasto adecuado sin elevar sus presiones de llenado, por falla de la contracción (sistólica, FE reducida) o del llenado (diastólica, FE conservada). La clínica nace de dos ejes: congestión (disnea, ortopnea, edemas, crepitantes) y bajo gasto (fatiga, hipotensión, oliguria). En la congestión, el diurético de asa (furosemida) alivia los síntomas.",
   "rubrica": ["Disfunción sistólica frente a diastólica", "Congestión y bajo gasto como ejes de la clínica", "Diurético de asa en la congestión"],
-  "respuesta": "El corazón no bombea bien y se acumula líquido en los pulmones; se da furosemida.",
-  "confianza": 70
+  "respuesta": "El corazón no bombea bien y se acumula líquido en los pulmones; se da furosemida."
 }
 ```
+
+- **Cómo califica el evaluador:** juzga el significado contra la `canonica`, criterio por criterio, y anota primero lo
+  que falta o está mal. Un criterio con dos partes («congestión y bajo gasto») se cumple solo si están las dos. Ante la
+  duda entre dos calificaciones, la más baja. La fluidez o el entusiasmo no suben la nota.
 
 - **Recibo:** lo devuelve el evaluador y lo aplica `okt estudio calificar aplicar <id> --recibo <archivo>`. El
   `paquete` debe ser el id del paquete; aplicar dos veces el mismo no hace nada (idempotente). `criterios` lleva un
@@ -207,12 +221,12 @@ las pistas ni de la opinión del tutor.
   "calificacion": "parcial",
   "criterios": [
     { "criterio": "Disfunción sistólica frente a diastólica", "cumple": false, "nota": "No distingue los dos tipos" },
-    { "criterio": "Congestión y bajo gasto como ejes de la clínica", "cumple": true, "nota": "Menciona la congestión pulmonar" },
+    { "criterio": "Congestión y bajo gasto como ejes de la clínica", "cumple": false, "nota": "Menciona la congestión pulmonar, pero no el bajo gasto" },
     { "criterio": "Diurético de asa en la congestión", "cumple": true, "nota": "Furosemida" }
   ],
   "errores": [],
   "pregunta_incompleta": [],
-  "comentario": "Falta separar disfunción sistólica y diastólica.",
+  "comentario": "Falta separar disfunción sistólica y diastólica, y el bajo gasto como segundo eje de la clínica.",
   "evaluador": "agy"
 }
 ```
@@ -221,8 +235,9 @@ las pistas ni de la opinión del tutor.
 
 ## 6. Plan (`plan.json`)
 
-Lo genera `okt estudio plan generar` para los próximos 14 días y lo rehace cada día o cuando se marca algo. Cada
-bloque es una acción concreta, con la herramienta en la que se hace.
+Lo genera `okt estudio plan generar` para los próximos 14 días y lo rehace cada día o cuando se marca algo. Conserva
+también los **7 días anteriores** tal como quedaron (con sus `hecho`, `saltado` y `pendiente`): de ahí salen el
+arrastre y el cumplimiento de la semana. Cada bloque es una acción concreta, con la herramienta en la que se hace.
 
 | Campo | Qué es |
 |---|---|
@@ -234,8 +249,10 @@ bloque es una acción concreta, con la herramienta en la que se hace.
 | `bloques[].accion` | Lo que se hace, en una frase para el usuario |
 | `bloques[].herramienta` | `remnote`, `repaso`, `banqueo`, `clase`, `lectura`, `notebooklm` o `simulacro` |
 | `bloques[].tema` | Id del tema (opcional) |
+| `bloques[].temas` | Ids de los temas de un banqueo intercalado o un simulacro (opcional) |
 | `bloques[].minutos` | Duración |
 | `bloques[].estado` | `pendiente`, `hecho` o `saltado` |
+| `bloques[].arrastres` | Cuántas veces se movió de un día anterior (0 a 2; opcional, 0 si falta) |
 
 ```json okt:plan
 {
@@ -250,7 +267,8 @@ bloque es una acción concreta, con la herramienta en la que se hace.
       "bloques": [
         { "id": "2026-12-22-1", "accion": "RemNote: 20 min de tarjetas vencidas", "herramienta": "remnote", "minutos": 20, "estado": "hecho" },
         { "id": "2026-12-22-2", "accion": "Repaso libre: Insuficiencia cardiaca (3 min)", "herramienta": "repaso", "tema": "insuficiencia-cardiaca", "minutos": 3, "estado": "pendiente" },
-        { "id": "2026-12-22-3", "accion": "Banqueo: 15 preguntas de Neumonía antes de estudiarla", "herramienta": "banqueo", "tema": "neumonia", "minutos": 25, "estado": "pendiente" }
+        { "id": "2026-12-22-3", "accion": "Banqueo: 10 preguntas de Neumonía antes de estudiarla", "herramienta": "banqueo", "tema": "neumonia", "minutos": 15, "estado": "pendiente", "arrastres": 1 },
+        { "id": "2026-12-22-4", "accion": "Banqueo intercalado: 20 preguntas mezcladas de Insuficiencia cardiaca, Asma y Preeclampsia", "herramienta": "banqueo", "temas": ["insuficiencia-cardiaca", "asma", "preeclampsia"], "minutos": 25, "estado": "pendiente" }
       ]
     }
   ]

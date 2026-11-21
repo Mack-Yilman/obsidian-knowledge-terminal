@@ -38,8 +38,8 @@ export const EVENTOS = {
   sesion: { minutos: 'entero', 'tema?': 'id', actividad: uno('lectura', 'clase', 'banqueo', 'repaso', 'remnote', 'notebooklm', 'otro') },
   examen: { nombre: 'texto', aciertos: 'entero', total: 'entero', 'por_tema?': 'objeto', 'fuente?': 'texto' },
   error: { tema: 'id', 'tipo_error?': 'tipo_error', 'pregunta?': 'texto', 'flashcard?': uno('remnote', 'pegar', 'no') },
-  repaso: { tema: 'id', paquete: 'texto', confianza: 'confianza', recibo: 'objeto' },
-  checkin: { bloque: 'texto', estado: uno('hecho', 'saltado') },
+  repaso: { tema: 'id', paquete: 'texto', confianza: 'confianza', recibo: 'objeto', reintento: 'bool' },
+  checkin: { bloque: 'texto', estado: uno('hecho', 'saltado'), herramienta: HERRAMIENTAS, 'tema?': 'id', minutos: 'entero' },
 };
 
 const RECIBO = {
@@ -75,6 +75,7 @@ export const ESQUEMAS = {
     'nota?': 'texto',
     metas: ['id'],
     pregunta: 'texto',
+    canonica: 'texto',
     rubrica: ['texto'],
     fsrs: 'fsrs',
     aciertos: 'entero',
@@ -82,14 +83,14 @@ export const ESQUEMAS = {
     contrasta_con: ['id'],
     retirado: 'bool',
   },
-  paquete: { version: uno(1), id: 'texto', concepto: 'texto', pregunta: 'texto', rubrica: ['texto'], respuesta: 'texto', confianza: 'confianza' },
+  paquete: { version: uno(1), id: 'texto', concepto: 'texto', pregunta: 'texto', canonica: 'texto', rubrica: ['texto'], respuesta: 'texto' },
   recibo: RECIBO,
   plan: {
     version: uno(1),
     generado: 'instante',
     meta: 'id',
     'aviso?': 'texto',
-    dias: [{ fecha: 'fecha', minutos: 'entero', bloques: [{ id: 'texto', accion: 'texto', herramienta: HERRAMIENTAS, 'tema?': 'id', minutos: 'entero', estado: uno('pendiente', 'hecho', 'saltado') }] }],
+    dias: [{ fecha: 'fecha', minutos: 'entero', bloques: [{ id: 'texto', accion: 'texto', herramienta: HERRAMIENTAS, 'tema?': 'id', 'temas?': ['id'], minutos: 'entero', estado: uno('pendiente', 'hecho', 'saltado'), 'arrastres?': 'entero' }] }],
   },
 };
 
