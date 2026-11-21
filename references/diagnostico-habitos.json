@@ -1,0 +1,182 @@
+{
+  "p1": {
+    "a": {
+      "hallazgo": "Disponibilidad diaria de tiempo muy reducida para estudiar.",
+      "recomendacion": "Ajusta una carga mínima diaria en FSRS priorizando exclusivamente tarjetas de fallos y banqueos de alta rentabilidad.",
+      "citas": [3, 8]
+    },
+    "b": {
+      "hallazgo": "Disponibilidad de tiempo diaria moderada para la preparación.",
+      "recomendacion": "Calibra una carga diaria intermedia repartida entre un bloque de banqueo y repaso espaciado.",
+      "citas": [3, 8]
+    },
+    "c": null,
+    "d": {
+      "hallazgo": "Disponibilidad diaria de tiempo muy amplia para estudiar.",
+      "recomendacion": "Dosifica la carga introduciendo descansos regulares programados para prevenir la fatiga cognitiva y mantener el rendimiento.",
+      "citas": [3, 8]
+    }
+  },
+  "p2": {
+    "a": null,
+    "b": {
+      "hallazgo": "Concentra el estudio nocturno tras acumular fatiga de otras actividades.",
+      "recomendacion": "Adelanta las tareas de mayor demanda como banqueos al inicio de tu sesión para contrarrestar el cansancio diario.",
+      "citas": [2]
+    },
+    "c": {
+      "hallazgo": "Estudia de madrugada o a altas horas de la noche.",
+      "recomendacion": "Traslada tus bloques de estudio a horarios diurnos para evitar que la privación de sueño afecte tu rendimiento.",
+      "citas": [2]
+    },
+    "d": {
+      "hallazgo": "Estudia sin horario fijo y solo ante evaluaciones inminentes.",
+      "recomendacion": "Establece un horario diario fijo y distribuido en lugar de acumular sesiones masivas antes de cada simulacro.",
+      "citas": [2]
+    }
+  },
+  "p3": {
+    "a": {
+      "hallazgo": "Dedica más de la mitad del tiempo a releer material.",
+      "recomendacion": "Sustituye la mayor parte de la relectura pasiva por bloques de banqueo y práctica de recuperación activa.",
+      "citas": [5, 9]
+    },
+    "b": {
+      "hallazgo": "Dedica la mayoría del tiempo a elaborar resúmenes y transcribir.",
+      "recomendacion": "Cambia la elaboración de resúmenes extensos por resolver preguntas de bancos y autoevaluaciones con tarjetas activas.",
+      "citas": [5, 9]
+    },
+    "c": {
+      "hallazgo": "Prioriza la autoexplicación o recuerdo libre sobre las preguntas objetivas.",
+      "recomendacion": "Complementa la autoexplicación resolviendo bancos de preguntas de opción múltiple para entrenar la discriminación de alternativas.",
+      "citas": [5, 9]
+    },
+    "d": null
+  },
+  "p4": {
+    "a": {
+      "hallazgo": "Selecciona los temas según urgencias o plazos inmediatos de exámenes.",
+      "recomendacion": "Planifica tu calendario con antelación distribuyendo las materias de forma regular en vez de reaccionar a plazos inmediatos.",
+      "citas": [1, 2, 4]
+    },
+    "b": {
+      "hallazgo": "Estudia por bloques monográficos aislados sin alternar materias previas.",
+      "recomendacion": "Intercala repasos de asignaturas anteriores en tu semana para evitar el olvido de los bloques ya concluidos.",
+      "citas": [1, 2, 4]
+    },
+    "c": null,
+    "d": {
+      "hallazgo": "Decide qué repasar guiándose solo por sensaciones subjetivas recientes.",
+      "recomendacion": "Adopta una programación sistemática y espaciada de repasos basada en registros objetivos y no solo en sensaciones puntuales.",
+      "citas": [1, 2, 4]
+    }
+  },
+  "p5": {
+    "a": {
+      "hallazgo": "Abandona las asignaturas terminadas hasta las semanas previas al examen.",
+      "recomendacion": "Programa repasos breves distribuidos a lo largo de los meses para mantener la retención a largo plazo.",
+      "citas": [4, 13, 14, 15]
+    },
+    "b": {
+      "hallazgo": "Acumula el repaso de forma masiva antes de los simulacros.",
+      "recomendacion": "Distribuye el estudio en sesiones cortas espaciadas en lugar de concentrar repasos masivos la víspera del simulacro.",
+      "citas": [4, 13, 14, 15]
+    },
+    "c": null,
+    "d": {
+      "hallazgo": "Relee apuntes de forma reactiva únicamente ante olvidos puntuales.",
+      "recomendacion": "Sustituye la relectura reactiva por autoevaluaciones activas agendadas en intervalos crecientes tras culminar cada materia.",
+      "citas": [4, 13, 14, 15]
+    }
+  },
+  "p6": {
+    "a": {
+      "hallazgo": "Usa banqueos en bloques inmediatos solo para comprobar lo leído.",
+      "recomendacion": "Mezcla preguntas de especialidades distintas y empléalas como herramienta de aprendizaje para ejercitar la discriminación diagnóstica.",
+      "citas": [1, 2, 17, 18]
+    },
+    "b": null,
+    "c": {
+      "hallazgo": "Reserva los bancos de preguntas únicamente para medir notas mensuales.",
+      "recomendacion": "Integra bloques frecuentes de preguntas en tu rutina semanal utilizándolas como método de estudio y no solo de evaluación.",
+      "citas": [1, 2, 6, 12]
+    },
+    "d": {
+      "hallazgo": "Posterga la resolución de preguntas hasta dominar la teoría leyendo.",
+      "recomendacion": "Empieza a resolver preguntas de examen desde las fases iniciales del estudio para consolidar el conocimiento clínico.",
+      "citas": [1, 2, 6, 12]
+    }
+  },
+  "p7": {
+    "a": {
+      "hallazgo": "Lee las tarjetas pasivamente sin forzar el recuerdo de memoria.",
+      "recomendacion": "Haz una pausa activa para intentar evocar la respuesta antes de voltear cada tarjeta.",
+      "citas": [1, 2, 6]
+    },
+    "b": {
+      "hallazgo": "Retira prematuramente las tarjetas tras pocos aciertos consecutivos.",
+      "recomendacion": "Mantén las tarjetas en el circuito de repetición espaciada sin eliminarlas temprano tras los primeros aciertos.",
+      "citas": [1, 2, 6]
+    },
+    "c": {
+      "hallazgo": "Sobrecarga la creación de tarjetas acumulando repasos diarios insostenibles.",
+      "recomendacion": "Restringe la creación de tarjetas exclusivamente a conceptos que falles o datos de alta dificultad.",
+      "citas": [1, 2, 6]
+    },
+    "d": null
+  },
+  "p8": {
+    "a": {
+      "hallazgo": "Comienza el estudio con lectura lineal y subrayado pasivo del texto.",
+      "recomendacion": "Resuelve unas pocas preguntas diagnósticas antes de leer para activar tu atención sobre las lagunas clave del tema.",
+      "citas": [19, 20, 21]
+    },
+    "b": {
+      "hallazgo": "Inicia los temas nuevos viendo videoclases y tomando notas extensas.",
+      "recomendacion": "Intenta responder tres preguntas previas del tema antes del video para sensibilizar tu comprensión hacia los conceptos críticos.",
+      "citas": [19, 20, 21]
+    },
+    "c": null,
+    "d": {
+      "hallazgo": "Recurre a esquemas o mnemotecnias ajenas antes de abordar el tema.",
+      "recomendacion": "Haz una autoevaluación inicial con preguntas previas para diagnosticar tu nivel antes de recurrir a ayudas externas.",
+      "citas": [19, 20, 21]
+    }
+  },
+  "p9": {
+    "a": {
+      "hallazgo": "Revisa la alternativa correcta superficialmente sin analizar la causa del fallo.",
+      "recomendacion": "Escribe en una línea por qué fallaste y qué razonamiento clínico erróneo debes corregir antes de avanzar.",
+      "citas": [22, 23, 24]
+    },
+    "b": {
+      "hallazgo": "Relee la explicación conformándose con la sensación de fluidez inmediata.",
+      "recomendacion": "Formula con tus propias palabras por qué tu concepto previo era erróneo para desmontar la falsa familiaridad.",
+      "citas": [22, 23, 24]
+    },
+    "c": null,
+    "d": {
+      "hallazgo": "Responde con frustración y relectura masiva ante los fallos imprevistos.",
+      "recomendacion": "Aísla el concepto fisiopatológico específico que causó el error en una tarjeta sin releer todo el capítulo.",
+      "citas": [22, 23, 24]
+    }
+  },
+  "p10": {
+    "a": {
+      "hallazgo": "Sobreestima su rendimiento real y posterga los temas clínicos complejos.",
+      "recomendacion": "Registra tu nivel de seguridad en cada pregunta y mantén el estudio de temas arduos dividiéndolos en metas breves.",
+      "citas": [3, 8, 25]
+    },
+    "b": {
+      "hallazgo": "Subestima su desempeño con ansiedad elevada durante las evaluaciones.",
+      "recomendacion": "Contrasta objetivamente tus aciertos reales frente a tu percepción subjetiva para reducir la ansiedad ante los exámenes.",
+      "citas": [3, 8, 25]
+    },
+    "c": {
+      "hallazgo": "Presenta baja calibración de seguridad y dificultad para regular el esfuerzo.",
+      "recomendacion": "Marca tu grado de certeza al responder y sostén el estudio de temas difíciles con sesiones cronometradas cortas.",
+      "citas": [3, 8, 25]
+    },
+    "d": null
+  }
+}

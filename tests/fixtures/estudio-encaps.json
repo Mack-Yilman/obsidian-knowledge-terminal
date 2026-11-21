@@ -1,0 +1,771 @@
+{
+ "metas": {
+  "version": 1,
+  "metas": [
+   {
+    "id": "encaps-2027-i",
+    "titulo": "ENCAPS 2027-I",
+    "tipo": "examen",
+    "fecha": "2027-04-10",
+    "inicio": "2026-12-22",
+    "temario": [
+     {
+      "tema": "insuficiencia-cardiaca",
+      "peso": 4
+     },
+     {
+      "tema": "neumonia",
+      "peso": 5
+     },
+     {
+      "tema": "preeclampsia",
+      "peso": 5
+     },
+     {
+      "tema": "diabetes-mellitus-tipo-2",
+      "peso": 5
+     },
+     {
+      "tema": "hipertension-arterial",
+      "peso": 5
+     },
+     {
+      "tema": "infarto-agudo-miocardio",
+      "peso": 5
+     },
+     {
+      "tema": "accidente-cerebrovascular",
+      "peso": 4
+     },
+     {
+      "tema": "tuberculosis-pulmonar",
+      "peso": 5
+     },
+     {
+      "tema": "enfermedad-pulmonar-obstructiva-cronica",
+      "peso": 3
+     },
+     {
+      "tema": "asma-bronquial",
+      "peso": 4
+     },
+     {
+      "tema": "enfermedad-renal-cronica",
+      "peso": 4
+     },
+     {
+      "tema": "cirrosis-hepatica",
+      "peso": 4
+     },
+     {
+      "tema": "infeccion-tracto-urinario",
+      "peso": 4
+     },
+     {
+      "tema": "sepsis-shock-septico",
+      "peso": 5
+     },
+     {
+      "tema": "hemorragia-digestiva-alta",
+      "peso": 4
+     },
+     {
+      "tema": "vih-sida",
+      "peso": 4
+     },
+     {
+      "tema": "apendicitis-aguda",
+      "peso": 5
+     },
+     {
+      "tema": "colecistitis-colelitiasis",
+      "peso": 5
+     },
+     {
+      "tema": "obstruccion-intestinal",
+      "peso": 4
+     },
+     {
+      "tema": "hernias-pared-abdominal",
+      "peso": 4
+     },
+     {
+      "tema": "pancreatitis-aguda",
+      "peso": 4
+     },
+     {
+      "tema": "trauma-abdominal",
+      "peso": 3
+     },
+     {
+      "tema": "hemorragia-postparto",
+      "peso": 5
+     },
+     {
+      "tema": "hemorragia-primera-mitad-embarazo",
+      "peso": 4
+     },
+     {
+      "tema": "hemorragia-segunda-mitad-embarazo",
+      "peso": 4
+     },
+     {
+      "tema": "sepsis-puerperal",
+      "peso": 3
+     },
+     {
+      "tema": "ruptura-prematura-membranas",
+      "peso": 4
+     },
+     {
+      "tema": "cancer-cuello-uterino",
+      "peso": 4
+     },
+     {
+      "tema": "bronquiolitis-aguda",
+      "peso": 4
+     },
+     {
+      "tema": "enfermedad-diarreica-aguda-pediatrica",
+      "peso": 5
+     },
+     {
+      "tema": "convulsion-febril",
+      "peso": 3
+     },
+     {
+      "tema": "ictericia-neonatal",
+      "peso": 4
+     },
+     {
+      "tema": "sepsis-neonatal",
+      "peso": 4
+     },
+     {
+      "tema": "reanimacion-neonatal",
+      "peso": 4
+     },
+     {
+      "tema": "desnutricion-infantil-anemia",
+      "peso": 5
+     },
+     {
+      "tema": "inmunizaciones-esquema-nacional",
+      "peso": 5
+     },
+     {
+      "tema": "atencion-primaria-salud",
+      "peso": 3
+     },
+     {
+      "tema": "epidemiologia-vigilancia",
+      "peso": 4
+     },
+     {
+      "tema": "gestion-calidad-salud",
+      "peso": 3
+     },
+     {
+      "tema": "bioetica-medicina-legal",
+      "peso": 3
+     }
+    ],
+    "activa": true
+   }
+  ]
+ },
+ "temas": {
+  "version": 1,
+  "temas": {
+   "insuficiencia-cardiaca": {
+    "titulo": "Insuficiencia cardíaca",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "Explica los criterios diagnósticos de Framingham (mayores y menores), las diferencias clínicas y fisiopatológicas entre disfunción sistólica y diastólica, y los cuatro pilares farmacológicos iniciales que reducen la mortalidad en insuficiencia cardíaca con fracción de eyección reducida.",
+    "canonica": "Para el diagnóstico de insuficiencia cardíaca se emplean los criterios de Framingham, requiriéndose dos criterios mayores o uno mayor acompañado de dos menores para confirmar el cuadro clínico. Fisiopatológicamente, la disfunción sistólica cursa con fracción de eyección reducida y falla de bomba contráctil, mientras que la disfunción diastólica presenta fracción de eyección preservada con rigidez ventricular y alteración del llenado. La terapia médica fundamental que disminuye la mortalidad abarca cuatro grupos de fármacos: un inhibidor de la neprilisina y del receptor de angiotensina (o IECA/ARA-II), un betabloqueador cardioselectivo con beneficio demostrado, un antagonista del receptor de mineralocorticoides y un inhibidor de SGLT2.",
+    "rubrica": [
+     "Criterios diagnósticos de Framingham distinguiendo entre criterios mayores y menores",
+     "Diferencias clínicas y fisiopatológicas entre disfunción sistólica y diastólica",
+     "Cuatro pilares del tratamiento farmacológico que reduce mortalidad (inhibidores de SRAA/ARNI, betabloqueadores, ARM e iSGLT2)"
+    ],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "neumonia": {
+    "titulo": "Neumonía adquirida en la comunidad",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "Describe la estratificación de riesgo en neumonía adquirida en la comunidad mediante la escala CURB-65 y su conducta respectiva, los criterios de ingreso a la unidad de cuidados intensivos según ATS/IDSA, y el esquema antibiótico empírico inicial para pacientes hospitalizados en sala común.",
+    "canonica": "La estratificación del riesgo en la neumonía adquirida en la comunidad se efectúa mediante la escala CURB-65 evaluando confusión, urea mayor a 19 mg/dL, frecuencia respiratoria de al menos 30 respiraciones por minuto, hipotensión arterial con sistólica menor a 90 o diastólica menor o igual a 60 mmHg, y edad igual o superior a 65 años para determinar manejo ambulatorio con puntajes de 0 a 1 u hospitalización con 2 o más puntos. El ingreso a la unidad de cuidados intensivos se fundamenta en los criterios de ATS/IDSA, requiriéndose la presencia de un criterio mayor como ventilación mecánica o shock séptico con vasopresores, o bien la concurrencia de al menos tres criterios menores. Para los pacientes que requieren hospitalización en sala general, el régimen antibiótico empírico estándar consiste en un betalactámico como ceftriaxona o ampicilina/sulbactam combinado con un macrólido como azitromicina, o de forma alternativa monoterapia con una fluoroquinolona respiratoria como levofloxacino o moxifloxacino.",
+    "rubrica": [
+     "Parámetros de la escala CURB-65 y decisión de manejo ambulatorio frente a hospitalario",
+     "Criterios mayores y menores de ATS/IDSA para determinar ingreso a UCI",
+     "Esquema antibiótico empírico para paciente hospitalizado en sala de medicina (betalactámico más macrólido o fluoroquinolona respiratoria sola)"
+    ],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "preeclampsia": {
+    "titulo": "Preeclampsia y trastornos hipertensivos del embarazo",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "Detalla los criterios diagnósticos y signos de severidad de la preeclampsia, el esquema terapéutico con sulfato de magnesio para prevención de eclampsia (dosis de ataque y mantenimiento), y los criterios clínicos y obstétricos para la interrupción del embarazo.",
+    "canonica": "La preeclampsia se diagnostica a partir de las 20 semanas de gestación ante una presión arterial sistólica mayor o igual a 140 mmHg o diastólica mayor o igual a 90 mmHg, acompañada de proteinuria significativa o evidencia de disfunción de órgano blanco como trombocitopenia, insuficiencia renal o compromiso hepático. Para prevenir las convulsiones eclámpticas se prescribe sulfato de magnesio administrando una dosis de carga de 4 a 6 gramos intravenosos en 20 minutos, seguida de una infusión de mantenimiento continuo de 1 a 2 gramos por hora vigilando reflejos patelares, diuresis y frecuencia respiratoria. La interrupción del embarazo constituye el tratamiento definitivo, indicándose el parto de inmediato ante preeclampsia severa a partir de las 34 semanas, o a cualquier edad gestacional si se presentan complicaciones maternas graves como eclampsia, rotura hepática o desprendimiento prematuro de placenta.",
+    "rubrica": [
+     "Criterios diagnósticos de preeclampsia y criterios de severidad clínica o de laboratorio",
+     "Esquema de sulfato de magnesio con dosis de ataque y de mantenimiento para profilaxis de eclampsia",
+     "Criterios y momento de interrupción de la gestación según gravedad y edad gestacional"
+    ],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "diabetes-mellitus-tipo-2": {
+    "titulo": "Diabetes mellitus tipo 2",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "hipertension-arterial": {
+    "titulo": "Hipertensión arterial primaria",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "infarto-agudo-miocardio": {
+    "titulo": "Infarto agudo de miocardio con elevación del ST",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "accidente-cerebrovascular": {
+    "titulo": "Accidente cerebrovascular isquémico y hemorrágico",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "tuberculosis-pulmonar": {
+    "titulo": "Tuberculosis pulmonar y extrapulmonar",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "enfermedad-pulmonar-obstructiva-cronica": {
+    "titulo": "Enfermedad pulmonar obstructiva crónica",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "asma-bronquial": {
+    "titulo": "Crisis asmática y manejo del asma",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "enfermedad-renal-cronica": {
+    "titulo": "Enfermedad renal crónica y complicaciones",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "cirrosis-hepatica": {
+    "titulo": "Cirrosis hepática y síndrome de hipertensión portal",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "infeccion-tracto-urinario": {
+    "titulo": "Infección del tracto urinario y pielonefritis",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "sepsis-shock-septico": {
+    "titulo": "Sepsis y shock séptico",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "hemorragia-digestiva-alta": {
+    "titulo": "Hemorragia digestiva alta variceal y no variceal",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "vih-sida": {
+    "titulo": "Infección por VIH e infecciones oportunistas",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "apendicitis-aguda": {
+    "titulo": "Apendicitis aguda",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "colecistitis-colelitiasis": {
+    "titulo": "Colecistitis aguda y coledocolitiasis",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "obstruccion-intestinal": {
+    "titulo": "Obstrucción intestinal mecánica",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "hernias-pared-abdominal": {
+    "titulo": "Hernias inguinales y de pared abdominal",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "pancreatitis-aguda": {
+    "titulo": "Pancreatitis aguda",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "trauma-abdominal": {
+    "titulo": "Trauma abdominal cerrado y penetrante",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "hemorragia-postparto": {
+    "titulo": "Hemorragia posparto y atonía uterina",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "hemorragia-primera-mitad-embarazo": {
+    "titulo": "Hemorragia de la primera mitad del embarazo",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "hemorragia-segunda-mitad-embarazo": {
+    "titulo": "Hemorragia de la segunda mitad del embarazo",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "sepsis-puerperal": {
+    "titulo": "Sepsis puerperal y endometritis",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "ruptura-prematura-membranas": {
+    "titulo": "Ruptura prematura de membranas pretérmino",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "cancer-cuello-uterino": {
+    "titulo": "Cáncer de cuello uterino y tamizaje",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "bronquiolitis-aguda": {
+    "titulo": "Bronquiolitis aguda",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "enfermedad-diarreica-aguda-pediatrica": {
+    "titulo": "Enfermedad diarreica aguda y deshidratación infantil",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "convulsion-febril": {
+    "titulo": "Convulsión febril simple y compleja",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "ictericia-neonatal": {
+    "titulo": "Ictericia neonatal fisiológica y patológica",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "sepsis-neonatal": {
+    "titulo": "Sepsis neonatal temprana y tardía",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "reanimacion-neonatal": {
+    "titulo": "Reanimación neonatal inmediata",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "desnutricion-infantil-anemia": {
+    "titulo": "Anemia ferropénica y desnutrición crónica infantil",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "inmunizaciones-esquema-nacional": {
+    "titulo": "Esquema nacional de vacunación",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "atencion-primaria-salud": {
+    "titulo": "Atención primaria de salud y redes integradas",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "epidemiologia-vigilancia": {
+    "titulo": "Vigilancia epidemiológica e indicadores de salud",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "gestion-calidad-salud": {
+    "titulo": "Gestión en salud y auditoría de la calidad",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   },
+   "bioetica-medicina-legal": {
+    "titulo": "Bioética médica y consentimiento informado",
+    "metas": [
+     "encaps-2027-i"
+    ],
+    "pregunta": "",
+    "canonica": "",
+    "rubrica": [],
+    "fsrs": null,
+    "aciertos": 0,
+    "preguntas": 0,
+    "contrasta_con": [],
+    "retirado": false
+   }
+  }
+ },
+ "respuestas": {
+  "insuficiencia-cardiaca": {
+   "buena": "Para el diagnóstico de insuficiencia cardíaca se emplean los criterios de Framingham, requiriéndose dos criterios mayores o uno mayor acompañado de dos menores para confirmar el cuadro clínico. Fisiopatológicamente, la disfunción sistólica cursa con fracción de eyección reducida y falla de bomba contráctil, mientras que la disfunción diastólica presenta fracción de eyección preservada con rigidez ventricular y alteración del llenado. La terapia médica fundamental que disminuye la mortalidad abarca cuatro grupos de fármacos: un inhibidor de la neprilisina y del receptor de angiotensina (o IECA/ARA-II), un betabloqueador cardioselectivo con beneficio demostrado, un antagonista del receptor de mineralocorticoides y un inhibidor de SGLT2.",
+   "parcial": "El diagnóstico clínico de la insuficiencia cardíaca se realiza identificando criterios de Framingham como disnea paroxística nocturna, estertores crepitantes y cardiomegalia. La falla sistólica implica una caída de la fracción de eyección con dificultades para eyectar la sangre, mientras que la diastólica mantiene la fracción de eyección pero con problemas para distender el ventrículo durante el llenado. Para el control sintomático y descongestión inicial del paciente se administran diuréticos de asa endovenosos como la furosemida junto con restricción de sodio y líquidos.",
+   "fallada": "La insuficiencia cardíaca es una taquiarritmia auricular benigna generada por crisis de pánico o consumo excesivo de cafeína que se detecta mediante Holter ambulatorio. El tratamiento resolutivo definitivo consiste en ablación por radiofrecuencia de vías accesorias junto con sedación oral con benzodiacepinas."
+  },
+  "neumonia": {
+   "buena": "La estratificación del riesgo en la neumonía adquirida en la comunidad se efectúa mediante la escala CURB-65 evaluando confusión, urea mayor a 19 mg/dL, frecuencia respiratoria de al menos 30 respiraciones por minuto, hipotensión arterial con sistólica menor a 90 o diastólica menor o igual a 60 mmHg, y edad igual o superior a 65 años para determinar manejo ambulatorio con puntajes de 0 a 1 u hospitalización con 2 o más puntos. El ingreso a la unidad de cuidados intensivos se fundamenta en los criterios de ATS/IDSA, requiriéndose la presencia de un criterio mayor como ventilación mecánica o shock séptico con vasopresores, o bien la concurrencia de al menos tres criterios menores. Para los pacientes que requieren hospitalización en sala general, el régimen antibiótico empírico estándar consiste en un betalactámico como ceftriaxona o ampicilina/sulbactam combinado con un macrólido como azitromicina, o de forma alternativa monoterapia con una fluoroquinolona respiratoria como levofloxacino o moxifloxacino.",
+   "parcial": "El pronóstico de la neumonía se evalúa con el puntaje CURB-65 tomando en cuenta la confusión del paciente, niveles de nitrógeno ureico, taquipnea marcada, hipotensión y edad avanzada, recomendando internamiento hospitalario si el score es de dos o más puntos. El esquema antimicrobiano empírico para pacientes admitidos en piso de hospitalización incluye ceftriaxona por vía endovenosa asociada a claritromicina o azitromicina para garantizar una adecuada cobertura contra patógenos típicos y atípicos. Se aconseja además iniciar oxigenoterapia complementaria si la saturación arterial de oxígeno desciende por debajo de noventa y dos por ciento.",
+   "fallada": "La neumonía adquirida en la comunidad es una enfermedad autoinmune idiopática del intersticio alveolar mediada por depósitos de complejos inmunes circulantes. El diagnóstico se basa en anticuerpos antinucleares y biopsia pulmonar a cielo abierto, requiriendo pulsos endovenosos de metilprednisolona en altas dosis como único tratamiento eficaz."
+  },
+  "preeclampsia": {
+   "buena": "La preeclampsia se diagnostica a partir de las 20 semanas de gestación ante una presión arterial sistólica mayor o igual a 140 mmHg o diastólica mayor o igual a 90 mmHg, acompañada de proteinuria significativa o evidencia de disfunción de órgano blanco como trombocitopenia, insuficiencia renal o compromiso hepático. Para prevenir las convulsiones eclámpticas se prescribe sulfato de magnesio administrando una dosis de carga de 4 a 6 gramos intravenosos en 20 minutos, seguida de una infusión de mantenimiento continuo de 1 a 2 gramos por hora vigilando reflejos patelares, diuresis y frecuencia respiratoria. La interrupción del embarazo constituye el tratamiento definitivo, indicándose el parto de inmediato ante preeclampsia severa a partir de las 34 semanas, o a cualquier edad gestacional si se presentan complicaciones maternas graves como eclampsia, rotura hepática o desprendimiento prematuro de placenta.",
+   "parcial": "La preeclampsia es un desorden hipertensivo gestacional que se presenta luego de la semana 20 con cifras tensionales superiores a 140/90 mmHg y proteinuria o compromiso multiorgánico materno. El sulfato de magnesio es el fármaco de elección para la profilaxis de convulsiones, administrándose un bolo inicial endovenoso de cuatro gramos seguido de un mantenimiento de un gramo por hora con monitorización de signos de toxicidad. Asimismo, se recomienda el uso de fármacos antihipertensivos orales o parenterales como labetalol, nifedipino o hidralazina para mantener la presión arterial en metas seguras.",
+   "fallada": "La preeclampsia es una infección bacteriana aguda de las glándulas mamarias causada por Staphylococcus aureus durante el puerperio tardío. Se confirma mediante ecografía mamaria bilateral y su tratamiento consiste en drenaje quirúrgico con amoxicilina más ácido clavulánico por vía oral durante catorce días."
+  }
+ }
+}
