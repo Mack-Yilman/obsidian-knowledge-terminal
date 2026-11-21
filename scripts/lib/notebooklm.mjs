@@ -3,7 +3,7 @@
 // Usa el CLI nlm (notebooklm-mcp-cli). Solo lectura sobre las fuentes del cuaderno; crear un
 // contenido de Studio consume cuota de NotebookLM y lo pide el usuario.
 import { readFileSync, existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
-import { join, relative, basename } from 'node:path';
+import { join, relative, basename, resolve } from 'node:path';
 import { ejecutar, jsonDe } from './binarios.mjs';
 import { errorUso, parsearSeleccion, escribirImportada } from './importacion.mjs';
 import { carpetaAdjuntos, resolverCarpeta } from './estructura.mjs';
@@ -19,8 +19,10 @@ const ESTUDIO = {
   mapa: { crear: ['mindmap', 'create'], bajar: 'mind-map', ext: 'json', opciones: { titulo: '--title' } },
   informe: { crear: ['report', 'create'], bajar: 'report', ext: 'md', opciones: { idioma: '--language', enfoque: '--prompt' } },
   tabla: { crear: ['data-table', 'create'], bajar: 'data-table', ext: 'csv', opciones: { idioma: '--language' }, descripcion: true },
+  quiz: { crear: ['quiz', 'create'], bajar: 'quiz', ext: 'json', formato: 'json', opciones: { cantidad: '--count', dificultad: '--difficulty', enfoque: '--focus' } },
+  flashcards: { crear: ['flashcards', 'create'], bajar: 'flashcards', ext: 'json', formato: 'json', opciones: { dificultad: '--difficulty', enfoque: '--focus' } },
 };
-const TIPO_NLM = { infografia: 'infographic', presentacion: 'slide_deck', audio: 'audio', video: 'video', mapa: 'mind_map', informe: 'report', tabla: 'data_table' };
+const TIPO_NLM = { infografia: 'infographic', presentacion: 'slide_deck', audio: 'audio', video: 'video', mapa: 'mind_map', informe: 'report', tabla: 'data_table', quiz: 'quiz', flashcards: 'flashcards' };
 
 function nlm(args, timeout = 180000) {
   const r = ejecutar('nlm', args, { timeout });
@@ -67,14 +69,77 @@ export function cuadernos() {
   return { texto: lista.length ? lista.map((c, i) => `${i + 1}. ${c.titulo} · ${c.fuentes} fuentes · ${c.actualizado} · ${c.id}`).join('\n') : 'No hay cuadernos.', datos: lista };
 }
 
+export function vincularCuaderno(vault, carpetaReal, c) {
+  const cuadernosCfg = { ...(leerConfigVault(vault).cuadernos || {}), [posix(carpetaReal).replace(/\/$/, '')]: c };
+  guardarConfigVault(vault, { cuadernos: cuadernosCfg });
+  return c;
+}
+
 export function vincular(vault, carpeta, ref) {
   if (!carpeta || !ref) throw errorUso('Uso: okt notebooklm vincular <carpeta del vault> "<cuaderno>"');
   const real = resolverCarpeta(vault, carpeta);
   if (!existsSync(join(vault, real))) throw errorUso(`La carpeta ${carpeta} no existe en el vault.`);
   const c = resolverCuaderno(vault, { cuaderno: ref });
-  const cuadernosCfg = { ...(leerConfigVault(vault).cuadernos || {}), [posix(real).replace(/\/$/, '')]: c };
-  guardarConfigVault(vault, { cuadernos: cuadernosCfg });
+  // Vinculado por id: se guarda el título real, que es lo que muestran los mensajes y los nombres de archivo.
+  if (c.titulo === c.id) c.titulo = listarCuadernos().find((x) => x.id === c.id)?.titulo || c.id;
+  vincularCuaderno(vault, real, c);
   return { texto: `${real} ↔ ${c.titulo}`, datos: c };
+}
+
+export function cuadernoCrear(vault, titulo, op = {}) {
+  if (!titulo) throw errorUso('Uso: okt notebooklm cuaderno crear "<título>" [--vincular <carpeta>]');
+  let real = null;
+  if (op.vincular) {
+    real = resolverCarpeta(vault, op.vincular);
+    if (!existsSync(join(vault, real))) throw errorUso(`La carpeta ${op.vincular} no existe en el vault.`);
+  }
+  const j = jsonDe(nlm(['notebook', 'create', titulo, '--json'])) || {};
+  const id = j.notebook_id || j.id;
+  if (!id) throw new Error('NotebookLM no devolvió el id del cuaderno creado.');
+  const c = { id, titulo: j.title || titulo };
+  if (real) vincularCuaderno(vault, real, c);
+  const texto = real ? `Cuaderno creado: ${c.titulo} (${c.id})\n${real} ↔ ${c.titulo}` : `Cuaderno creado: ${c.titulo} (${c.id})`;
+  return { texto, datos: c };
+}
+
+export function fuenteAgregar(vault, ref, op = {}) {
+  if (!ref) throw errorUso('Uso: okt notebooklm fuente agregar <archivo|url> [--cuaderno "<título>"] [--titulo "<título>"]');
+  let flag;
+  let valor;
+  if (op.drive) {
+    flag = '--drive';
+    valor = ref;
+  } else if (/^https?:\/\//i.test(ref)) {
+    flag = /(?:youtube\.com|youtu\.be)/i.test(ref) ? '--youtube' : '--url';
+    valor = ref;
+  } else {
+    const abs = resolve(ref);
+    if (!existsSync(abs)) throw errorUso(`No existe el archivo: ${ref}`);
+    flag = '--file';
+    valor = abs;
+  }
+  const c = op._cuaderno || resolverCuaderno(vault, op);
+  // Un reintento no vuelve a subir el mismo archivo: NotebookLM titula la fuente con el nombre del archivo.
+  if (flag === '--file' && !op.titulo) {
+    const lista = jsonDe(nlm(['source', 'list', c.id, '--json'])) || [];
+    const previa = (Array.isArray(lista) ? lista : lista.sources || []).find((s) => s.title === basename(valor));
+    if (previa) return { texto: `Ya estaba en «${c.titulo}»: ${previa.title} (${previa.id})`, datos: { source_id: previa.id, title: previa.title, cuaderno: c, reutilizada: true } };
+  }
+  const esperar = Number(op.esperar ?? 1800);
+  const args = ['source', 'add', c.id, flag, valor, '--wait', '--wait-timeout', String(esperar), '--json'];
+  if (op.titulo) args.push('--title', String(op.titulo));
+  const j = jsonDe(nlm(args, (esperar + 120) * 1000)) || {};
+  return {
+    texto: `Fuente agregada a «${c.titulo}»: ${j.title} (${j.source_id})`,
+    datos: { source_id: j.source_id, title: j.title, cuaderno: c },
+  };
+}
+
+export function fuenteContenido(sourceId) {
+  const j = jsonDe(nlm(['source', 'content', sourceId, '--json'])) || {};
+  const texto = String(j.content ?? '').trim();
+  if (!texto) throw new Error(`NotebookLM no devolvió la transcripción de la fuente ${sourceId} (¿audio sin voz o aún en proceso?).`);
+  return texto;
 }
 
 // Una subcarpeta por cuaderno dentro de los adjuntos de NotebookLM.
@@ -167,6 +232,47 @@ export function leerCsv(texto) {
   return filas.filter((f) => f.some((c) => c.trim()));
 }
 
+function textoBloque(lado) {
+  const bloques = lado?.flashcardContentBlock || [];
+  return bloques
+    .filter((b) => b.type === 'text' && b.content != null)
+    .map((b) => String(b.content).trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
+export function flashcardsAMarkdown(j) {
+  const cards = j?.cards || [];
+  return cards
+    .map((card, i) => {
+      const frente = textoBloque(card.front).replace(/\r?\n/g, ' ');
+      const reverso = textoBloque(card.back).replace(/\r?\n/g, '\n> ');
+      return `> [!question]- ${i + 1}. ${frente}\n> ${reverso}`;
+    })
+    .join('\n\n');
+}
+
+export function quizAMarkdown(j) {
+  const questions = j?.questions || [];
+  return questions
+    .map((q, i) => {
+      const opts = q.answerOptions || [];
+      const letras = opts.map((_, idx) => String.fromCharCode(97 + idx));
+      // Un salto de línea dentro de la pregunta o de una opción rompería la negrita y la lista.
+      const linea = (t) => String(t ?? '').replace(/\s*\r?\n\s*/g, ' ').trim();
+      const bloqueOpts = [`**${i + 1}. ${linea(q.question)}**`, ...opts.map((o, idx) => `- ${letras[idx]}) ${linea(o.text)}`)].join('\n');
+      const partes = [bloqueOpts];
+      if (q.hint) partes.push(`> [!tip]- Pista\n> ${String(q.hint).replace(/\r?\n/g, '\n> ')}`);
+      const correctas = opts.map((o, idx) => ({ o, idx })).filter(({ o }) => o.isCorrect);
+      if (correctas.length) {
+        const resp = correctas.map(({ o, idx }) => `${letras[idx]}) ${linea(o.text)}${o.rationale ? ` — ${o.rationale}` : ''}`).join('\n');
+        partes.push(`> [!success]- Respuesta\n> ${resp.replace(/\r?\n/g, '\n> ')}`);
+      }
+      return partes.join('\n\n');
+    })
+    .join('\n\n');
+}
+
 // Convierte lo descargado en algo que Obsidian muestre bien.
 function contenidoDescargado(abs, nombre, tipo) {
   if (tipo === 'informe') return readFileSync(abs, 'utf8');
@@ -187,6 +293,8 @@ function contenidoDescargado(abs, nombre, tipo) {
     if (!filas.length) return `[[${nombre}]]`;
     return [`| ${filas[0].join(' | ')} |`, `| ${filas[0].map(() => '---').join(' | ')} |`, ...filas.slice(1).map((f) => `| ${f.join(' | ')} |`)].join('\n') + `\n\nOriginal: [[${nombre}]]`;
   }
+  if (tipo === 'quiz') return `${quizAMarkdown(jsonDe(readFileSync(abs, 'utf8')))}\n\nOriginal: [[${nombre}]]`;
+  if (tipo === 'flashcards') return `${flashcardsAMarkdown(jsonDe(readFileSync(abs, 'utf8')))}\n\nOriginal: [[${nombre}]]`;
   return `![[${nombre}]]`;
 }
 
@@ -209,7 +317,7 @@ export function descargar(vault, tipo, op) {
   const cache = join(vault, '.cerebro', 'cache', 'notebooklm');
   mkdirSync(cache, { recursive: true });
   const temporal = join(cache, `${id}.${def.ext}`);
-  nlm(['download', def.bajar, c.id, '--output', temporal, '--id', id], 600000);
+  nlm(['download', def.bajar, c.id, '--output', temporal, '--id', id, ...(def.formato ? ['--format', def.formato] : [])], 600000);
   if (!existsSync(temporal)) throw new Error('NotebookLM no entregó el archivo.');
   let convertido;
   try {
@@ -220,9 +328,13 @@ export function descargar(vault, tipo, op) {
   }
   const abs = join(dir, nombre);
   renameSync(temporal, abs);
+  const archivo = posix(relative(vault, abs));
+  if (op._sinNota) {
+    return { texto: `Descargado ${nombre}.`, datos: { archivo, nombre, convertido } };
+  }
   const contenido = `${convertido}\n\nCuaderno: ${c.titulo} · ${tipo} · ${fechaISO()} · \`${subcarpeta}/${nombre}\``;
   const res = escribirImportada(vault, { clave: `notebooklm:${tipo}:${id}`, titulo: `${tipo[0].toUpperCase()}${tipo.slice(1)} - ${c.titulo}`, contenido, datos: { origen: 'notebooklm', id_externo: `${c.id}/${id}`, cuaderno: c.titulo, adjunto: `[[${nombre}]]` }, op });
-  return { texto: `Descargado ${basename(abs)} → nota ${res.ruta} (${res.accion}).`, datos: { archivo: posix(relative(vault, abs)), ...res } };
+  return { texto: `Descargado ${basename(abs)} → nota ${res.ruta} (${res.accion}).`, datos: { archivo, ...res } };
 }
 
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -230,7 +342,7 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function crear(vault, tipo, op) {
   const def = ESTUDIO[tipo];
   if (!def) throw errorUso(`Tipo de Studio desconocido: ${tipo}. Tipos: ${Object.keys(ESTUDIO).join(', ')}`);
-  const c = resolverCuaderno(vault, op);
+  const c = op._cuaderno || resolverCuaderno(vault, op);
   const args = [...def.crear, c.id];
   if (def.descripcion) {
     if (!op.descripcion) throw errorUso('La tabla necesita --descripcion "<qué tabla quieres>".');
@@ -250,7 +362,7 @@ export async function crear(vault, tipo, op) {
     if (a?.status === 'completed') return descargar(vault, tipo, { ...op, id, _cuaderno: c });
     if (a && /fail|error/i.test(a.status)) throw new Error(`NotebookLM no pudo crear el ${tipo} (${a.status}).`);
     if (Date.now() >= limite) {
-      return { texto: `El ${tipo} sigue en proceso en NotebookLM (id ${id}). Cuando esté listo: okt notebooklm descargar ${tipo} --cuaderno "${c.titulo}" --id ${id}`, datos: { id, pendiente: true }, codigo: 0 };
+      return { texto: `El ${tipo} sigue en proceso en NotebookLM (id ${id}). Cuando esté listo: okt notebooklm descargar ${tipo} --cuaderno "${c.titulo}" --id ${id}`, datos: { id, pendiente: true, cuaderno: c }, codigo: 0 };
     }
     await dormir(intervalo);
   }

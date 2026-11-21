@@ -67,6 +67,8 @@ test('init crea lo que sale de la entrevista: áreas, proyectos con su área, te
   assert.match(leer('AGENTS.md'), /\[\[01 │ 🎨 Diseño\]\]/);
   assert.match(leer('AGENTS.md'), /Diseñadora gráfica freelance/);
   assert.equal(JSON.parse(leer('.cerebro/config.json')).numerar_carpetas, true);
+  // El índice ya muestra el árbol: un agente que lo lee no debe creer que el vault está vacío.
+  assert.match(leer('05 │ ⚙️ Sistema/🗂️ indice.md'), /\[\[01 │ 🎨 Diseño\]\][\s\S]*\[\[01 │ 🖌️ Portafolio 2026\]\]/);
   // Un tema nuevo toma el siguiente número entre sus hermanas, y «Diseño» encuentra «01 │ 🎨 Diseño».
   r = okt(['tema', 'nuevo', 'Diseño/🖍️ Color'], { cwd: t.dir, configDir });
   assert.equal(r.codigo, 0, r.error);

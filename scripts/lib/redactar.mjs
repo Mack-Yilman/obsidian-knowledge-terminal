@@ -40,6 +40,7 @@ export function analizar(cuerpo) {
 
 // Perfil de la skill redactar. dudoso: el agente pregunta en una línea en lugar de asumir.
 export function sugerirPerfil(nombre, datos, an) {
+  if (datos.origen === 'clase') return { perfil: 'clase', dudoso: false };
   // Lo que dice el origen pesa más que el parecido del texto: una web con etiquetas repetidas no es una reunión.
   if (datos.origen === 'youtube' || nombre.startsWith('▶️')) return { perfil: 'clase', dudoso: false };
   if (ORDENAR.has(datos.origen)) return { perfil: 'ordenar', dudoso: false };

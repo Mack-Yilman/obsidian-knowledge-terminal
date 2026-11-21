@@ -1,5 +1,35 @@
 # Cambios
 
+## 0.11.0 — 2026-11-21
+
+- **Clase grabada y transcripción con NotebookLM (`okt clase preparar`):**
+  `okt clase preparar "<curso>" --audio <archivo> [--diapos <pdf>] [--video <url>] [--tema "<nombre>"]` usa el cuaderno
+  de NotebookLM vinculado a la carpeta del curso (o crea uno con su nombre y lo vincula), sube audio, diapositivas y
+  video como fuentes, y baja la transcripción a la nota `🎓 <tema>` en la carpeta del curso (con las propiedades `curso`,
+  `notebooklm` y `diapositivas`). Guarda el original en `📥 Bruto` y la deja lista para pasarla a limpio con la skill
+  `redactar` (perfil clase). El audio no se copia al vault; el PDF va a los adjuntos (git no lo versiona). Respeta los
+  límites de NotebookLM (200 MB y 500 000 palabras por fuente). La skill `capturar` ya no adjunta grabaciones de clase:
+  las deriva a este comando.
+- **Recursos de estudio interactivos (`okt clase recurso`):** crea en NotebookLM Studio un recurso (`quiz`, `flashcards`,
+  `infografia`, `audio`, `presentacion`…) con el cuaderno de la clase y lo agrega a la sección
+  `## 🧪 Recursos de estudio` de la nota. Si tarda, la salida indica cómo retomarlo con `--id`.
+- **Gestión de cuadernos y fuentes de NotebookLM:** nuevos comandos
+  `okt notebooklm cuaderno crear "<título>" [--vincular <carpeta>]` para crear cuadernos vinculados a carpetas del vault
+  y `okt notebooklm fuente agregar <archivo|url>` para incorporar fuentes directamente a un cuaderno.
+- **Quizzes y flashcards en Studio:** suma `quiz` (`--cantidad`, `--dificultad 1-5`) y `flashcards` (`--dificultad
+  easy|medium|hard`). Se descargan en JSON y quedan como callouts plegables de Obsidian (la respuesta se ve al abrirlos),
+  sorteando el formato Markdown defectuoso de `nlm` 0.15.7.
+- **Perfil clase de la skill `redactar` enriquecido:** incrusta la primera lámina de cada tema (`![[diapos.pdf#page=N]]`),
+  agrega de 1 a 3 preguntas de práctica plegadas por tema y marca la procedencia de lo que la IA complementa (🟢 de la
+  clase, 🟡 complemento con fuente, ⚠️ generado por la IA).
+- **Reintentos seguros:** repetir `okt clase preparar` con la misma grabación reutiliza las fuentes que NotebookLM ya
+  tiene (no las sube otra vez) y no pisa la nota de esa clase, que quizá ya se pasó a limpio. Una transcripción vacía da
+  error sin crear la nota.
+- `okt init` deja el índice del vault al día: antes quedaba vacío hasta el primer `okt cerrar`, y un agente que lo leía
+  creía que el vault no tenía áreas ni proyectos.
+- `okt notebooklm vincular` con el id de un cuaderno guarda su título (antes guardaba el id). `--drive` en
+  `fuente agregar` ya no se come la opción siguiente.
+
 ## 0.10.0 — 2026-11-20
 
 - **Diagnóstico de espacio del vault y su `.git`:** `okt espacio [--breve]` informa cuánto pesa el vault y su historial de

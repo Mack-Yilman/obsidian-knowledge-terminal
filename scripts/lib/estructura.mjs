@@ -90,6 +90,7 @@ export const EMOJI = {
   concepto: '💡',
   entidad: '🏷️',
   sintesis: '🧩',
+  clase: '🎓',
 };
 
 // En estos tipos el emoji lo elige la IA según el tema; si no viene ninguno, va el del tipo.

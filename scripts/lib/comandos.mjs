@@ -35,6 +35,8 @@ import { importarUrl, importarEnlaces, lanzarSegundoPlano } from './importar-url
 import { configurar as tgConfigurar, bajar as tgBajar, descartar as tgDescartar } from './telegram.mjs';
 import {
   cuadernos as nlmCuadernos,
+  cuadernoCrear as nlmCuadernoCrear,
+  fuenteAgregar as nlmFuenteAgregar,
   vincular as nlmVincular,
   notas as nlmNotas,
   preguntar as nlmPreguntar,
@@ -43,6 +45,7 @@ import {
   descargar as nlmDescargar,
   TIPOS_ESTUDIO,
 } from './notebooklm.mjs';
+import { preparar as clasePreparar, recurso as claseRecurso } from './clase.mjs';
 
 export const AYUDA = `okt: CLI de obsidian-knowledge-terminal (segundo cerebro en Obsidian)
 
@@ -133,9 +136,12 @@ Importar (solo a pedido; va a la Bandeja salvo --carpeta)
   importar drive "<enlace>"  [--seleccion 1,3|todo] [--aplicar] [--carpeta]
   importar url "<enlace>" [--carpeta]   Página web completa (con imágenes) o transcripción de YouTube, sin el modelo
   importar enlaces [--reintentar]        Completa las capturas de la Bandeja que solo traen un enlace (p. ej. de Telegram)
-  notebooklm cuadernos | vincular <carpeta> "<cuaderno>" | notas [--seleccion]
+  notebooklm cuadernos | cuaderno crear "<título>" [--vincular <carpeta>] | vincular <carpeta> "<cuaderno>" | notas [--seleccion]
+  notebooklm fuente agregar <archivo|url> [--cuaderno "<título>"] [--drive] [--titulo "<título>"]
   notebooklm preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo> [--id]
-             (--cuaderno "<título>"; tipos: infografia presentacion audio video mapa informe tabla)
+             (--cuaderno "<título>"; tipos: infografia presentacion audio video mapa informe tabla quiz flashcards)
+  clase preparar "<curso>" --audio <archivo> [--diapos <pdf>] [--video <url|archivo>] [--tema "<título>"]
+  clase recurso "<nota>" <tipo> [--id <id>]   (incrusta flashcards, quiz, infografia… en la nota de la clase)
 
 Telegram (bot okt-telegram: el celular encola, aquí se baja)
   telegram config [--url <worker> --token <token>]   Guarda la conexión en ~/.config/okt/telegram.json
@@ -363,13 +369,23 @@ export const COMANDOS = {
     async correr({ pos, op, vault }) {
       const accion = pos.shift();
       if (accion === 'cuadernos') return nlmCuadernos();
+      if (accion === 'cuaderno' && pos[0] === 'crear') return nlmCuadernoCrear(vault, pos.slice(1).join(' '), op);
+      if (accion === 'fuente' && pos[0] === 'agregar') return nlmFuenteAgregar(vault, pos.slice(1).join(' '), op);
       if (accion === 'vincular') return nlmVincular(vault, pos[0], pos.slice(1).join(' '));
       if (accion === 'notas') return nlmNotas(vault, op);
       if (accion === 'preguntar') return nlmPreguntar(vault, pos.join(' '), op);
       if (accion === 'estado') return nlmEstado(vault, op);
       if (accion === 'crear') return nlmCrear(vault, pos[0], op);
       if (accion === 'descargar') return nlmDescargar(vault, pos[0], op);
-      throw Object.assign(new Error(`Uso: okt notebooklm cuadernos | vincular <carpeta> "<cuaderno>" | notas | preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo>\nTipos de Studio: ${TIPOS_ESTUDIO.join(', ')}`), { codigo: 2 });
+      throw Object.assign(new Error(`Uso: okt notebooklm cuadernos | cuaderno crear "<título>" [--vincular <carpeta>] | fuente agregar <archivo|url> | vincular <carpeta> "<cuaderno>" | notas | preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo>\nTipos de Studio: ${TIPOS_ESTUDIO.join(', ')}`), { codigo: 2 });
+    },
+  },
+  clase: {
+    async correr({ pos, op, vault }) {
+      const accion = pos.shift();
+      if (accion === 'preparar') return clasePreparar(vault, pos.join(' '), op);
+      if (accion === 'recurso') return claseRecurso(vault, pos[0], pos[1], op);
+      throw Object.assign(new Error(`Uso: okt clase preparar "<curso>" --audio <archivo> [--diapos <pdf>] [--video <url|archivo>] [--tema "<título>"] | recurso "<nota>" <tipo> [--id <id>]\nTipos: ${TIPOS_ESTUDIO.join(', ')}`), { codigo: 2 });
     },
   },
   telegram: {

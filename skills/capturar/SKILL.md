@@ -28,6 +28,7 @@ description: Guarda conocimiento en el segundo cerebro de Obsidian (OKT) en la B
 | Notion, o una carpeta de Drive | Ver **Importar** |
 | «Guarda lo que hicimos» | `okt nota nueva captura "<proyecto> - <tema>" --origen sesion` con tres secciones: Decisiones, Aprendizajes y «Para el CLAUDE.md del proyecto» (propuestas, sin escribir en ese archivo) |
 | NotebookLM | Skill `notebooklm` |
+| La grabación de una clase (audio o video, con o sin diapositivas) | **No la adjuntes:** skill `notebooklm`, «Clase grabada» (`okt clase preparar`). El audio va a NotebookLM y al vault solo su transcripción |
 
 **Nombres con emoji** (contrato, sección 3): en notas, temas, proyectos y áreas, pon tú un emoji temático al inicio del título (`"🫀 Infarto agudo de miocardio"`). En fuentes, capturas y diario lo pone el CLI. Para enlazar una nota usa el nombre exacto que devuelve el comando (`Creada: …/📄 Guía ESC 2023.md` → `[[📄 Guía ESC 2023]]`).
 

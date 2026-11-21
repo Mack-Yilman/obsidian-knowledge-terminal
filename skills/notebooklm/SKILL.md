@@ -1,6 +1,6 @@
 ---
 name: notebooklm
-description: Conecta cuadernos de NotebookLM con el segundo cerebro de Obsidian (OKT), siempre a pedido. Consulta sus fuentes con citas, trae sus notas y genera y descarga contenidos de Studio. Úsala al mencionar NotebookLM o un cuaderno, por ejemplo «pregúntale a mi cuaderno…», «trae las notas del cuaderno», «crea una infografía / presentación / audio / mapa mental del cuaderno…», «descarga la infografía», «vincula esta carpeta con el cuaderno…» o «cómo instalo NotebookLM».
+description: Conecta NotebookLM con el segundo cerebro de Obsidian (OKT), a pedido: consulta cuadernos con citas, trae notas, crea cuadernos y fuentes, prepara clases grabadas y genera contenidos de Studio. Úsala al mencionar NotebookLM o un cuaderno: «pregúntale a mi cuaderno…», «sube la grabación de mi clase», «transcribe mi clase», «crea una infografía / audio / quiz / flashcards de…», «agrega recursos de estudio a esta clase», «vincula esta carpeta con el cuaderno…» o «cómo instalo NotebookLM».
 ---
 
 # NotebookLM
@@ -27,12 +27,15 @@ Usa el CLI `nlm`. Si `okt doctor` dice que falta, o si un comando responde «Fal
 | Un contenido de Studio | `okt notebooklm crear <tipo>`; antes, ver **Studio** |
 | Descargar algo ya creado en NotebookLM | `okt notebooklm descargar <tipo>` (el último terminado, o `--id`) |
 | Ver qué hay en Studio | `okt notebooklm estado` |
+| Un cuaderno nuevo | `okt notebooklm cuaderno crear "<título>" [--vincular "<carpeta>"]` |
+| Subir una fuente | `okt notebooklm fuente agregar "<archivo o URL>"` (espera a que NotebookLM la procese) |
+| Pasar una clase grabada al vault | Ver **Clase grabada** |
 
 Lo que se trae va a la Bandeja. Para dejarlo directo en su carpeta (por ejemplo, el proyecto o el tema del cuaderno), agrega `--carpeta "<área o proyecto>/<tema>"`.
 
 ## Studio
 
-**Tipos:** `infografia`, `presentacion`, `audio`, `video`, `mapa`, `informe` y `tabla` (esta pide `--descripcion "<qué tabla>"`).
+**Tipos:** `infografia`, `presentacion`, `audio`, `video`, `mapa`, `informe`, `tabla` (esta pide `--descripcion "<qué tabla>"`), `quiz` (`--cantidad`, `--dificultad 1-5`) y `flashcards` (`--dificultad easy|medium|hard`). Quiz y flashcards quedan como callouts plegables: la respuesta se ve al abrirlos.
 
 1. **Confirma antes de crear:** crear consume la cuota de NotebookLM del usuario y tarda minutos. Di qué vas a crear y con qué opciones, y espera su sí.
 2. **Opciones:** `--enfoque "<tema>"`, `--idioma es` (es el valor por defecto), y para la infografía `--orientacion landscape|portrait|square`, `--detalle concise|standard|detailed` y `--estilo professional|scientific|sketch_note|…`.
@@ -42,6 +45,21 @@ Lo que se trae va a la Bandeja. Para dejarlo directo en su carpeta (por ejemplo,
    - informe: texto;
    - tabla: tabla Markdown.
 4. **Si sigue en proceso:** `okt pendiente agregar "descargar <tipo> de <cuaderno>" --de notebooklm --para notebooklm` y dile cómo descargarlo después.
+
+## Clase grabada
+
+Para el audio de una clase (mp3, m4a, wav…, hasta 200 MB), con sus diapositivas en PDF o un video:
+
+1. `okt clase preparar "<curso>" --audio "<archivo>" [--diapos "<pdf>"] [--video "<url>"] [--tema "<nombre>"]`. El curso es
+   la carpeta del proyecto o tema. Usa el cuaderno vinculado a esa carpeta o crea uno con su nombre. Sube las fuentes y
+   espera la transcripción (minutos en una clase larga: ejecútalo en segundo plano si puedes). Crea la nota `🎓 <tema>`
+   en el curso y guarda el original en Bruto. El audio **no** se copia al vault; el PDF va a los adjuntos.
+2. **Pásala a limpio** con la skill `redactar`, perfil clase (la salida ya trae `Perfil sugerido: clase` y los tramos).
+   NotebookLM transcribe de corrido, sin hablantes ni párrafos, y confunde términos técnicos («horta» por aorta):
+   corrígelos por el contexto y márcalos con `(¿?)` si dudas.
+3. **Recursos de estudio**, si los pide (confirma antes, como en Studio):
+   `okt clase recurso "<nota>" <tipo> [opciones]` crea el contenido en el cuaderno de la clase y lo agrega a la sección
+   `## 🧪 Recursos de estudio` de la nota. Si sigue en proceso, la salida dice el comando para retomarlo (`--id`).
 
 ## Al terminar
 
