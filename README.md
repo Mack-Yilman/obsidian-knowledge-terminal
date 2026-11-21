@@ -85,6 +85,8 @@ AGENTS.md                 reglas del vault para cualquier agente
 - **Propiedades justas:** `tipo`, `estado` (borrador o revisado), `resumen` y `fuentes`; nada de campos vacíos. El
   formato completo está en [references/contrato-vault.md](references/contrato-vault.md).
 - El separador de las carpetas es `│` (línea fina, U+2502): la barra `|` no está permitida en los nombres de Windows.
+- **Evidencia de estudio:** las 25 referencias (DOI verificados) y el cuestionario propio sobre hábitos de estudio que
+  usará el futuro coach (skill `estudiar`) están en [references/evidencia-estudio.md](references/evidencia-estudio.md).
 
 ## Instalación
 
