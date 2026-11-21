@@ -1,5 +1,14 @@
 # Cambios
 
+## 0.11.1 — 2026-11-21
+
+- **Nombres con comas en `--notas` (`okt cerrar` y `okt bitacora`):** cada `[[…]]` de la lista se procesa íntegro aunque lleve
+  comas (p. ej. `--notas "[[📄 Padre rico, padre pobre]],Sepsis"`), evitando que se parta en dos enlaces. El resto de la
+  lista se sigue separando por comas como hasta ahora.
+- **Base de evidencia de estudio (`references/evidencia-estudio.md`):** nuevo documento con 25 referencias con DOI
+  verificado y cuestionario breve propio de 10 preguntas sobre hábitos y técnicas de estudio. Servirá de base para el
+  futuro coach de estudio (skill `estudiar`, versión 0.12.0); de momento ningún comando ni skill lo utiliza.
+
 ## 0.11.0 — 2026-11-21
 
 - **Clase grabada y transcripción con NotebookLM (`okt clase preparar`):**

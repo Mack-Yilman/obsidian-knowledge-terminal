@@ -112,7 +112,7 @@ Sistema (las skills se comunican por aquí)
   bitacora <skill> "<texto>" [--notas "A,B"]
   pendiente agregar "<texto>" [--para usuario|ia] [--de <skill>] [--nota] | cerrar <n> | listar [--cerrados]
   indice | hot [--aprendizaje "<texto>"] | lint | commit "<mensaje>"
-  cerrar <skill> "<texto>" [--notas "A,B"]   bitácora + índices + hot + commit
+  cerrar <skill> "<texto>" [--notas "A,B"]   bitácora + índices + hot + commit (nombre con coma: "[[A, B]],C")
 
 Mejora continua
   reportar error "<qué pasó>" [--skill s] [--comando c]   Un fallo de OKT (los del CLI se anotan solos)

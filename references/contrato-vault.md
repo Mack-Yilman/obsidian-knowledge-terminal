@@ -221,4 +221,5 @@ la anotes sin su sí. Y nunca edites a mano los archivos del plugin instalado: l
 (`okt doctor` los detecta).
 
 **Al terminar una operación que cambió notas:** `okt cerrar <skill> "<texto>" [--notas …]`, que hace bitácora,
-índices, hot y commit en un paso.
+índices, hot y commit en un paso. `--notas` separa por comas; si un nombre lleva coma, ponlo entre corchetes:
+`--notas "[[📄 Padre rico, padre pobre]],Sepsis"`.

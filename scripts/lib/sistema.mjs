@@ -41,7 +41,14 @@ function guardarBloque(vault, rel, lineas, titulo) {
   if (nuevo !== texto) sobrescribir(ruta, nuevo);
 }
 
-const enlaces = (lista) => (lista ? String(lista).split(',').map((s) => s.trim()).filter(Boolean).map((n) => `[[${n.replace(/^\[\[|\]\]$/g, '')}]]`) : []);
+const enlaces = (lista) => {
+  if (!lista) return [];
+  // Conserva intactos los [[…]] (pueden contener comas) y parte solo el resto por comas.
+  return (String(lista).match(/\[\[.*?\]\]|[^,\s][^,]*/g) || [])
+    .map((s) => s.replace(/^\[\[|\]\]$/g, '').trim())
+    .filter(Boolean)
+    .map((n) => `[[${n}]]`);
+};
 
 // ---------- bitácora ----------
 
