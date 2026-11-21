@@ -72,8 +72,10 @@ al minuto donde empieza, copiado de la transcripción. Si una clase no es de You
 
 ## Diapositivas
 
-Si la nota tiene la propiedad `diapositivas` (`okt clase preparar --diapos`), el PDF está en los adjuntos. Léelo con tu
-herramienta de lectura (por páginas, si es largo) **antes de escribir** y anota el título de cada lámina. Al escribir,
+Si la nota tiene la propiedad `diapositivas` (`okt clase preparar --diapos`), el PDF está en `📕 pdf` de los adjuntos.
+Léelo **entero y antes de escribir** con tu herramienta de lectura, **sin pedir un rango de páginas** (leer por páginas
+exige programas que quizá no estén instalados; entero, cada lámina llega con su número de página), y anota el título
+de cada lámina. Si no puedes leerlo, no incrustes láminas ni instales nada: dilo en el informe. Al escribir,
 justo debajo de cada `##` o `###`, incrusta la primera lámina que trata ese tema o subtema:
 
 ```markdown

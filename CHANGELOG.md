@@ -25,6 +25,8 @@
 - **Reintentos seguros:** repetir `okt clase preparar` con la misma grabación reutiliza las fuentes que NotebookLM ya
   tiene (no las sube otra vez) y no pisa la nota de esa clase, que quizá ya se pasó a limpio. Una transcripción vacía da
   error sin crear la nota.
+- `okt init` deja el índice del vault al día: antes quedaba vacío hasta el primer `okt cerrar`, y un agente que lo leía
+  creía que el vault no tenía áreas ni proyectos.
 - `okt notebooklm vincular` con el id de un cuaderno guarda su título (antes guardaba el id). `--drive` en
   `fuente agregar` ya no se come la opción siguiente.
 

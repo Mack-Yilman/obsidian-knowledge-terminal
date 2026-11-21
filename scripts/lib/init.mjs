@@ -10,6 +10,7 @@ import { reemplazarBloque, leerBloque } from './bloques.mjs';
 import { escribirFrontmatter } from './frontmatter.mjs';
 import { fechaISO } from './fechas.mjs';
 import { iniciarGit, commit } from './git.mjs';
+import { indice } from './sistema.mjs';
 import { limpiarNombre, sinEmoji, numeroDe, conNumero } from './nombres.mjs';
 
 const PLANTILLA = join(RAIZ_PLUGIN, 'plantillas', 'vault');
@@ -250,6 +251,9 @@ export function aplicarInit(plan) {
   // El perfil puede haber llegado con este init: el bloque de AGENTS.md se regenera con él.
   actualizarAgents(vault, valores.cli);
   guardarConfigGlobal({ vault: posix(vault), cli: posix(CLI) });
+  // Sin esto, indice.md quedaba vacío hasta el primer okt cerrar, y un agente que lo lee creía que el vault no tenía
+  // áreas ni proyectos (sesión real de la 0.11.0).
+  indice(vault);
   const g = plan.acciones.some((a) => a.tipo === 'git') ? iniciarGit(vault) : {};
   const c = commit(vault, 'okt init: estructura del vault');
   return { git: g, commit: c };

@@ -41,7 +41,7 @@
     "scripts/lib/importar-drive.mjs": "b1d70871053454a50dff9c47fb973232afc211eeb82ca78910744be2f48ed503",
     "scripts/lib/importar-notion.mjs": "fb8df5442f61753dbbbb9a815a6146b7fca5ec5c95fa5847a50f5790b23d5772",
     "scripts/lib/importar-url.mjs": "6d01292290d1c1dc82518c2f6577656106f247773fe2123de548690ac6c82c12",
-    "scripts/lib/init.mjs": "d5e187c571c4b0b83d1b1dff221906e4ed677a6ec94e0b6acde84f48cd3635f3",
+    "scripts/lib/init.mjs": "8949cdcd1af97c9937a1dec8479771f9baddf39a19de5e01631311447b454cc4",
     "scripts/lib/instalar.mjs": "071fb45743a474be6bba84420f61047b439c9fc72db06535b36af0f7baa387ac",
     "scripts/lib/jerarquia.mjs": "3b902e9e37973b7576f6539a5f7752e4ff084644ae75a648ca722d43a2570309",
     "scripts/lib/libro.mjs": "f943a945adf63c749856de09707c041d15739727d7cc2b0aeb1e23de118686c6",
@@ -74,7 +74,7 @@
     "skills/notebooklm/SKILL.md": "7d5858c2db5a332cc633a0a05b31cf77ee4b937e4f40a324bffa56e2695952e3",
     "skills/notebooklm/references/instalacion.md": "eee67bae1d2854ab6f4ee15472a48cbf68de6066949943d6c2779dfcd1fc64e0",
     "skills/redactar/SKILL.md": "3f5368dc00fffb2d58218887b9d3496d3a7c691f653a4eb3bc77e0f1473a1be3",
-    "skills/redactar/references/perfil-clase.md": "915e3113229a219d1794302ce425f9fd5584cb0cc1870113b513de1035f216af",
+    "skills/redactar/references/perfil-clase.md": "2b6c79b3a0765a25b879750b90336e6446e61a83e974e54a96e5f6656e61d5d0",
     "skills/redactar/references/perfil-propia.md": "5e94af9b2250b0ce258f106b5dc3a7dbb0c937e25eb75b336a4986615ede9688",
     "skills/redactar/references/perfil-reunion.md": "c5380b57ca858c7dfdfd62977bf34b2c7fc57892f4312aa61f0e9e5198a93701",
     "skills/redactar/references/reglas-redaccion.md": "e8df62a87a40ef263027e132982ea4d55cf6ac100f57b4dfb5842c00a2cfd54f"
