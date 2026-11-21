@@ -275,6 +275,18 @@ arrastre y el cumplimiento de la semana. Cada bloque es una acción concreta, co
 }
 ```
 
+**Cómo se arma** (`scripts/lib/plan.mjs`, función pura; pruebas en `tests/plan.test.mjs`):
+
+1. La meta guía es el examen activo más próximo; si no hay, la meta continua.
+2. Cada día, en orden y solo si cabe entero: lo arrastrado (lo pendiente o saltado desde la generación anterior, salvo
+   RemNote y repasos, que se recalculan; como máximo 2 veces, y la tercera se descarta y se avisa) → RemNote → repasos
+   (recuerdo libre inicial al día siguiente de cada clase, y vencidos; hasta el 30 % del día) → simulacro (sábados de las
+   últimas 8 semanas) → banqueo intercalado (cada 3 días, con 3 temas vistos) → temas nuevos (pretest, clase o lectura de
+   30 a 60 min y NotebookLM, el mismo día).
+3. Los temas nuevos se reparten hacia atrás desde la fecha del examen, sin entrar en su última semana; una meta continua
+   suma 3 por semana. La prioridad es peso × debilidad × errores de los últimos 14 días.
+4. Nunca pasa de los minutos del día; lo que no cabe sale en `aviso` con el ritmo necesario.
+
 ## 7. Qué usa cada parte
 
 | Parte | Lee | Escribe |
