@@ -132,7 +132,7 @@ test('clase preparar: sin cuaderno vinculado lo crea, sube audio y diapositivas 
   const todos = readdirSync(v.vault, { recursive: true }).map(String);
   assert.ok(!todos.some((f) => f.endsWith('.mp3')), 'el audio no se copia al vault');
   // Original en Bruto y la salida de redactar preparar con el perfil clase, sin dudas.
-  assert.match(r.salida, /Perfil sugerido: clase\n/);
+  assert.match(r.salida, /Perfil sugerido: clase o video\n/);
   assert.match(r.salida, /📍 /);
   v.borrar();
 });
@@ -149,6 +149,16 @@ test('clase preparar: con el cuaderno ya vinculado lo reutiliza; un video de You
   assert.ok(adds.some((a) => a.includes('--youtube')));
   // Sin --tema, el nombre es «Clase <fecha>».
   assert.match(leer(v, `${CURSO}/🎓 Clase 2026-10-22.md`), /notebooklm: 66666666-2222-3333-4444-555555555555/);
+  v.borrar();
+});
+
+test('notebooklm vincular por id guarda el título del cuaderno, no el id', () => {
+  const v = preparar();
+  v.run(['nota', 'nueva', 'proyecto', 'Fisiología']);
+  const r = v.run(['notebooklm', 'vincular', 'proyectos/Fisiología', CARDIO]);
+  assert.equal(r.codigo, 0, r.error);
+  assert.match(r.salida, /↔ Cardiología$/m);
+  assert.equal(JSON.parse(leer(v, '.cerebro/config.json')).cuadernos[CURSO].titulo, 'Cardiología');
   v.borrar();
 });
 

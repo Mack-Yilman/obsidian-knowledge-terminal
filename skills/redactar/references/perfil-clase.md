@@ -70,6 +70,49 @@ en un diálogo aparte, salvo que el intercambio sea el contenido.
 Se quitan del texto (reglas, sección 2). **En un video de YouTube** conserva el reproductor arriba y, en cada tema, el enlace
 al minuto donde empieza, copiado de la transcripción. Si una clase no es de YouTube, ningún tiempo queda en la nota.
 
+## Diapositivas
+
+Si la nota tiene la propiedad `diapositivas` (`okt clase preparar --diapos`), el PDF está en los adjuntos. Léelo con tu
+herramienta de lectura (por páginas, si es largo) **antes de escribir** y anota el título de cada lámina. Al escribir,
+justo debajo de cada `##` o `###`, incrusta la primera lámina que trata ese tema o subtema:
+
+```markdown
+### 1.2. 🫀 Contracción isovolumétrica
+![[Ciclo cardiaco.pdf#page=7]]
+```
+
+- Una lámina por encabezado, y solo si de verdad corresponde: si ninguna trata ese subtema, no pongas ninguna.
+- Lo que la lámina dice y el expositor no (una cifra, una tabla) no se copia al texto: ya se ve en la lámina.
+- Si la lámina corrige al audio (un término mal transcrito, una cifra), usa la forma de la lámina.
+
+## Preguntas de práctica
+
+Al final de cada `## Tema`, de 1 a 3 preguntas de recuerdo activo, en callouts plegados (la respuesta solo se ve al
+abrirlos):
+
+```markdown
+> [!question]- ¿Por qué no cambia el volumen en la contracción isovolumétrica?
+> Porque las cuatro válvulas están cerradas: sube la presión, pero la sangre no sale. 🟢
+```
+
+- Pregunta lo que el expositor explicó o marcó como importante (o dijo que «viene en el examen»), no detalles sueltos.
+- La respuesta sale del tema, con sus palabras. Si no se puede responder solo con la clase, no hagas esa pregunta.
+- Que exijan explicar o aplicar («¿por qué…?», «¿qué pasa si…?»), no solo repetir una definición.
+
+## Procedencia: 🟢, 🟡 y ⚠️
+
+Los apuntes son de la clase. Si el usuario pide **completarlos** («complementa con lo que sabes», «explícame mejor esto»),
+lo que agregues va aparte y marcado, nunca mezclado con lo del expositor:
+
+| Marca | Qué es | Dónde va |
+|---|---|---|
+| 🟢 | Lo dijo el expositor o está en sus láminas | Todo el cuerpo (sin marcar) y las respuestas de práctica |
+| 🟡 | Complemento tuyo, con su fuente (guía, libro, PubMed) | `> [!note] 🟡 Complemento` debajo del subtema |
+| ⚠️ | Tu respuesta o razonamiento, sin fuente verificada | `> [!warning] ⚠️ Generado por la IA` |
+
+Si el expositor dijo algo que contradice una fuente confiable, no lo corrijas en el texto: déjalo y agrega un `🟡` con la
+fuente. Sin un pedido de completar, no agregas nada.
+
 ## Antes de pasar al siguiente tramo
 
 Cada párrafo, viñeta o fila sale de una frase del expositor en ese tramo, editada pero con sus palabras. Revisa en especial
