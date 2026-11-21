@@ -7,11 +7,11 @@ import { COMANDOS } from '../scripts/lib/comandos.mjs';
 import { FRASE_RAIZ } from '../scripts/lib/instalar.mjs';
 import { leerFrontmatter } from '../scripts/lib/frontmatter.mjs';
 
-const SKILLS = ['cerebro', 'capturar', 'consultar', 'mantener', 'notebooklm', 'redactar'];
+const SKILLS = ['cerebro', 'capturar', 'consultar', 'mantener', 'notebooklm', 'redactar', 'estudiar'];
 const leerSkill = (s) => readFileSync(join(RAIZ, 'skills', s, 'SKILL.md'), 'utf8');
 const bloque = (t) => t.match(/<!-- okt:contrato -->[\s\S]*?<!-- \/okt:contrato -->/)?.[0];
 
-test('las 6 skills existen con name igual a su carpeta y una description útil', () => {
+test('las 7 skills existen con name igual a su carpeta y una description útil', () => {
   assert.deepEqual(readdirSync(join(RAIZ, 'skills')).sort(), [...SKILLS].sort());
   for (const s of SKILLS) {
     const { datos } = leerFrontmatter(leerSkill(s));
@@ -33,7 +33,7 @@ test('ninguna frase de activación («…») se repite en dos skills: cada pedid
   }
 });
 
-test('el bloque del contrato es idéntico en las 6 skills y define <raíz> con la frase que adapta el instalador', () => {
+test('el bloque del contrato es idéntico en las 7 skills y define <raíz> con la frase que adapta el instalador', () => {
   const primero = bloque(leerSkill(SKILLS[0]));
   assert.ok(primero, 'falta el bloque en cerebro');
   assert.ok(primero.includes(FRASE_RAIZ));
@@ -46,6 +46,16 @@ test('las rutas que citan las skills existen', () => {
     for (const m of t.matchAll(/`(references\/[^`]+\.md)`/g)) assert.ok(existsSync(join(RAIZ, 'skills', s, m[1])), `${s}: falta ${m[1]}`);
     for (const m of t.matchAll(/`<raíz>\/([^`<]+?\.md)`/g)) assert.ok(existsSync(join(RAIZ, m[1])), `${s}: falta <raíz>/${m[1]}`);
   }
+});
+
+test('estudiar cita el contrato de estudio y su guía, y el evaluador ciego no recibe la confianza', () => {
+  const t = leerSkill('estudiar');
+  for (const r of ['<raíz>/references/contrato-estudio.md', '<raíz>/skills/estudiar/references/coach.md']) assert.ok(t.includes(r), r);
+  const coach = readFileSync(join(RAIZ, 'skills', 'estudiar', 'references', 'coach.md'), 'utf8');
+  assert.ok(coach.includes('<raíz>/references/recibo.schema.json'));
+  assert.ok(existsSync(join(RAIZ, 'references', 'recibo.schema.json')));
+  for (const m of coach.matchAll(/`okt ([a-z]+)/g)) assert.ok(COMANDOS[m[1]], `coach.md cita «okt ${m[1]}», que no existe`);
+  assert.match(leerSkill('cerebro'), /`estudiar`/, 'cerebro remite a estudiar');
 });
 
 test('redactar cita sus 3 perfiles y la plantilla de reunión trae sus secciones', () => {

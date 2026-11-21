@@ -112,6 +112,7 @@ Si el pedido es de otra skill, aplica esa skill (en Claude se activa sola; si no
 | Ordenar: bandeja, temas, revisión semanal, lint, renombrar, archivar | `mantener` | «procesa mi bandeja», «revisa mi vault» |
 | Pasar a limpio una clase, un video, una reunión o sus ideas | `redactar` | «pasa a limpio esta nota», «ordena esta reunión», «dale forma a mis ideas» |
 | Usar un cuaderno de NotebookLM | `notebooklm` | «crea una infografía del cuaderno Tesis» |
+| Estudiar para una meta: plan diario, repasos, banqueos, errores, RemNote | `estudiar` | «quiero prepararme para el ENCAPS», «¿qué estudio hoy?» |
 
 **Cómo trabaja el usuario y mejoras del plugin:**
 - «Recuerda que prefiero…», «anota como preferencia…», o el usuario repite una forma de trabajar → si no lo pidió él, pregúntale en una línea si la anotas. Con su sí: `okt preferencia agregar "<texto en una línea>" --sobre flujo|formato|fuentes|herramientas`. **No la guardes en tu memoria propia** (la de Claude Code u otra): solo `AGENTS.md` la ven todos sus agentes, también Antigravity.

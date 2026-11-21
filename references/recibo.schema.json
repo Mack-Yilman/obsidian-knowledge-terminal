@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Recibo del evaluador ciego de OKT (contrato-estudio.md, sección 5)",
+  "type": "object",
+  "required": ["version", "paquete", "calificacion", "criterios", "errores", "pregunta_incompleta", "comentario", "evaluador"],
+  "properties": {
+    "version": { "const": 1 },
+    "paquete": { "type": "string" },
+    "calificacion": { "enum": ["recordado", "parcial", "fallado"] },
+    "criterios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["criterio", "cumple", "nota"],
+        "properties": { "criterio": { "type": "string" }, "cumple": { "type": "boolean" }, "nota": { "type": "string" } }
+      }
+    },
+    "errores": { "type": "array", "items": { "type": "string" } },
+    "pregunta_incompleta": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+    "comentario": { "type": "string" },
+    "evaluador": { "enum": ["agy", "subagente", "agente"] }
+  }
+}
