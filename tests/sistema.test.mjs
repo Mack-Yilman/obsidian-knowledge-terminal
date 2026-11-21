@@ -16,6 +16,18 @@ test('bitacora agrega la línea nueva primero, con enlaces a las notas', () => {
   v.borrar();
 });
 
+test('bitacora respeta los [[…]] con comas en el nombre (mejora #9)', () => {
+  const v = vaultNuevo();
+  let r = v.okt(['bitacora', 'mantener', 'ordenó un libro', '--notas', '[[📄 Padre rico, padre pobre]],[[Sepsis]]']);
+  assert.equal(r.codigo, 0, r.error);
+  r = v.okt(['bitacora', 'mantener', 'mezcla', '--notas', '[[Ana, la del bosque]], Guía A ,Hierro']);
+  assert.equal(r.codigo, 0, r.error);
+  const lineas = leer(v, '05 │ ⚙️ Sistema/📜 bitacora.md').split('\n').filter((l) => l.startsWith('- '));
+  assert.equal(lineas[0], '- 2026-10-22 10:30 · mantener · mezcla · [[Ana, la del bosque]], [[Guía A]], [[Hierro]]');
+  assert.equal(lineas[1], '- 2026-10-22 10:30 · mantener · ordenó un libro · [[📄 Padre rico, padre pobre]], [[Sepsis]]');
+  v.borrar();
+});
+
 test('pendiente agregar y cerrar por número', () => {
   const v = vaultNuevo();
   v.okt(['pendiente', 'agregar', 'compilar el PDF de anemia', '--de', 'capturar', '--para', 'mantener', '--nota', 'Guía anemia']);
