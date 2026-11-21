@@ -1,0 +1,1096 @@
+{
+ "fuente": "ts-fsrs 6.0.0, fsrs() FSRS-6, parámetros por defecto, enable_fuzz:false, enable_short_term:false",
+ "casos": [
+  {
+   "nombre": "nueva-1",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 1,
+     "r_antes": null,
+     "estabilidad": 0.212,
+     "dificultad": 6.4133,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-2",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 2,
+     "r_antes": null,
+     "estabilidad": 1.2931,
+     "dificultad": 5.11217071,
+     "intervalo": 2,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-3",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-4",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 4,
+     "r_antes": null,
+     "estabilidad": 8.2956,
+     "dificultad": 1,
+     "intervalo": 8,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "buenas-a-tiempo",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 3,
+     "nota": 3,
+     "r_antes": 0.88094796,
+     "estabilidad": 13.82690327,
+     "dificultad": 2.11121424,
+     "intervalo": 14,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 8,
+     "nota": 3,
+     "r_antes": 0.93306381,
+     "estabilidad": 42.06295792,
+     "dificultad": 2.1043314,
+     "intervalo": 42,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    },
+    {
+     "dias": 20,
+     "nota": 3,
+     "r_antes": 0.94270556,
+     "estabilidad": 102.9590338,
+     "dificultad": 2.09745544,
+     "intervalo": 103,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 0
+    },
+    {
+     "dias": 50,
+     "nota": 3,
+     "r_antes": 0.9417226,
+     "estabilidad": 233.72063264,
+     "dificultad": 2.09058635,
+     "intervalo": 234,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "facil-seguido",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 4,
+     "r_antes": null,
+     "estabilidad": 8.2956,
+     "dificultad": 1,
+     "intervalo": 8,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 8,
+     "nota": 4,
+     "r_antes": 0.9024733,
+     "estabilidad": 65.62422648,
+     "dificultad": 1,
+     "intervalo": 66,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 30,
+     "nota": 4,
+     "r_antes": 0.9444999,
+     "estabilidad": 245.41910593,
+     "dificultad": 1,
+     "intervalo": 245,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "lapso-y-vuelta",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 3,
+     "nota": 3,
+     "r_antes": 0.88094796,
+     "estabilidad": 13.82690327,
+     "dificultad": 2.11121424,
+     "intervalo": 14,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 9,
+     "nota": 1,
+     "r_antes": 0.92671929,
+     "estabilidad": 1.6496484,
+     "dificultad": 7.39223814,
+     "intervalo": 2,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 1
+    },
+    {
+     "dias": 1,
+     "nota": 3,
+     "r_antes": 0.93060355,
+     "estabilidad": 3.67172981,
+     "dificultad": 7.38007427,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 1
+    },
+    {
+     "dias": 3,
+     "nota": 3,
+     "r_antes": 0.91327159,
+     "estabilidad": 8.64567129,
+     "dificultad": 7.36792257,
+     "intervalo": 9,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 1
+    },
+    {
+     "dias": 7,
+     "nota": 2,
+     "r_antes": 0.91384016,
+     "estabilidad": 14.73162196,
+     "dificultad": 8.23793271,
+     "intervalo": 15,
+     "estado": 2,
+     "repasos": 6,
+     "lapsos": 1
+    }
+   ]
+  },
+  {
+   "nombre": "dos-lapsos",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 2,
+     "r_antes": null,
+     "estabilidad": 1.2931,
+     "dificultad": 5.11217071,
+     "intervalo": 2,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 1,
+     "nota": 1,
+     "r_antes": 0.91666972,
+     "estabilidad": 0.37539493,
+     "dificultad": 8.37863212,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 1
+    },
+    {
+     "dias": 1,
+     "nota": 1,
+     "r_antes": 0.82035993,
+     "estabilidad": 0.15302112,
+     "dificultad": 9.45229578,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 2
+    },
+    {
+     "dias": 2,
+     "nota": 3,
+     "r_antes": 0.66706251,
+     "estabilidad": 0.79193134,
+     "dificultad": 9.43807185,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 2
+    },
+    {
+     "dias": 4,
+     "nota": 3,
+     "r_antes": 0.75953999,
+     "estabilidad": 2.55591831,
+     "dificultad": 9.42386215,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 2
+    }
+   ]
+  },
+  {
+   "nombre": "atrasado",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 30,
+     "nota": 3,
+     "r_antes": 0.66752633,
+     "estabilidad": 37.42063886,
+     "dificultad": 2.11121424,
+     "intervalo": 37,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 90,
+     "nota": 3,
+     "r_antes": 0.82962517,
+     "estabilidad": 209.23516017,
+     "dificultad": 2.1043314,
+     "intervalo": 209,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "adelantado",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 1,
+     "nota": 3,
+     "r_antes": 0.9468475,
+     "estabilidad": 7.31530068,
+     "dificultad": 2.11121424,
+     "intervalo": 7,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 1,
+     "nota": 4,
+     "r_antes": 0.9807942,
+     "estabilidad": 16.07246833,
+     "dificultad": 1,
+     "intervalo": 16,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    },
+    {
+     "dias": 2,
+     "nota": 3,
+     "r_antes": 0.98240746,
+     "estabilidad": 25.35189983,
+     "dificultad": 1,
+     "intervalo": 25,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "mixto-largo",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 2,
+     "nota": 2,
+     "r_antes": 0.90949326,
+     "estabilidad": 7.51332013,
+     "dificultad": 4.75285849,
+     "intervalo": 8,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 4,
+     "nota": 3,
+     "r_antes": 0.93729215,
+     "estabilidad": 18.67693483,
+     "dificultad": 4.743334,
+     "intervalo": 19,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    },
+    {
+     "dias": 9,
+     "nota": 4,
+     "r_antes": 0.94208501,
+     "estabilidad": 59.90593949,
+     "dificultad": 2.97202955,
+     "intervalo": 60,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 0
+    },
+    {
+     "dias": 25,
+     "nota": 1,
+     "r_antes": 0.94848893,
+     "estabilidad": 2.93893365,
+     "dificultad": 7.67518227,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 1
+    },
+    {
+     "dias": 2,
+     "nota": 3,
+     "r_antes": 0.92421227,
+     "estabilidad": 6.24050741,
+     "dificultad": 7.66273546,
+     "intervalo": 6,
+     "estado": 2,
+     "repasos": 6,
+     "lapsos": 1
+    },
+    {
+     "dias": 6,
+     "nota": 3,
+     "r_antes": 0.90267729,
+     "estabilidad": 14.28078492,
+     "dificultad": 7.65030109,
+     "intervalo": 14,
+     "estado": 2,
+     "repasos": 7,
+     "lapsos": 1
+    },
+    {
+     "dias": 15,
+     "nota": 3,
+     "r_antes": 0.89658894,
+     "estabilidad": 31.41796913,
+     "dificultad": 7.63787916,
+     "intervalo": 31,
+     "estado": 2,
+     "repasos": 8,
+     "lapsos": 1
+    }
+   ]
+  },
+  {
+   "nombre": "mismo-dia",
+   "retencion": 0.9,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 0,
+     "nota": 3,
+     "r_antes": 1,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11121424,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 3,
+     "nota": 1,
+     "r_antes": 0.88094796,
+     "estabilidad": 0.63697811,
+     "dificultad": 7.39223814,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 1
+    },
+    {
+     "dias": 0,
+     "nota": 3,
+     "r_antes": 1,
+     "estabilidad": 0.63697811,
+     "dificultad": 7.38007427,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 1
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-1",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 1,
+     "r_antes": null,
+     "estabilidad": 0.212,
+     "dificultad": 6.4133,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-2",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 2,
+     "r_antes": null,
+     "estabilidad": 1.2931,
+     "dificultad": 5.11217071,
+     "intervalo": 2,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-3",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "nueva-4",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 4,
+     "r_antes": null,
+     "estabilidad": 8.2956,
+     "dificultad": 1,
+     "intervalo": 16,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "buenas-a-tiempo",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 3,
+     "nota": 3,
+     "r_antes": 0.88094796,
+     "estabilidad": 13.82690327,
+     "dificultad": 2.11121424,
+     "intervalo": 26,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 8,
+     "nota": 3,
+     "r_antes": 0.93306381,
+     "estabilidad": 42.06295792,
+     "dificultad": 2.1043314,
+     "intervalo": 80,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    },
+    {
+     "dias": 20,
+     "nota": 3,
+     "r_antes": 0.94270556,
+     "estabilidad": 102.9590338,
+     "dificultad": 2.09745544,
+     "intervalo": 196,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 0
+    },
+    {
+     "dias": 50,
+     "nota": 3,
+     "r_antes": 0.9417226,
+     "estabilidad": 233.72063264,
+     "dificultad": 2.09058635,
+     "intervalo": 446,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "facil-seguido",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 4,
+     "r_antes": null,
+     "estabilidad": 8.2956,
+     "dificultad": 1,
+     "intervalo": 16,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 8,
+     "nota": 4,
+     "r_antes": 0.9024733,
+     "estabilidad": 65.62422648,
+     "dificultad": 1,
+     "intervalo": 125,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 30,
+     "nota": 4,
+     "r_antes": 0.9444999,
+     "estabilidad": 245.41910593,
+     "dificultad": 1,
+     "intervalo": 468,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "lapso-y-vuelta",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 3,
+     "nota": 3,
+     "r_antes": 0.88094796,
+     "estabilidad": 13.82690327,
+     "dificultad": 2.11121424,
+     "intervalo": 26,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 9,
+     "nota": 1,
+     "r_antes": 0.92671929,
+     "estabilidad": 1.6496484,
+     "dificultad": 7.39223814,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 1
+    },
+    {
+     "dias": 1,
+     "nota": 3,
+     "r_antes": 0.93060355,
+     "estabilidad": 3.67172981,
+     "dificultad": 7.38007427,
+     "intervalo": 7,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 1
+    },
+    {
+     "dias": 3,
+     "nota": 3,
+     "r_antes": 0.91327159,
+     "estabilidad": 8.64567129,
+     "dificultad": 7.36792257,
+     "intervalo": 16,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 1
+    },
+    {
+     "dias": 7,
+     "nota": 2,
+     "r_antes": 0.91384016,
+     "estabilidad": 14.73162196,
+     "dificultad": 8.23793271,
+     "intervalo": 28,
+     "estado": 2,
+     "repasos": 6,
+     "lapsos": 1
+    }
+   ]
+  },
+  {
+   "nombre": "dos-lapsos",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 2,
+     "r_antes": null,
+     "estabilidad": 1.2931,
+     "dificultad": 5.11217071,
+     "intervalo": 2,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 1,
+     "nota": 1,
+     "r_antes": 0.91666972,
+     "estabilidad": 0.37539493,
+     "dificultad": 8.37863212,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 1
+    },
+    {
+     "dias": 1,
+     "nota": 1,
+     "r_antes": 0.82035993,
+     "estabilidad": 0.15302112,
+     "dificultad": 9.45229578,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 2
+    },
+    {
+     "dias": 2,
+     "nota": 3,
+     "r_antes": 0.66706251,
+     "estabilidad": 0.79193134,
+     "dificultad": 9.43807185,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 2
+    },
+    {
+     "dias": 4,
+     "nota": 3,
+     "r_antes": 0.75953999,
+     "estabilidad": 2.55591831,
+     "dificultad": 9.42386215,
+     "intervalo": 5,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 2
+    }
+   ]
+  },
+  {
+   "nombre": "atrasado",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 30,
+     "nota": 3,
+     "r_antes": 0.66752633,
+     "estabilidad": 37.42063886,
+     "dificultad": 2.11121424,
+     "intervalo": 71,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 90,
+     "nota": 3,
+     "r_antes": 0.82962517,
+     "estabilidad": 209.23516017,
+     "dificultad": 2.1043314,
+     "intervalo": 399,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "adelantado",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 1,
+     "nota": 3,
+     "r_antes": 0.9468475,
+     "estabilidad": 7.31530068,
+     "dificultad": 2.11121424,
+     "intervalo": 14,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 1,
+     "nota": 4,
+     "r_antes": 0.9807942,
+     "estabilidad": 16.07246833,
+     "dificultad": 1,
+     "intervalo": 31,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    },
+    {
+     "dias": 2,
+     "nota": 3,
+     "r_antes": 0.98240746,
+     "estabilidad": 25.35189983,
+     "dificultad": 1,
+     "intervalo": 48,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 0
+    }
+   ]
+  },
+  {
+   "nombre": "mixto-largo",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 2,
+     "nota": 2,
+     "r_antes": 0.90949326,
+     "estabilidad": 7.51332013,
+     "dificultad": 4.75285849,
+     "intervalo": 14,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 4,
+     "nota": 3,
+     "r_antes": 0.93729215,
+     "estabilidad": 18.67693483,
+     "dificultad": 4.743334,
+     "intervalo": 36,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 0
+    },
+    {
+     "dias": 9,
+     "nota": 4,
+     "r_antes": 0.94208501,
+     "estabilidad": 59.90593949,
+     "dificultad": 2.97202955,
+     "intervalo": 114,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 0
+    },
+    {
+     "dias": 25,
+     "nota": 1,
+     "r_antes": 0.94848893,
+     "estabilidad": 2.93893365,
+     "dificultad": 7.67518227,
+     "intervalo": 6,
+     "estado": 2,
+     "repasos": 5,
+     "lapsos": 1
+    },
+    {
+     "dias": 2,
+     "nota": 3,
+     "r_antes": 0.92421227,
+     "estabilidad": 6.24050741,
+     "dificultad": 7.66273546,
+     "intervalo": 12,
+     "estado": 2,
+     "repasos": 6,
+     "lapsos": 1
+    },
+    {
+     "dias": 6,
+     "nota": 3,
+     "r_antes": 0.90267729,
+     "estabilidad": 14.28078492,
+     "dificultad": 7.65030109,
+     "intervalo": 27,
+     "estado": 2,
+     "repasos": 7,
+     "lapsos": 1
+    },
+    {
+     "dias": 15,
+     "nota": 3,
+     "r_antes": 0.89658894,
+     "estabilidad": 31.41796913,
+     "dificultad": 7.63787916,
+     "intervalo": 60,
+     "estado": 2,
+     "repasos": 8,
+     "lapsos": 1
+    }
+   ]
+  },
+  {
+   "nombre": "mismo-dia",
+   "retencion": 0.85,
+   "pasos": [
+    {
+     "dias": null,
+     "nota": 3,
+     "r_antes": null,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11810397,
+     "intervalo": 4,
+     "estado": 2,
+     "repasos": 1,
+     "lapsos": 0
+    },
+    {
+     "dias": 0,
+     "nota": 3,
+     "r_antes": 1,
+     "estabilidad": 2.3065,
+     "dificultad": 2.11121424,
+     "intervalo": 5,
+     "estado": 2,
+     "repasos": 2,
+     "lapsos": 0
+    },
+    {
+     "dias": 3,
+     "nota": 1,
+     "r_antes": 0.88094796,
+     "estabilidad": 0.63697811,
+     "dificultad": 7.39223814,
+     "intervalo": 1,
+     "estado": 2,
+     "repasos": 3,
+     "lapsos": 1
+    },
+    {
+     "dias": 0,
+     "nota": 3,
+     "r_antes": 1,
+     "estabilidad": 0.63697811,
+     "dificultad": 7.38007427,
+     "intervalo": 3,
+     "estado": 2,
+     "repasos": 4,
+     "lapsos": 1
+    }
+   ]
+  }
+ ],
+ "w": [
+  0.212,
+  1.2931,
+  2.3065,
+  8.2956,
+  6.4133,
+  0.8334,
+  3.0194,
+  0.001,
+  1.8722,
+  0.1666,
+  0.796,
+  1.4835,
+  0.0614,
+  0.2629,
+  1.6483,
+  0.6014,
+  1.8729,
+  0.5425,
+  0.0912,
+  0.0658,
+  0.1542
+ ]
+}
