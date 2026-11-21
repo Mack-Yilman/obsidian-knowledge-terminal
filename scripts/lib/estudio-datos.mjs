@@ -17,7 +17,8 @@ const TIPO_ERROR = /^C-[A-Z]{3}-\d{2}$/;
 const T = {
   texto: (v) => typeof v === 'string',
   id: (v) => typeof v === 'string' && ID.test(v),
-  fecha: (v) => typeof v === 'string' && FECHA.test(v),
+  // Además del formato, que exista en el calendario: 2027-02-30 pasaba y desbordaba la aritmética de días.
+  fecha: (v) => typeof v === 'string' && FECHA.test(v) && new Date(`${v}T00:00:00Z`).toJSON()?.slice(0, 10) === v,
   instante: (v) => typeof v === 'string' && INSTANTE.test(v),
   entero: (v) => Number.isInteger(v) && v >= 0,
   numero: (v) => typeof v === 'number' && Number.isFinite(v),

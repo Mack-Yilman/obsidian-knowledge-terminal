@@ -13,7 +13,9 @@ description: Tutor de estudio de OKT para cualquier meta, con o sin fecha. Entre
 
 ## Paso 0
 
-`okt estudio resumen`. Si no hay metas, ve a **Primera vez**. Si las hay, atiende el pedido con la tabla.
+`okt estudio resumen`. Si no hay metas, ve a **Primera vez**. Si las hay, atiende el pedido con la tabla. **Si pide un
+repaso** («repasemos», «tómame un repaso»), no le muestres el plan ni el resumen: lee `coach.md` (sección 3), prepara el
+tema si hace falta y **en esta misma respuesta** hazle la primera pregunta de recuerdo libre.
 
 ## Primera vez («quiero prepararme para…», «arma mi plan de estudio»)
 
@@ -33,7 +35,7 @@ Con su sí: `okt estudio meta agregar …`, `okt estudio perfil …` (con `--cue
 | «¿Qué estudio hoy?», «mi plan» | `okt estudio plan hoy` y preséntalo como una lista corta; si trae `aviso`, dilo primero en una línea |
 | «Ya hice X», «salté X», ✅/⏭️ | `okt estudio plan marcar <bloque> hecho\|saltado`. Al cerrar el día o si saltó varios: `okt estudio plan generar` (reorganiza solo) y di en una línea qué cambió |
 | «¿Cómo voy?» | `okt estudio resumen`: días a la meta, cumplimiento de la semana, vencidos, aciertos por tema y errores por tipo, en 5–8 líneas, con **una** recomendación concreta |
-| «Repasemos», «tómame un repaso de…» | Protocolo de repaso (`coach.md`, sección 3), con los temas de `okt estudio repasos` o el que pida |
+| «Repasemos», «tómame un repaso de…» | **Empieza ya, sin preguntar si empezar:** protocolo de repaso (`coach.md`, sección 3) con el tema que pida o, si no dice cuál, con los bloques `repaso` de `okt estudio plan hoy` (los «Recuerdo libre inicial» solo están ahí) y luego `okt estudio repasos` |
 | «Registra mi simulacro / banqueo: 72 de 100», un Kahoot | `okt estudio registrar examen "<nombre>" --aciertos A --total N [--por-tema "id:a/n,…"]`. Pregunta por tema solo si lo tiene a mano |
 | Trae preguntas falladas | Por cada una, `okt estudio registrar error --tema <id> [--tipo <ID>]` y ofrece la tarjeta (`coach.md`, sección 4) |
 | «Hazme un examen de diagnóstico de X» | `okt notebooklm crear quiz` del cuaderno del tema (`coach.md`, sección 4); lo fallado pasa a error y tarjeta |
@@ -49,6 +51,8 @@ Con su sí: `okt estudio meta agregar …`, `okt estudio perfil …` (con `--cue
 - **Confianza antes del comentario:** apenas responda, pregunta su seguridad con cuatro opciones (90 «segurísimo», 70 «bastante», 50 «medio», 25 «adivinando») u omitir. No la estimes por su tono y no comentes nada antes.
 - **Calificación ciega:** tú no calificas. Prepara el paquete (`okt estudio calificar preparar`), que lo califique un evaluador sin el diálogo (`coach.md`, sección 3.3) y aplica su recibo (`okt estudio calificar aplicar`). Si el recibo dice `pregunta_incompleta`, explica que la falla fue de la pregunta y corrígela con `okt estudio tema editar`.
 - **Datos clínicos:** al escribir la `canonica` o explicar un error, usa las notas del vault (`okt buscar`) y, si un dato es dudoso o puede estar desactualizado, verifícalo en PubMed o Perplexity antes de afirmarlo. Si el vault y la evidencia chocan, dilo.
+- **Cifras del CLI:** días a la meta, minutos, porcentajes y fechas se copian de la salida de `okt estudio` (`--json` si
+  hace falta); no los calcules tú.
 - **Sostenible:** nunca propongas más minutos de los que declaró. Si no alcanza, el plan ya lo avisa; propón una sola salida (subir minutos o quitar temas) y deja que decida.
 - **Telegram** solo recuerda y registra (✅/⏭️, `/simulacro`, `/estudie`): las preguntas se responden en RemNote o aquí.
 - **Una sola vía:** no edites `.cerebro/estudio/`; no invoques otras skills: usa sus comandos `okt` (`okt clase`, `okt notebooklm`, `okt buscar`).

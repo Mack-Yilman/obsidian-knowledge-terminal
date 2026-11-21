@@ -341,8 +341,9 @@ function cmdRegistrar(vault, pos, op) {
     }
 
     let porTema;
+    let temas;
     if (op['por-tema']) {
-      const temas = leer(vault, 'temas');
+      temas = leer(vault, 'temas');
       porTema = {};
       for (const bruto of String(op['por-tema']).split(',')) {
         const parte = bruto.trim();
@@ -354,13 +355,14 @@ function cmdRegistrar(vault, pos, op) {
         const n = Number(m[3]);
         if (!temas.temas[tid]) uso(`No existe el tema "${tid}" en temas.json.`);
         if (a > n) uso(`En "${tid}", los aciertos (${a}) no pueden superar el total (${n}).`);
+        if (porTema[tid]) uso(`El tema "${tid}" está repetido en --por-tema: súmalo en una sola entrada.`);
         porTema[tid] = { aciertos: a, total: n };
         temas.temas[tid].aciertos += a;
         temas.temas[tid].preguntas += n;
       }
-      guardar(vault, 'temas', temas);
     }
 
+    // El evento primero: si no valida (p. ej. un --origen raro), temas.json queda sin tocar.
     const ev = agregarEvento(vault, {
       tipo: 'examen',
       origen,
@@ -371,6 +373,7 @@ function cmdRegistrar(vault, pos, op) {
       ...(op.fuente ? { fuente: op.fuente } : {}),
       ...extraNota,
     });
+    if (temas) guardar(vault, 'temas', temas);
     return salida(`Examen "${nombre}" registrado (${aciertos}/${total}).`, 'resumen', { evento: ev });
   }
 
@@ -530,9 +533,17 @@ function cmdCalificar(vault, pos, op, hoy) {
       return salida(`El paquete ${id} ya estaba aplicado; no se hicieron cambios.`, 'plan hoy', { ya_aplicado: true });
     }
 
+    const temas = leer(vault, 'temas');
+    const t = temas.temas[meta.tema];
+    if (!t) uso(`No existe el tema "${meta.tema}" en temas.json.`);
+    if (recibo.criterios.length !== t.rubrica.length) {
+      fallo(`El recibo trae ${recibo.criterios.length} criterios y la rúbrica de "${meta.tema}" tiene ${t.rubrica.length}: el evaluador debe juzgar cada criterio.`);
+    }
+
+    // «recordado» exige todos los criterios y ningún error: si no, se aplica como parcial (contrato, sección 4).
     let calificacion = recibo.calificacion;
     let bajado = false;
-    if (calificacion === 'recordado' && Array.isArray(recibo.errores) && recibo.errores.length > 0) {
+    if (calificacion === 'recordado' && (recibo.errores.length > 0 || recibo.criterios.some((c) => !c.cumple))) {
       calificacion = 'parcial';
       bajado = true;
     }
@@ -545,13 +556,11 @@ function cmdCalificar(vault, pos, op, hoy) {
           ? 2
           : 1;
 
-    const temas = leer(vault, 'temas');
-    const t = temas.temas[meta.tema];
-    if (!t) uso(`No existe el tema "${meta.tema}" en temas.json.`);
-
     const perfil = leer(vault, 'perfil');
-    const reintento = t.fsrs !== null && t.fsrs.ultimo === hoy;
+    // Reintento: el tema ya se repasó el día en que se preparó este paquete (o después), aunque se aplique pasada la medianoche.
+    const reintento = t.fsrs !== null && (t.fsrs.ultimo === hoy || t.fsrs.ultimo >= (meta.preparado ?? hoy));
     let vence;
+    let temasNuevos = null;
 
     if (reintento) {
       vence = t.fsrs.vence;
@@ -568,9 +577,10 @@ function cmdCalificar(vault, pos, op, hoy) {
         ultimo: hoy,
         vence,
       };
-      guardar(vault, 'temas', temas);
+      temasNuevos = temas;
     }
 
+    // El evento primero (marca el paquete como aplicado); luego FSRS.
     agregarEvento(vault, {
       tipo: 'repaso',
       origen: op.origen || 'cli',
@@ -580,6 +590,7 @@ function cmdCalificar(vault, pos, op, hoy) {
       recibo: reciboFinal,
       reintento,
     });
+    if (temasNuevos) guardar(vault, 'temas', temasNuevos);
 
     const avisos = [];
     if (bajado) avisos.push('Calificación bajada de recordado a parcial por errores en el recibo.');
@@ -640,8 +651,7 @@ function marcarBloque(vault, bloqueId, estado, origen = 'cli', nota) {
   if (!bloque) uso(`No existe el bloque "${bloqueId}". Consulta los bloques de hoy con: okt estudio plan hoy`);
 
   bloque.estado = estado;
-  guardar(vault, 'plan', plan);
-
+  // El evento primero: si no valida, plan.json queda como estaba.
   const ev = agregarEvento(vault, {
     tipo: 'checkin',
     origen,
@@ -652,6 +662,7 @@ function marcarBloque(vault, bloqueId, estado, origen = 'cli', nota) {
     minutos: bloque.minutos,
     ...(nota !== undefined ? { nota } : {}),
   });
+  guardar(vault, 'plan', plan);
 
   return salida(`Bloque ${bloque.id} marcado como ${estado}.`, 'plan hoy', { bloque, evento: ev });
 }
@@ -720,7 +731,8 @@ function cmdResumen(vault, hoy) {
   };
 
   const minutos_7d = eventos
-    .filter((e) => e.tipo === 'sesion' && e.ts.slice(0, 10) >= hace6 && e.ts.slice(0, 10) <= hoy)
+    // Día local del evento (un ts en UTC, p. ej. de Telegram, cae en otro día con slice).
+    .filter((e) => e.tipo === 'sesion' && fechaISO(new Date(e.ts)) >= hace6 && fechaISO(new Date(e.ts)) <= hoy)
     .reduce((acc, e) => acc + e.minutos, 0);
 
   const activos = Object.entries(temas.temas).filter(([, t]) => !t.retirado);

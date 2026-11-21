@@ -99,6 +99,16 @@ test('repaso final: sin temas nuevos en los últimos 7 días y simulacro el sáb
   assert.ok(sim[0].temas.length === 40);
 });
 
+test('antes del inicio de la meta no hay bloques: el plan empieza el día de inicio', () => {
+  const plan = generarPlan(entrada({ hoy: '2026-11-21', generado: '2026-11-21T09:00:00-05:00' }));
+  sano(plan);
+  assert.equal(plan.dias[0].fecha, '2026-11-21');
+  for (const d of plan.dias) assert.equal(d.bloques.length, 0, `${d.fecha} antes del inicio`);
+  const cerca = generarPlan(entrada({ hoy: '2026-12-15', generado: '2026-12-15T09:00:00-05:00' }));
+  assert.equal(bloques(cerca).filter((b) => b.fecha < '2026-12-22').length, 0);
+  assert.ok(bloques(cerca).some((b) => b.fecha === '2026-12-22' && b.herramienta === 'lectura'), 'el día de inicio ya trae su primer tema');
+});
+
 test('días libres sin bloques', () => {
   const plan = generarPlan(entrada({ perfil: { dias_libres: ['2026-12-25'] } }));
   sano(plan);
@@ -139,6 +149,34 @@ test('un bloque movido 2 veces que se vuelve a saltar se descarta y se avisa', (
   sano(hoy);
   assert.ok(!bloques(hoy).some((b) => b.fecha >= '2026-12-23' && b.arrastres === 3));
   assert.match(hoy.aviso, /Descarté 1/);
+});
+
+test('auditoría: regenerar el mismo día no pierde lo arrastrado a un día futuro ni pasa de los minutos', () => {
+  const ayer = generarPlan(entrada({ hoy: '2026-12-21', generado: '2026-12-21T07:00:00-05:00' }));
+  // Hoy (22/12) es libre: lo saltado ayer se arrastra a un día futuro.
+  ayer.dias[0].bloques.push({ id: '2026-12-21-99', accion: 'Clase o lectura: Asma bronquial', herramienta: 'lectura', tema: 'asma-bronquial', minutos: 40, estado: 'saltado' });
+  ayer.dias[0].minutos += 40;
+  const libre = { perfil: { dias_libres: ['2026-12-22'] } };
+  const p1 = generarPlan(entrada({ ...libre, planAnterior: ayer, generado: '2026-12-22T07:00:00-05:00' }));
+  const movido = (p) => bloques(p).filter((b) => b.fecha >= '2026-12-22' && b.tema === 'asma-bronquial' && b.arrastres === 1);
+  assert.equal(movido(p1).length, 1);
+  assert.ok(movido(p1)[0].fecha > '2026-12-22');
+  const p2 = generarPlan(entrada({ ...libre, planAnterior: p1, generado: '2026-12-22T10:00:00-05:00' }));
+  assert.equal(movido(p2).length, 1, 'regenerar el mismo día perdió el bloque arrastrado');
+  // Si hoy pasa a tener menos minutos, lo arrastrado a hoy no se queda si ya no cabe.
+  const p3 = generarPlan(entrada({ hoy: '2026-12-23', generado: '2026-12-23T07:00:00-05:00', planAnterior: p2 }));
+  const p4 = generarPlan(entrada({ hoy: '2026-12-23', generado: '2026-12-23T09:00:00-05:00', planAnterior: p3, perfil: { minutos_laborable: 30 } }));
+  sano(p4);
+});
+
+test('auditoría: un tema agregado a la meta fuera del temario también entra al plan, con peso 1', () => {
+  const metas = structuredClone(FIX.metas);
+  metas.metas[0].temario = metas.metas[0].temario.slice(0, 1);
+  const temas = structuredClone(FIX.temas);
+  for (const [id, t] of Object.entries(temas.temas)) if (id !== metas.metas[0].temario[0].tema && id !== 'asma-bronquial') t.metas = [];
+  // Cerca de la fecha, para que los 2 temas entren en la ventana de 14 días.
+  const plan = generarPlan(entrada({ metas, temas, hoy: '2027-03-25', generado: '2027-03-25T07:00:00-05:00' }));
+  assert.ok(nuevos(plan).some((b) => b.tema === 'asma-bronquial'), 'falta el tema agregado con --meta');
 });
 
 test('conserva lo ya marcado hoy y numera después', () => {

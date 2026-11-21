@@ -155,6 +155,31 @@ test('calificar aplicar mueve FSRS con la nota del contrato, es idempotente y no
   v.borrar();
 });
 
+test('auditoría: nada queda a medias si el evento es inválido, y el recibo no infla la nota', () => {
+  const v = vault();
+  conTema(v);
+  // Un origen inválido no debe dejar sumados los aciertos sin su evento.
+  assert.notEqual(v.correr(['registrar', 'examen', 'Sim', '--aciertos', '7', '--total', '10', '--por-tema', 'insuficiencia-cardiaca:7/10', '--origen', 'bot']).codigo, 0);
+  assert.equal(v.leer('temas.json').temas['insuficiencia-cardiaca'].preguntas, 0);
+  assert.equal(v.correr(['registrar', 'examen', 'Sim', '--aciertos', '7', '--total', '10', '--por-tema', 'insuficiencia-cardiaca:3/5,insuficiencia-cardiaca:4/5']).codigo, 2);
+  const resp = escribir(v.dir, 'r.txt', 'x');
+  // recordado con un criterio incumplido → parcial; criterios que no son los de la rúbrica → rechazo.
+  const p1 = v.json(['calificar', 'preparar', '--tema', 'insuficiencia-cardiaca', '--respuesta', resp, '--confianza', '90']).id;
+  const r1 = JSON.parse(readFileSync(recibo(v, p1, 'recordado'), 'utf8'));
+  r1.criterios[1].cumple = false;
+  const a = v.json(['calificar', 'aplicar', p1, '--recibo', escribir(v.dir, 'r1.json', JSON.stringify(r1))]);
+  assert.deepEqual([a.calificacion, a.nota], ['parcial', 2]);
+  const p2 = v.json(['calificar', 'preparar', '--tema', 'insuficiencia-cardiaca', '--respuesta', resp], { OKT_FECHA: '2026-12-22T23:50' }).id;
+  const r2 = JSON.parse(readFileSync(recibo(v, p2, 'parcial'), 'utf8'));
+  assert.equal(v.correr(['calificar', 'aplicar', p2, '--recibo', escribir(v.dir, 'r2.json', JSON.stringify({ ...r2, criterios: r2.criterios.slice(0, 2) }))]).codigo, 1);
+  // Preparado el mismo día del repaso y aplicado pasada la medianoche: sigue siendo reintento.
+  const fsrsAntes = v.leer('temas.json').temas['insuficiencia-cardiaca'].fsrs;
+  const b = v.json(['calificar', 'aplicar', p2, '--recibo', recibo(v, p2, 'fallado')], { OKT_FECHA: '2026-12-23T00:05' });
+  assert.equal(b.reintento, true);
+  assert.deepEqual(v.leer('temas.json').temas['insuficiencia-cardiaca'].fsrs, fsrsAntes);
+  v.borrar();
+});
+
 test('repasos lista los vencidos con su recuperabilidad', () => {
   const v = vault();
   conTema(v);

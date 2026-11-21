@@ -1,5 +1,30 @@
 # Cambios
 
+## 0.12.0 — 2026-11-21
+
+- **Tutor de estudio (skill `estudiar`, la 7.ª):** entrevista breve (meta con fecha o aprendizaje continuo, temario con
+  pesos, minutos por día laborable y fin de semana, días sin estudio, si usa RemNote y un cuestionario de 10 preguntas
+  sobre cómo estudia, que da un diagnóstico con recomendaciones basadas en evidencia). Frases: «quiero prepararme
+  para…», «arma mi plan de estudio», «¿cómo voy?», «qué estudio hoy», «repasemos», «registra mi simulacro», «revisa
+  mis tarjetas de RemNote» o «cómo me fue esta semana estudiando».
+- **Plan diario que se reorganiza solo (`okt estudio plan generar|hoy|marcar`):** 14 días hacia adelante; cada bloque
+  es una acción con su herramienta (RemNote, repaso libre de 3 min, banqueo, clase o lectura, NotebookLM, simulacro);
+  reparte los temas nuevos hacia atrás desde la fecha del examen, deja la última semana para repasar, mete banqueos
+  intercalados y un simulacro los sábados en las últimas 8 semanas; lo no hecho se mueve solo (hasta 2 veces) y avisa
+  en una línea si no alcanza el tiempo. Nunca pasa de los minutos declarados.
+- **Repasos de recuerdo libre con FSRS (`okt estudio repasos`):** explicar un tema de memoria en 2–4 minutos; antes de
+  cualquier comentario, el usuario dice su confianza (90/70/50/25); un evaluador ciego (otro modelo o subagente que
+  solo ve la pregunta, la respuesta de referencia, la rúbrica y lo que respondió el usuario) califica `recordado`,
+  `parcial` o `fallado`; `okt estudio calificar preparar|aplicar` lo registra y FSRS-6 (portado de ts-fsrs, MIT) agenda
+  el próximo repaso. Los reintentos del mismo día no mueven el calendario.
+- **Registro de banqueos, simulacros y errores (`okt estudio registrar examen|error|sesion|checkin`):** con aciertos por
+  tema; los errores pueden llevar el id de una taxonomía de errores; solo lo fallado pasa a tarjeta de RemNote (con el
+  MCP de RemNote, o para pegar).
+- **`okt estudio resumen`:** días a la meta, cumplimiento de la semana, minutos, temas vistos y nuevos, aciertos por
+  tema, errores por tipo y calibración (confianza frente a aciertos).
+- **Datos en `.cerebro/estudio/`:** JSON que solo escribe el CLI, con su formato en `references/contrato-estudio.md`;
+  el panel de Obsidian (okt-estudio) y los recordatorios de Telegram llegarán en versiones siguientes.
+
 ## 0.11.1 — 2026-11-21
 
 - **Nombres con comas en `--notas` (`okt cerrar` y `okt bitacora`):** cada `[[…]]` de la lista se procesa íntegro aunque lleve

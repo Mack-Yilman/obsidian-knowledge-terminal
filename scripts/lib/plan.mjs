@@ -1,6 +1,7 @@
 // Planificador puro del tutor de estudio: reglas resumidas en references/contrato-estudio.md (sección 6).
 // Lo implementó agy (Gemini 4 Hydrogen High) desde las reglas y las pruebas de tests/plan.test.mjs.
 import { crearFsrs } from './fsrs.mjs';
+import { fechaISO } from './fechas.mjs';
 
 const MS_DIA = 86400000;
 const TOPE_REPASO = 0.3;
@@ -106,16 +107,13 @@ function extraerConservadosHoy(planClonado, hoy) {
   const prefijo = `${hoy}-`;
 
   for (const b of diaHoy.bloques) {
-    const conservado = b.estado === 'hecho' || b.estado === 'saltado' || (b.arrastres ?? 0) > 0;
+    // Solo lo ya marcado; lo arrastrado y pendiente se vuelve a ubicar en arrastrarPendientes (puede no caber hoy).
+    const conservado = b.estado === 'hecho' || b.estado === 'saltado';
     if (!conservado) continue;
     bloques.push(clonarBloque(b));
     if (b.id?.startsWith(prefijo)) {
       const n = Number.parseInt(b.id.slice(prefijo.length), 10);
       if (Number.isInteger(n) && n > maxN) maxN = n;
-    }
-    if ((b.arrastres ?? 0) > 0 && b.tema) {
-      temasExcluidos.add(b.tema);
-      if (b.herramienta === 'lectura' || b.herramienta === 'clase') clasesEnHoy.add(b.tema);
     }
     if (b.tema && (b.herramienta === 'lectura' || b.herramienta === 'clase') && b.estado === 'hecho') {
       temasExcluidos.add(b.tema);
@@ -137,11 +135,11 @@ function obtenerTemasMeta(metaGuia, temasObj) {
       vistos.add(item.tema);
       resultado.push({ ...t, id: item.tema, peso: item.peso ?? 1, orden: resultado.length });
     }
-    return resultado;
   }
 
+  // Los temas que dicen pertenecer a la meta sin estar en su temario entran con peso 1 (contrato, metas.temario).
   for (const [id, t] of Object.entries(mapa)) {
-    if (!t || t.retirado || !Array.isArray(t.metas) || !t.metas.includes(metaGuia.id)) continue;
+    if (!t || t.retirado || vistos.has(id) || !Array.isArray(t.metas) || !t.metas.includes(metaGuia.id)) continue;
     resultado.push({ ...t, id, peso: 1, orden: resultado.length });
   }
   return resultado;
@@ -154,7 +152,8 @@ function calcularErrores14(eventos, hoy) {
     if (id && cant > 0) conteo.set(id, (conteo.get(id) ?? 0) + cant);
   };
   for (const ev of eventos) {
-    const fechaEv = ev?.ts?.slice(0, 10);
+    // Día local del evento: un ts en UTC (p. ej. de Telegram) cae en otro día con slice.
+    const fechaEv = ev?.ts ? fechaISO(new Date(ev.ts)) : null;
     if (!fechaEv || fechaEv < desde || fechaEv > hoy) continue;
     if (ev.tipo === 'error') sumar(ev.tema, 1);
     else if (ev.tipo === 'examen' && ev.por_tema) {
@@ -207,18 +206,26 @@ function arrastrarPendientes(planClonado, hoy, diasVentana, usadosPorDia) {
   }
 
   const fechaG = planClonado.generado.slice(0, 10);
-  const diasPrevios = planClonado.dias
+  const porFecha = (a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
+  // Lo ya arrastrado que sigue pendiente desde hoy se vuelve a ubicar sin sumar arrastre (si no, regenerar el mismo día
+  // lo perdía, o lo dejaba en un hoy con menos minutos); lo pendiente de los días pasados se arrastra y suma uno.
+  const yaArrastrados = planClonado.dias
+    .filter((d) => d.fecha >= hoy)
+    .sort(porFecha)
+    .flatMap((d) => d.bloques.filter((b) => b.estado === 'pendiente' && (b.arrastres ?? 0) > 0).map((b) => ({ b, suma: 0 })));
+  const deDiasPasados = planClonado.dias
     .filter((d) => d.fecha >= fechaG && d.fecha < hoy)
-    .sort((a, b) => (a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0));
+    .sort(porFecha)
+    .flatMap((d) => d.bloques.map((b) => ({ b, suma: 1 })));
 
-  for (const d of diasPrevios) {
-    for (const b of d.bloques) {
+  for (const { b, suma } of [...yaArrastrados, ...deDiasPasados]) {
+    {
       const esArrastrable =
         (b.estado === 'pendiente' || b.estado === 'saltado') &&
         b.herramienta !== 'remnote' &&
         b.herramienta !== 'repaso';
       if (!esArrastrable) continue;
-      if ((b.arrastres ?? 0) >= 2) {
+      if (suma && (b.arrastres ?? 0) >= 2) {
         descartados += 1;
         continue;
       }
@@ -232,11 +239,11 @@ function arrastrarPendientes(planClonado, hoy, diasVentana, usadosPorDia) {
         ...(b.temas ? { temas: [...b.temas] } : {}),
         minutos: b.minutos,
         estado: 'pendiente',
-        arrastres: (b.arrastres ?? 0) + 1,
+        arrastres: (b.arrastres ?? 0) + suma,
       };
       arrastradosPorDia[destino].push(copia);
       usadosPorDia[destino] += b.minutos;
-      movidos += 1;
+      movidos += suma;
 
       if (b.tema) {
         temasArrastrados.add(b.tema);
@@ -535,7 +542,9 @@ function construirAviso({ movidos, descartados, sinProgramar, diasEstudioVentana
 export function generarPlan({ metas, perfil, temas, eventos = [], planAnterior = null, hoy, generado, fsrs }) {
   const motorFsrs = fsrs ?? crearFsrs({ retencion: perfil?.retencion_deseada ?? 0.9 });
   const metaGuia = elegirMetaGuia(metas, hoy);
-  const diasLibres = new Set(perfil?.dias_libres || []);
+  // Antes del inicio de la meta no se estudia: esos días cuentan como libres (0 minutos, fuera de la cuota).
+  const libres = new Set(perfil?.dias_libres || []);
+  const diasLibres = { has: (fecha) => libres.has(fecha) || fecha < (metaGuia.inicio ?? '') };
 
   const planClonado = aplicarCheckins(planAnterior, eventos);
   const historial = extraerHistorial(planClonado, hoy);

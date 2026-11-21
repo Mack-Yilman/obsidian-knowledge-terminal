@@ -24,6 +24,8 @@ test('las muestras inválidas fallan con un mensaje que dice dónde', () => {
     ['metas', (d) => delete d.metas[0].fecha, /fecha/],
     ['metas', (d) => (d.metas[0].temario[0].peso = 0), /peso/],
     ['metas', (d) => (d.metas[0].id = 'ENCAPS 2027'), /id/],
+    ['metas', (d) => (d.metas[0].fecha = '2027-02-30'), /fecha/],
+    ['perfil', (d) => (d.dias_libres = ['9999-99-99']), /dias_libres/],
     ['perfil', (d) => (d.retencion_deseada = 0.99), /retencion_deseada/],
     ['temas', (d) => (d.temas['insuficiencia-cardiaca'].fsrs.estabilidad = -1), /estabilidad/],
     ['temas', (d) => (d.temas['Mal Id'] = d.temas.neumonia), /Mal Id/],

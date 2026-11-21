@@ -39,6 +39,12 @@ Está pensado para gastar poco en tus planes (Claude Pro, Google One):
 | «¿Qué sabes de cómo trabajo?» | Consulta tus preferencias aprendidas en el bloque `okt:preferencias` de `AGENTS.md` (flujo, formato, herramientas) |
 | «¿Qué mejoras tiene OKT?» | Revisa los fallos anotados por el CLI, scripts improvisados e ideas registradas en `05 │ ⚙️ Sistema/🛠️ Mejoras OKT` |
 | «Revisión semanal» / «revisa mi vault» | Arma la semana y revisa enlaces rotos, notas sueltas o sin enlaces y datos vencidos |
+| «Quiero prepararme para…» / «arma mi plan de estudio» | Entrevista breve (metas, fechas, temario ponderado y hábitos) y diagnóstico con recomendaciones |
+| «Qué estudio hoy» / «¿cómo voy?» | Consulta tu bloque del día en el plan de 14 días que se reorganiza solo y avisa si no alcanza el tiempo |
+| «Repasemos» | Repaso de recuerdo libre (2–4 min) con confianza previa, evaluación ciega y algoritmo FSRS-6 |
+| «Registra mi simulacro» | Registra aciertos y fallos por tema en exámenes o banqueos; lo fallado puede pasar a una tarjeta de RemNote |
+| «Revisa mis tarjetas de RemNote» | Revisa las tarjetas creadas a partir de tus fallos con el MCP de RemNote |
+| «Cómo me fue esta semana estudiando» | Resumen con días a la meta, cumplimiento semanal, minutos, aciertos por tema y calibración |
 
 Nada se importa ni se procesa solo, y nada se borra sin tu sí: lo terminado va al archivo.
 
@@ -177,7 +183,7 @@ En Antigravity: `okt instalar obsidian-skills --aplicar`.
 ### 8. Antigravity (opcional)
 
 Si también usas Antigravity, con el plugin ya instalado en Claude Code pide: **«instala OKT en Antigravity»**. Se
-instala como **plugin de Antigravity** (aparece en `agy plugin list` con sus 6 skills), no como skills sueltas. Sin
+instala como **plugin de Antigravity** (aparece en `agy plugin list` con sus 7 skills), no como skills sueltas. Sin
 Claude Code, clona el repositorio y ejecútalo a mano:
 
 ```bash
@@ -366,6 +372,46 @@ okt espacio limpiar aplicar <lote.json>      # unifica duplicados y mueve lo apr
 okt espacio git ignorar --aplicar            # deja de versionar binarios pesados en git (siguen en disco)
 okt espacio git purgar --aplicar             # quita binarios del historial previo (con respaldo ~/okt-respaldos/)
 ```
+
+## Tutor de estudio
+
+Organiza tu preparación de forma personalizada, tanto para una meta con fecha fija (un examen o certificación) como
+para aprendizaje continuo. El tutor distribuye los temas según sus pesos, planifica sesiones diarias y programa
+repasos espaciados con FSRS-6 junto al registro de simulacros, banqueos y errores.
+
+Para empezar basta con decir **«quiero prepararme para…»** o **«arma mi plan de estudio»**. La IA realiza una breve
+entrevista sobre tu meta, fechas, temario ponderado, minutos disponibles en días laborables y fines de semana, días
+libres, si usas RemNote y un cuestionario de 10 preguntas sobre tus métodos de estudio, entregando un diagnóstico con
+recomendaciones basadas en evidencia.
+
+En un día típico dices **«qué estudio hoy»** (o consultas con `okt estudio plan hoy`). El tutor arma un plan de 14
+días en el que cada bloque asigna una acción y su herramienta (RemNote, recuerdo libre de 3 minutos, banqueo,
+clase o lectura, NotebookLM o simulacro). Reparte los temas nuevos hacia atrás desde la fecha límite, reserva la última
+semana para repaso, intercala banqueos y programa simulacros los sábados en las últimas 8 semanas. Si no completas un
+bloque, se reprograma automáticamente (hasta 2 veces) y avisa en una sola línea si el tiempo no alcanza, sin sobrepasar
+nunca los minutos declarados.
+
+Cómo se califica un repaso:
+- Explicas de memoria en 2–4 minutos y declaras primero tu confianza (90/70/50/25) antes de recibir retroalimentación.
+- Evaluador ciego (ve pregunta, respuesta modelo, rúbrica y tu texto): califica `recordado`, `parcial` o `fallado`.
+- `okt estudio calificar` lo registra y FSRS-6 agenda el repaso; reintentos del mismo día no mueven el calendario.
+
+```bash
+okt estudio meta agregar "<título>" --tipo examen|continuo [--fecha AAAA-MM-DD] [--temario "Tema:peso,…"]
+okt estudio perfil [--minutos-laborable N] [--minutos-fin N] [--remnote N] [--dias-libres "f1,f2"]
+okt estudio plan generar | hoy | marcar <bloque> hecho|saltado
+okt estudio repasos [--max N]                  # temas vencidos (FSRS), los que aún se salvan primero
+okt estudio calificar preparar --tema <id> --respuesta <archivo> [--confianza 90|70|50|25]
+okt estudio calificar aplicar <id> --recibo <archivo>
+okt estudio registrar sesion --minutos N --actividad <tipo> [--tema <id>]
+okt estudio registrar examen "<nombre>" --aciertos A --total N [--por-tema "id:a/n,…"]
+okt estudio registrar error --tema <id> [--tipo C-CON-03] [--flashcard remnote|pegar|no]
+okt estudio resumen                            # días a la meta, cumplimiento, aciertos y calibración
+```
+
+Los datos se guardan en `.cerebro/estudio/` en formato JSON (escritos únicamente por el CLI), según se define en
+`references/contrato-estudio.md`. El panel visual de Obsidian (okt-estudio) y los recordatorios por Telegram llegarán
+en versiones posteriores.
 
 ## Automatización (sin gastar tokens)
 
