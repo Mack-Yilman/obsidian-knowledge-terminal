@@ -1,7 +1,7 @@
 # Atribución
 
-OKT no copia código de estos proyectos, pero adapta ideas y patrones de diseño suyos. Se reconocen
-aquí, junto con sus avisos de licencia MIT.
+OKT adapta ideas y patrones de diseño de estos proyectos y porta un algoritmo (FSRS-6 de ts-fsrs, en
+`scripts/lib/fsrs.mjs`). Se reconocen aquí, junto con sus avisos de licencia MIT.
 
 Las reglas de redacción y el formato de índice y temas de la skill `redactar` (`skills/redactar/references/`) se adaptaron del
 [transcriptor académico](https://github.com/Mack-Yilman/transcriptor-academico), del mismo autor (Mack Chirinos), que
@@ -13,6 +13,9 @@ autoriza su uso en OKT.
 | [eugeniughelbur/obsidian-second-brain](https://github.com/eugeniughelbur/obsidian-second-brain) | Una skill guía que enruta los pedidos; reglas de escritura (buscar antes de crear, bloques regenerables entre marcas); política de frescura (atemporal, fechado o puntero); contexto de inicio con tope de tamaño |
 | [AgriciDaniel/claude-obsidian](https://github.com/AgriciDaniel/claude-obsidian) | Estructura mínima del vault (hot, índice, bitácora); procedencia: contradicciones visibles, lo conversacional no es evidencia; filtro de valor antes de compilar |
 | [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) | Capa de formato de Obsidian recomendada (opcional) |
+| [open-spaced-repetition/ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) | **Código portado:** el algoritmo FSRS-6 (6.0.0) de repetición espaciada, en `scripts/lib/fsrs.mjs` |
+| [nagisanzenin/engram](https://github.com/nagisanzenin/engram) | Tutor con evaluador ciego, recibos en disco, confianza antes de la retroalimentación y recuperación hasta el criterio (solo ideas) |
+| [ZeKaiNie/universal-examprep-skill](https://github.com/ZeKaiNie/universal-examprep-skill) | Estado de estudio en JSON, registro de errores y la línea «📍 siguiente comando» (solo ideas) |
 
 La idea de fondo, compilar el conocimiento una vez en lugar de recuperarlo en cada pregunta, viene
 del [LLM Wiki de Andrej Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
@@ -103,6 +106,32 @@ SOFTWARE.
 MIT License
 
 Copyright (c) 2026 Steph Ango (@kepano)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### ts-fsrs
+
+```text
+MIT License
+
+Copyright (c) 2026 Open Spaced Repetition
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

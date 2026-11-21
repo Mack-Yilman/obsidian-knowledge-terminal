@@ -46,6 +46,7 @@ import {
   TIPOS_ESTUDIO,
 } from './notebooklm.mjs';
 import { preparar as clasePreparar, recurso as claseRecurso } from './clase.mjs';
+import { estudio } from './estudio.mjs';
 
 export const AYUDA = `okt: CLI de obsidian-knowledge-terminal (segundo cerebro en Obsidian)
 
@@ -142,6 +143,17 @@ Importar (solo a pedido; va a la Bandeja salvo --carpeta)
              (--cuaderno "<título>"; tipos: infografia presentacion audio video mapa informe tabla quiz flashcards)
   clase preparar "<curso>" --audio <archivo> [--diapos <pdf>] [--video <url|archivo>] [--tema "<título>"]
   clase recurso "<nota>" <tipo> [--id <id>]   (incrusta flashcards, quiz, infografia… en la nota de la clase)
+
+Estudio (tutor: metas, plan diario, repasos FSRS y calificación a ciegas; datos en .cerebro/estudio/)
+  estudio meta agregar "<título>" --tipo examen|continuo [--fecha AAAA-MM-DD] [--temario "Tema:peso,…"] | meta listar | meta cerrar <id>
+  estudio perfil [--minutos-laborable N] [--minutos-fin N] [--remnote N] [--dias-libres "f1,f2"] [--retencion 0.9] [--cuestionario "1b,3a,…"]
+  estudio tema agregar "<título>" | tema editar <id> [--meta <id>] [--nota "[[…]]"] [--pregunta] [--canonica] [--rubrica "a|b|c"] | tema retirar <id> | tema listar
+  estudio registrar sesion --minutos N --actividad <tipo> [--tema <id>] | examen "<nombre>" --aciertos A --total N [--por-tema "id:a/n,…"] [--fuente]
+  estudio registrar error --tema <id> [--tipo C-CON-03] [--pregunta "…"] [--flashcard remnote|pegar|no] | checkin <bloque> hecho|saltado
+  estudio repasos [--max N]              Temas vencidos (FSRS), los que aún se salvan primero
+  estudio calificar preparar --tema <id> --respuesta <archivo> [--confianza 90|70|50|25] | calificar aplicar <id> --recibo <archivo>
+  estudio resumen                        Días a la meta, cumplimiento, aciertos, errores por tipo y calibración
+  estudio plan generar | hoy | marcar <bloque> hecho|saltado
 
 Telegram (bot okt-telegram: el celular encola, aquí se baja)
   telegram config [--url <worker> --token <token>]   Guarda la conexión en ~/.config/okt/telegram.json
@@ -380,6 +392,7 @@ export const COMANDOS = {
       throw Object.assign(new Error(`Uso: okt notebooklm cuadernos | cuaderno crear "<título>" [--vincular <carpeta>] | fuente agregar <archivo|url> | vincular <carpeta> "<cuaderno>" | notas | preguntar "<pregunta>" | estado | crear <tipo> | descargar <tipo>\nTipos de Studio: ${TIPOS_ESTUDIO.join(', ')}`), { codigo: 2 });
     },
   },
+  estudio: { correr: ({ pos, op, vault }) => estudio(vault, pos, op) },
   clase: {
     async correr({ pos, op, vault }) {
       const accion = pos.shift();

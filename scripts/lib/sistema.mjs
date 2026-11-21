@@ -68,7 +68,7 @@ export function bitacora(vault, skill, texto, notas) {
 // Dos secciones: «Para ti» (lo que la IA necesita que decida el usuario) y «Para la IA» (lo que una skill debe
 // hacer después). Las líneas sin sección, de versiones anteriores, cuentan como «Para la IA».
 const SECCIONES = { usuario: '## Para ti', ia: '## Para la IA' };
-const SKILLS = new Set(['cerebro', 'capturar', 'consultar', 'mantener', 'notebooklm', 'redactar', 'ia']);
+const SKILLS = new Set(['cerebro', 'capturar', 'consultar', 'mantener', 'notebooklm', 'redactar', 'estudiar', 'ia']);
 
 function leerPendientes(vault) {
   const grupos = { usuario: [], ia: [] };
